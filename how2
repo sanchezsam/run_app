@@ -1,0 +1,6 @@
+use pastebin.com for code
+
+
+run
+
+python3 -m streamlit run app.py

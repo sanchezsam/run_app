@@ -1,0 +1,450 @@
+{
+    "name": "Strider",
+    "bodyweight": 75.0,
+    "level": 14,
+    "total_xp": 960,
+    "running_level": 1,
+    "vo2_max": 40.0,
+    "avg_heart_rate": 150,
+    "resting_heart_rate": 65,
+    "lifetime_elevation_gain": 0.0,
+    "cadence_history": [],
+    "elevation_milestone_history": [],
+    "deep_rem_streak": 0,
+    "stat_points": 16,
+    "gold": 11211,
+    "inventory": [
+        "Nike Vaporfly 4%",
+        "Oakley Speed Jacket Sunglasses",
+        "Arcade Neon Headband",
+        "Elite Aero-Grid Singlet",
+        "Split Training Track Shorts",
+        "Garmin Forerunner Pro",
+        "Coros Pace Performance Matrix"
+    ],
+    "equipped_gear": {
+        "feet": "None",
+        "accessory": "None",
+        "Nike Vaporfly 4%": 5,
+        "Oakley Speed Jacket Sunglasses": 1,
+        "Arcade Neon Headband": 1,
+        "Elite Aero-Grid Singlet": 1,
+        "Split Training Track Shorts": 1,
+        "Garmin Forerunner Pro": 1,
+        "Coros Pace Performance Matrix": 1
+    },
+    "registered_races": [],
+    "boss_wins": {
+        "The Couch Potato": 0,
+        "The Desk Jockey": 0,
+        "The Cardio Hydra": 0,
+        "The 5K Local Contender": 0,
+        "The 10K Track Specialist": 0,
+        "The Sonic Singularity": 0,
+        "The Half-Marathon Cruiser": 0,
+        "The Treadmill Titan": 0,
+        "The Hill Sprint Gorgon": 0,
+        "The Lactate Overlord": 0,
+        "The Marathon Monarch": 0,
+        "The 50K Trail Blazer": 0,
+        "The Ultramarathon Wraith": 0,
+        "The 100-Mile Century Drone": 0,
+        "The Chronos Phantom": 0
+    },
+    "fatigue": 0,
+    "days_tracked": 1,
+    "synced_garmin_activities": [],
+    "history_logs": [
+        "[2026-05-03] Run: 11.61 miles | Duration: 1:35:38 | Pace: 8.24 min/mi | Elevation Climbed: +956 ft. [REWARD] Earned +116g and +580 XP.",
+        "[2026-05-06] Run: 7.11 miles | Duration: 1:05:06 | Pace: 9.16 min/mi | Elevation Climbed: +901 ft. [REWARD] Earned +71g and +355 XP.",
+        "[2026-02-16] Run: 10.15 miles | Duration: 1:28:27 | Pace: 8.71 min/mi | Elevation Climbed: +675 ft. [REWARD] Earned +101g and +507 XP.",
+        "[2026-02-10] Run: 7.30 miles | Duration: 1:08:17 | Pace: 9.35 min/mi | Elevation Climbed: +1087 ft. [REWARD] Earned +73g and +365 XP.",
+        "[2026-03-09] Run: 13.18 miles | Duration: 1:53:46 | Pace: 8.63 min/mi | Elevation Climbed: +1049 ft. [REWARD] Earned +131g and +659 XP.",
+        "[2026-04-13] Run: 10.22 miles | Duration: 1:29:57 | Pace: 8.80 min/mi | Elevation Climbed: +1050 ft. [REWARD] Earned +102g and +511 XP.",
+        "[2026-04-28] Run: 6.29 miles | Duration: 0:59:16 | Pace: 9.42 min/mi | Elevation Climbed: +983 ft. [REWARD] Earned +62g and +314 XP.",
+        "[2026-05-29] Run: 8.12 miles | Duration: 1:00:32 | Pace: 7.45 min/mi | Elevation Climbed: +713 ft. [REWARD] Earned +81g and +405 XP.",
+        "[2026-07-22] Run: 7.34 miles | Duration: 1:02:06 | Pace: 8.46 min/mi | Elevation Climbed: +922 ft. [REWARD] Earned +73g and +367 XP.",
+        "[2026-05-25] Run: 0.91 miles | Duration: 0:11:13 | Pace: 12.33 min/mi | Elevation Climbed: +68 ft. [REWARD] Earned +9g and +45 XP.",
+        "[2026-05-31] Run: 20.66 miles | Duration: 2:49:19 | Pace: 8.20 min/mi | Elevation Climbed: +1747 ft. [REWARD] Earned +206g and +1033 XP.",
+        "[2026-07-04] Run: 26.93 miles | Duration: 4:02:24 | Pace: 9.00 min/mi | Elevation Climbed: +4510 ft. [REWARD] Earned +269g and +1346 XP.",
+        "[2026-06-05] Run: 7.40 miles | Duration: 1:08:33 | Pace: 9.26 min/mi | Elevation Climbed: +505 ft. [REWARD] Earned +74g and +370 XP.",
+        "[2026-06-12] Run: 20.09 miles | Duration: 2:50:44 | Pace: 8.50 min/mi | Elevation Climbed: +1739 ft. [REWARD] Earned +200g and +1004 XP.",
+        "[2026-06-27] Run: 7.17 miles | Duration: 1:03:57 | Pace: 8.92 min/mi | Elevation Climbed: +777 ft. [REWARD] Earned +71g and +358 XP.",
+        "[2026-07-19] Run: 6.57 miles | Duration: 0:59:00 | Pace: 8.98 min/mi | Elevation Climbed: +561 ft. [REWARD] Earned +65g and +328 XP.",
+        "[2026-07-18] Run: 5.29 miles | Duration: 0:47:57 | Pace: 9.06 min/mi | Elevation Climbed: +395 ft. [REWARD] Earned +52g and +264 XP.",
+        "[2026-07-20] Run: 4.50 miles | Duration: 0:42:03 | Pace: 9.34 min/mi | Elevation Climbed: +385 ft. [REWARD] Earned +45g and +225 XP.",
+        "[2026-07-21] Run: 6.46 miles | Duration: 0:57:34 | Pace: 8.91 min/mi | Elevation Climbed: +947 ft. [REWARD] Earned +64g and +323 XP.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Victory: Conquered Olympic Pace Sentinel [VOMERO PACER] on the Los Alamos Canyon Trail Loop! [WIN] Your Time: 0:42:49.771 | Rival Time: 0:44:34.189 | Score: 10822 | Gold Impact: +126g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Defeat: Raced Olympic Pace Sentinel [VOMERO PACER] on the Los Alamos Canyon Trail Loop! [LOSS] Your Time: 0:43:30.560 | Rival Time: 0:42:33.818 | Score: 4069 | Gold Impact: -205g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Victory: Conquered Sprinting Apex Titan [SPRINT SPECIALIST] on the Los Alamos Canyon Trail Loop! [WIN] Your Time: 0:43:11.509 | Rival Time: 0:46:12.550 | Score: 11126 | Gold Impact: +112g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Defeat: Raced Haile [FLASH] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:04.479 | Rival Time: 0:01:59.743 | Score: 192 | Gold Impact: -10g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Victory: Conquered Kilian [GAZELLE] on the Berlin Olympiastadion Track! [WIN] Your Time: 0:02:03.410 | Rival Time: 0:02:12.333 | Score: 536 | Gold Impact: +10g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Victory: Conquered Kilian [GAZELLE] on the Boston Marathon (Hopkinton to Copley)! [WIN] Your Time: 3:39:03.771 | Rival Time: 3:43:54.900 | Score: 53601 | Gold Impact: +1050g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:05.400 | Rival Time: 0:02:03.167 | Score: 196 | Gold Impact: -13g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:03.484 | Rival Time: 0:02:03.468 | Score: 199 | Gold Impact: -13g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Victory: Conquered Pre [ROADRUNNER] on the Berlin Olympiastadion Track! [WIN] Your Time: 0:02:04.926 | Rival Time: 0:02:09.065 | Score: 516 | Gold Impact: +10g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:03.633 | Rival Time: 0:02:01.710 | Score: 196 | Gold Impact: -13g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Victory: Conquered Pre [ROADRUNNER] on the Jemez Mountain 50-Mile Ultra Rim! [WIN] Your Time: 6:42:20.087 | Rival Time: 6:56:45.730 | Score: 103585 | Gold Impact: +2276g.",
+        "[2026-07-23] \ud83c\udfc1 Track Match Victory: Conquered Kilian [GAZELLE] on the UTMB Mont-Blanc Core Loop! [WIN] Your Time: 14:18:17.035 | Rival Time: 14:30:21.171 | Score: 214981 | Gold Impact: +6010g.",
+        "[2026-07-24] Run: 5.23 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +52g and +261 XP.",
+        "[2026-07-24] Run: 5.23 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +52g and +261 XP.",
+        "[2026-07-24] Run: 26.69 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +266g and +1334 XP.",
+        "[2026-07-24] Run: 1.00 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +10g and +50 XP.",
+        "[2026-07-24] Run: 5.47 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +54g and +273 XP.",
+        "[2026-07-24] Run: 6.51 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +65g and +325 XP.",
+        "[2026-07-24] Run: 5.24 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +52g and +262 XP.",
+        "[2026-07-24] Run: 6.53 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +65g and +326 XP.",
+        "[2026-07-24] Run: 4.52 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +45g and +225 XP.",
+        "[2026-07-24] Run: 6.41 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +64g and +320 XP.",
+        "[2026-07-24] Run: 7.32 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +73g and +366 XP.",
+        "[2026-07-24] Run: 5.23 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +52g and +261 XP.",
+        "[2026-07-24] Run: 5.23 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +52g and +261 XP.",
+        "[2026-07-24] Run: 26.69 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +266g and +1334 XP.",
+        "[2026-07-24] Run: 1.00 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +10g and +50 XP.",
+        "[2026-07-24] Run: 5.47 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +54g and +273 XP.",
+        "[2026-07-24] Run: 6.51 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +65g and +325 XP.",
+        "[2026-07-24] Run: 5.24 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +52g and +262 XP.",
+        "[2026-07-24] Run: 6.53 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +65g and +326 XP.",
+        "[2026-07-24] Run: 4.52 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +45g and +225 XP.",
+        "[2026-07-24] Run: 6.41 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +64g and +320 XP.",
+        "[2026-07-24] Run: 7.32 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +73g and +366 XP.",
+        "[2026-07-21] Run: 6.41 miles | Duration: 00:00:00 | Pace: 0.00 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +64g and +320 XP.",
+        "[2026-07-04] Run: 26.69 miles | Duration: 04:02:56 | Pace: 9.10 min/mi | Elevation Climbed: +0.0 ft. [REWARD] Earned +266g and +1334 XP.",
+        "[2026-07-04] Run: 26.69 miles | Duration: 04:02:56 | Pace: 9.10 min/mi | Elevation Climbed: +4511.2 ft. [REWARD] Earned +266g and +1334 XP.",
+        "[2026-07-24] Run: 26.69 miles | Duration: 04:02:56 | Pace: 9.10 min/mi | Elevation Climbed: +4511.2 ft. [REWARD] Earned +266g and +1334 XP.",
+        {
+            "Activity Date": "2026-07-24",
+            "Activity Name": "2026-07-22-17-54-54.fit",
+            "Distance (Miles)": 7.32,
+            "Duration": "01:02:51",
+            "Pace (min/mi)": "8.59",
+            "Elevation (ft)": "+929.1 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "10:08",
+                    "pace": "10:08"
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "09:49",
+                    "pace": "9:49"
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "08:18",
+                    "pace": "8:18"
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "08:19",
+                    "pace": "8:19"
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "08:12",
+                    "pace": "8:12"
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "08:04",
+                    "pace": "8:04"
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "07:15",
+                    "pace": "7:15"
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 0.32,
+                    "time": "02:24",
+                    "pace": "7:33"
+                }
+            ],
+            "text_payload": "[2026-07-24] Run: 7.32 miles | Duration: 01:02:51 | Pace: 8.59 min/mi | Elevation Climbed: +929.1 ft. [REWARD] Earned +73g and +366 XP."
+        },
+        "[2026-07-24] Run: 7.32 miles | Duration: 01:02:51 | Pace: 8.59 min/mi | Elevation Climbed: +929.1 ft. [REWARD] Earned +73g and +366 XP.",
+        {
+            "Activity Date": "2026-07-04",
+            "Activity Name": "2026-07-04-06-30-10.fit",
+            "Distance (Miles)": 26.69,
+            "Duration": "04:02:56",
+            "Pace (min/mi)": "9.10",
+            "Elevation (ft)": "+4511.2 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "08:51",
+                    "pace": "8:51"
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "09:10",
+                    "pace": "9:10"
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "07:55",
+                    "pace": "7:55"
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "07:58",
+                    "pace": "7:58"
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "09:47",
+                    "pace": "9:47"
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "09:43",
+                    "pace": "9:43"
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "13:36",
+                    "pace": "13:36"
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "08:30",
+                    "pace": "8:30"
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "09:31",
+                    "pace": "9:31"
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 1.0,
+                    "time": "08:28",
+                    "pace": "8:28"
+                },
+                {
+                    "split_num": 11,
+                    "distance_mi": 1.0,
+                    "time": "08:02",
+                    "pace": "8:02"
+                },
+                {
+                    "split_num": 12,
+                    "distance_mi": 1.0,
+                    "time": "09:31",
+                    "pace": "9:31"
+                },
+                {
+                    "split_num": 13,
+                    "distance_mi": 1.0,
+                    "time": "08:09",
+                    "pace": "8:09"
+                },
+                {
+                    "split_num": 14,
+                    "distance_mi": 1.0,
+                    "time": "07:04",
+                    "pace": "7:04"
+                },
+                {
+                    "split_num": 15,
+                    "distance_mi": 1.0,
+                    "time": "14:05",
+                    "pace": "14:05"
+                },
+                {
+                    "split_num": 16,
+                    "distance_mi": 1.0,
+                    "time": "08:37",
+                    "pace": "8:37"
+                },
+                {
+                    "split_num": 17,
+                    "distance_mi": 1.0,
+                    "time": "08:13",
+                    "pace": "8:13"
+                },
+                {
+                    "split_num": 18,
+                    "distance_mi": 1.0,
+                    "time": "10:52",
+                    "pace": "10:52"
+                },
+                {
+                    "split_num": 19,
+                    "distance_mi": 1.0,
+                    "time": "08:42",
+                    "pace": "8:42"
+                },
+                {
+                    "split_num": 20,
+                    "distance_mi": 1.0,
+                    "time": "09:16",
+                    "pace": "9:16"
+                },
+                {
+                    "split_num": 21,
+                    "distance_mi": 1.0,
+                    "time": "09:00",
+                    "pace": "9:00"
+                },
+                {
+                    "split_num": 22,
+                    "distance_mi": 1.0,
+                    "time": "11:16",
+                    "pace": "11:16"
+                },
+                {
+                    "split_num": 23,
+                    "distance_mi": 1.0,
+                    "time": "08:51",
+                    "pace": "8:51"
+                },
+                {
+                    "split_num": 24,
+                    "distance_mi": 1.0,
+                    "time": "08:20",
+                    "pace": "8:20"
+                },
+                {
+                    "split_num": 25,
+                    "distance_mi": 1.0,
+                    "time": "07:39",
+                    "pace": "7:39"
+                },
+                {
+                    "split_num": 26,
+                    "distance_mi": 1.0,
+                    "time": "07:00",
+                    "pace": "7:00"
+                },
+                {
+                    "split_num": 27,
+                    "distance_mi": 0.69,
+                    "time": "04:34",
+                    "pace": "6:36"
+                }
+            ],
+            "text_payload": "[2026-07-04] Run: 26.69 miles | Duration: 04:02:56 | Pace: 9.10 min/mi | Elevation Climbed: +4511.2 ft. [REWARD] Earned +266g and +1334 XP."
+        },
+        "[2026-07-04] Run: 26.69 miles | Duration: 04:02:56 | Pace: 9.10 min/mi | Elevation Climbed: +4511.2 ft. [REWARD] Earned +266g and +1334 XP.",
+        {
+            "Activity Date": "2026-07-11",
+            "Activity Name": "2026-07-11-18-27-36.fit",
+            "Distance (Miles)": 5.47,
+            "Duration": "00:48:24",
+            "Pace (min/mi)": "8.84",
+            "Elevation (ft)": "+190.3 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "09:33",
+                    "pace": "9:33"
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "08:11",
+                    "pace": "8:11"
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "08:11",
+                    "pace": "8:11"
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "08:14",
+                    "pace": "8:14"
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "07:53",
+                    "pace": "7:53"
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 0.48,
+                    "time": "04:21",
+                    "pace": "9:09"
+                }
+            ],
+            "text_payload": "[2026-07-11] Run: 5.47 miles | Duration: 00:48:24 | Pace: 8.84 min/mi | Elevation Climbed: +190.3 ft. [REWARD] Earned +54g and +273 XP."
+        },
+        "[2026-07-11] Run: 5.47 miles | Duration: 00:48:24 | Pace: 8.84 min/mi | Elevation Climbed: +190.3 ft. [REWARD] Earned +54g and +273 XP.",
+        {
+            "Activity Date": "2026-07-04",
+            "Activity Name": "2026-07-04-12-40-51.fit",
+            "Distance (Miles)": 1.0,
+            "Duration": "00:13:14",
+            "Pace (min/mi)": "13.23",
+            "Elevation (ft)": "+19.7 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "13:11",
+                    "pace": "13:11"
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 0.0,
+                    "time": "00:02",
+                    "pace": "13:07"
+                }
+            ],
+            "text_payload": "[2026-07-04] Run: 1.00 miles | Duration: 00:13:14 | Pace: 13.23 min/mi | Elevation Climbed: +19.7 ft. [REWARD] Earned +10g and +50 XP."
+        },
+        "[2026-07-04] Run: 1.00 miles | Duration: 00:13:14 | Pace: 13.23 min/mi | Elevation Climbed: +19.7 ft. [REWARD] Earned +10g and +50 XP."
+    ],
+    "unlocked_badges": [],
+    "daily_miles": [],
+    "base_xp": 250,
+    "exponent": 1.8,
+    "last_distance": 0.0,
+    "last_pace": 0.0,
+    "boss_clears": 7,
+    "boss_levels": {
+        "Olympic Pace Sentinel [VOMERO PACER]": 2,
+        "Sprinting Apex Titan [SPRINT SPECIALIST]": 2,
+        "Kilian [GAZELLE]": 4,
+        "Pre [ROADRUNNER]": 3
+    },
+    "gear_colors": {
+        "Nike Vaporfly 4%": "Blue",
+        "Oakley Speed Jacket Sunglasses": "Red",
+        "Arcade Neon Headband": "Silver",
+        "Elite Aero-Grid Singlet": "Yellow",
+        "Split Training Track Shorts": "Yellow",
+        "Garmin Forerunner Pro": "Silver",
+        "Coros Pace Performance Matrix": "Basic Factory"
+    },
+    "equipped_shoe_name": "Nike Vaporfly 4%",
+    "equipped_sunglasses_name": "Oakley Speed Jacket Sunglasses",
+    "equipped_headgear_name": "Arcade Neon Headband",
+    "equipped_singlet_name": "Elite Aero-Grid Singlet",
+    "equipped_shorts_name": "Split Training Track Shorts",
+    "equipped_watch_name": "Garmin Forerunner Pro"
+}
