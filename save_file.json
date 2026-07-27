@@ -1,8 +1,8 @@
 {
-    "name": "runsanchitorun",
+    "name": "Athlete",
     "bodyweight": 180,
-    "level": 38,
-    "total_xp": 5615,
+    "level": 1,
+    "total_xp": 0,
     "running_level": 1,
     "vo2_max": 40.0,
     "avg_heart_rate": 150,
@@ -12,17 +12,8 @@
     "elevation_milestone_history": [],
     "deep_rem_streak": 0,
     "stat_points": 0,
-    "gold": 1642,
-    "inventory": [
-        "Nike Vaporfly 4%",
-        "adidas UltraBoost",
-        "Hoka One One Speedgoat",
-        "Brooks Ghost Speed",
-        "Oakley Speed Jacket Sunglasses",
-        "Elite Aero-Grid Singlet",
-        "Championship Crimson Jersey",
-        "Garmin Forerunner Pro"
-    ],
+    "gold": 0,
+    "inventory": [],
     "equipped_gear": {
         "feet": "None",
         "accessory": "None",
@@ -29449,7 +29440,19 @@
         "[2026-07-24] \ud83c\udfc1 Track Match Victory: Conquered Usain [CHEETAH] on the Berlin Speedway (World Record Flat)! [WIN] Your Time: 3:25:51.042 | Rival Time: 3:31:36.715 | Score: 53907 | Gold Impact: +1160g.",
         "[2026-07-24] \ud83c\udfc1 Track Match Victory: Conquered Pre [ROADRUNNER] on the Comrades Ultra Marathon (Up-Run)! [WIN] Your Time: 7:03:02.080 | Rival Time: 7:44:02.043 | Score: 118467 | Gold Impact: +1581g.",
         "[2026-07-24] \ud83c\udfc1 Track Match Victory: Conquered Haile [FLASH] on the Monza F1 Breaking2 Grid! [WIN] Your Time: 0:11:54.487 | Rival Time: 0:11:59.022 | Score: 3019 | Gold Impact: +61g.",
-        "[2026-07-24] \ud83c\udfc1 Track Match Defeat: Raced Haile [FLASH] on the Monza F1 Breaking2 Grid! [LOSS] Your Time: 0:11:56.722 | Rival Time: 0:11:35.960 | Score: 1165 | Gold Impact: -84g."
+        "[2026-07-24] \ud83c\udfc1 Track Match Defeat: Raced Haile [FLASH] on the Monza F1 Breaking2 Grid! [LOSS] Your Time: 0:11:56.722 | Rival Time: 0:11:35.960 | Score: 1165 | Gold Impact: -84g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:09.232 | Rival Time: 0:02:08.109 | Score: 198 | Gold Impact: -20g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:08.803 | Rival Time: 0:02:06.041 | Score: 195 | Gold Impact: -20g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:09.430 | Rival Time: 0:02:07.328 | Score: 196 | Gold Impact: -20g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:09.105 | Rival Time: 0:02:07.140 | Score: 196 | Gold Impact: -20g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:07.756 | Rival Time: 0:02:08.290 | Score: 200 | Gold Impact: -20g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:08.311 | Rival Time: 0:02:07.944 | Score: 199 | Gold Impact: -20g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the London Marathon Highway Grid! [LOSS] Your Time: 3:47:22.598 | Rival Time: 3:41:59.704 | Score: 20479 | Gold Impact: -1010g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Speedway (World Record Flat)! [LOSS] Your Time: 3:43:23.783 | Rival Time: 3:41:06.822 | Score: 20761 | Gold Impact: -512g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:08.678 | Rival Time: 0:02:06.319 | Score: 196 | Gold Impact: -0g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:09.152 | Rival Time: 0:02:06.114 | Score: 195 | Gold Impact: -0g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:08.705 | Rival Time: 0:02:07.117 | Score: 197 | Gold Impact: -0g.",
+        "[2026-07-27] \ud83c\udfc1 Track Match Defeat: Raced Kilian [GAZELLE] on the Berlin Olympiastadion Track! [LOSS] Your Time: 0:02:16.551 | Rival Time: 0:02:07.079 | Score: 186 | Gold Impact: -0g."
     ],
     "unlocked_badges": [],
     "daily_miles": [],
@@ -29457,7 +29460,6 @@
     "exponent": 1.8,
     "last_distance": 0.0,
     "last_pace": 0.0,
-    "weight_kg": 75.0,
     "boss_clears": 5,
     "boss_levels": {
         "Kilian [GAZELLE]": 2,
@@ -29465,18 +29467,42 @@
         "Pre [ROADRUNNER]": 2,
         "Haile [FLASH]": 2
     },
-    "gear_colors": {
-        "Nike Vaporfly 4%": "Basic Factory",
-        "adidas UltraBoost": "Basic Factory",
-        "Hoka One One Speedgoat": "Green",
-        "Brooks Ghost Speed": "White",
-        "Oakley Speed Jacket Sunglasses": "Red",
-        "Elite Aero-Grid Singlet": "Basic Factory",
-        "Championship Crimson Jersey": "Basic Factory",
-        "Garmin Forerunner Pro": "Yellow"
-    },
-    "equipped_shoe_name": "Brooks Ghost Speed",
-    "equipped_sunglasses_name": "Oakley Speed Jacket Sunglasses",
-    "equipped_singlet_name": "Elite Aero-Grid Singlet",
-    "equipped_watch_name": "Garmin Forerunner Pro"
+    "coliseum_history": [
+        {
+            "Date": "2026-07-27 12:08",
+            "Course": "Berlin Olympiastadion Track",
+            "Opponent": "Kilian [GAZELLE] (Lv 2)",
+            "Result": "\ud83d\udc80 LOSS",
+            "Your Time": "22:36",
+            "Rival Time": "21:51",
+            "Bounty": "-15g"
+        },
+        {
+            "Date": "2026-07-27 12:08",
+            "Course": "Berlin Olympiastadion Track",
+            "Opponent": "Kilian [GAZELLE] (Lv 2)",
+            "Result": "\ud83d\udc80 LOSS",
+            "Your Time": "25:54",
+            "Rival Time": "21:47",
+            "Bounty": "-15g"
+        },
+        {
+            "Date": "2026-07-27 12:09",
+            "Course": "Berlin Olympiastadion Track",
+            "Opponent": "Yiannis [STRIDER] (Lv 1)",
+            "Result": "\ud83d\udc80 LOSS",
+            "Your Time": "26:11",
+            "Rival Time": "23:12",
+            "Bounty": "-15g"
+        },
+        {
+            "Date": "2026-07-27 12:11",
+            "Course": "Zegama-Aizkorri Mountain Skyrun",
+            "Opponent": "Yiannis [STRIDER] (Lv 1)",
+            "Result": "\ud83d\udc80 LOSS",
+            "Your Time": "237:44",
+            "Rival Time": "188:55",
+            "Bounty": "-15g"
+        }
+    ]
 }

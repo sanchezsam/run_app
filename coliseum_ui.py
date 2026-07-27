@@ -4,6 +4,7 @@ import streamlit as st
 import json
 import re
 import pandas as pd
+import time
 import random
 from datetime import datetime, timedelta
 
@@ -162,6 +163,68 @@ def render_coliseum(player, FILE_PATH):
             
         p_time_str = format_finish_time(p_total_seconds)
         r_time_str = format_finish_time(r_total_seconds)
+
+        # =========================================================================
+        # INJECTED: LIVE PROGRESS BARS WITH MILE SELECTION AND 5-SECOND FINISH FREEZE
+        # =========================================================================
+        distance_placeholder = st.empty()
+        commentary_placeholder = st.empty()
+        player_bar_placeholder = st.empty()
+        rival_bar_placeholder = st.empty()
+        total_dist = course_specs['dist']
+
+        # STAGE 1: THE START LINE
+        distance_placeholder.markdown('### 📍 **Mile 0.00** / ' + str(round(total_dist, 2)) + ' Mi')
+        commentary_placeholder.info('🟢 **START LINE:** The starter pistol fires! You and **' + str(selected_boss) + '** surge out of the blocks across the **' + str(parsed_course_key) + '**!')
+        player_bar_placeholder.progress(0.15, text='🏃‍♂️ **Your Progress** (15%)')
+        rival_bar_placeholder.progress(0.15, text='⚡ **' + str(selected_boss) + '** (15%)')
+        time.sleep(3.0)
+
+        # STAGE 2: THE MID-RACE ACCELERATION
+        mid_mile = round(total_dist * 0.5, 2)
+        distance_placeholder.markdown('### 📍 **Mile ' + str(mid_mile) + '** / ' + str(round(total_dist, 2)) + ' Mi')
+        if total_3wk_miles >= 30.0:
+            commentary_placeholder.success('⚡ **MID-RACE BREAKDOWN:** Your strong 3-week fitness load of **' + str(round(total_3wk_miles, 1)) + ' miles** is providing a solid aerobic stamina buffer. You match **' + str(selected_boss) + '** stride-for-stride!')
+            player_bar_placeholder.progress(0.55, text='🏃‍♂️ **Your Progress** (55%)')
+            rival_bar_placeholder.progress(0.50, text='⚡ **' + str(selected_boss) + '** (50%)')
+        else:
+            commentary_placeholder.warning('🥵 **MID-RACE BREAKDOWN:** Aerobic pressure mounting! Your limited 3-week volume of **' + str(round(total_3wk_miles, 1)) + ' miles** leaves you searching for deep recovery reserves. Pacer takes the lead!')
+            player_bar_placeholder.progress(0.42, text='🏃‍♂️ **Your Progress** (42%)')
+            rival_bar_placeholder.progress(0.55, text='⚡ **' + str(selected_boss) + '** (55%)')
+        time.sleep(3.5)
+
+        # STAGE 3: THE HOME STRETCH
+        stretch_mile = round(total_dist * 0.9, 2)
+        distance_placeholder.markdown('### 📍 **Mile ' + str(stretch_mile) + '** / ' + str(round(total_dist, 2)) + ' Mi')
+        if total_kit_physics_bonus >= 0.50:
+            commentary_placeholder.success('👟 **THE HOME STRETCH:** Your equipped gear advantage of **+' + str(round(total_kit_physics_bonus, 2)) + ' points** activates! Carbon-plated shoes grant maximum closing velocity!')
+            player_bar_placeholder.progress(0.92, text='🏃‍♂️ **Your Progress** (92%)')
+            rival_bar_placeholder.progress(0.85, text='⚡ **' + str(selected_boss) + '** (85%)')
+        else:
+            commentary_placeholder.info('🏁 **THE HOME STRETCH:** Minimal kit enhancements detected. It\'s a dead heat, high-cadence sprint to the tape!')
+            player_bar_placeholder.progress(0.85, text='🏃‍♂️ **Your Progress** (85%)')
+            rival_bar_placeholder.progress(0.86, text='⚡ **' + str(selected_boss) + '** (86%)')
+        time.sleep(2.5)
+
+        # STAGE 4: THE FINISH LINE WITH A 5-SECOND STATE HOLD
+        distance_placeholder.markdown('### 🏁 **Mile ' + str(round(total_dist, 2)) + ' (Finished)** / ' + str(round(total_dist, 2)) + ' Mi')
+        if p_total_seconds < r_total_seconds:
+            commentary_placeholder.success('🏁 **FINISH LINE REACHED:** Absolute triumph! You cross the finish line tape fractions of a second ahead of **' + str(selected_boss) + '**!')
+            player_bar_placeholder.progress(1.00, text='🏃‍♂️ **Your Progress** (100% - Finished)')
+            rival_bar_placeholder.progress(0.98, text='⚡ **' + str(selected_boss) + '** (98% - Finished)')
+        else:
+            commentary_placeholder.error('🏁 **FINISH LINE REACHED:** Heartbreak at the line! **' + str(selected_boss) + '** out-leans you at the tape to claim victory.')
+            player_bar_placeholder.progress(0.98, text='🏃‍♂️ **Your Progress** (98% - Finished)')
+            rival_bar_placeholder.progress(1.00, text='⚡ **' + str(selected_boss) + '** (100% - Finished)')
+        time.sleep(5.0)
+
+        # Dismount animation canvases to smoothly reveal summary boxes
+        distance_placeholder.empty()
+        commentary_placeholder.empty()
+        player_bar_placeholder.empty()
+        rival_bar_placeholder.empty()
+        # =========================================================================
+
         
         calc_racing_score = int(10000 * (r_total_seconds / p_total_seconds) * (course_specs['dist'] / 5.0))
         base_gold_pool = int(boss_specs['gold_reward'] * (course_specs['dist'] / 5.0))
