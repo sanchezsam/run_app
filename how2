@@ -5,3 +5,7 @@ use pastebin.com for code
 run
 
 python3 -m streamlit run app.py
+
+
+import bulk load
+python3 builk_upload.py data/2026
