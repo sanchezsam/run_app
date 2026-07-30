@@ -1,293 +1,352 @@
-# Part 1: source_payload.py (Data Processing & Setup)
 import streamlit as st
 import pandas as pd
-import datetime
-import altair as alt
 import json
 import os
-import math
+import calendar
+from datetime import datetime
 
-def render_dashboard_overview(player_object=None):
-    st.title("🏃‍♂️ Training Ledger Analytics & RPG Progression")
+def load_data_from_save_json():
+    """
+    Directly reads save_file.json and extracts records from the 'history_logs' root key.
+    """
+    possible_paths = ['save_file.json', '../save_file.json', 'data/save_file.json']
     
-    # 1. READ DATA
-    df = pd.DataFrame()
-    json_path = "save_file.json"
-    raw_records = []
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        if "history_logs" in data:
+                            return data["history_logs"]
+                        for root_key in data.values():
+                            if isinstance(root_key, dict) and "history_logs" in root_key:
+                                return root_key["history_logs"]
+                    elif isinstance(data, list):
+                        return data
+            except Exception as e:
+                st.error(f"Error reading save_file.json: {e}")
+    return []
 
-    if os.path.exists(json_path):
+def pace_str_to_minutes(pace_str):
+    """Converts a pace string like '10:36' or a float number into total decimal minutes."""
+    if pd.isna(pace_str) or pace_str == "":
+        return 0.0
+    if isinstance(pace_str, (int, float)):
+        return float(pace_str)
+    try:
+        parts = str(pace_str).strip().split(':')
+        if len(parts) == 2:
+            return int(parts[0]) + (int(parts[1]) / 60.0)
+        return float(pace_str)
+    except (ValueError, IndexError):
+        return 0.0
+def render_dashboard_overview(player):
+    """
+    Renders an interactive running dashboard featuring:
+    - Side-by-side Dual Slider charts (Daily, Monthly, Annual)
+    - Miles vs Kilometers unit toggling
+    - Custom monthly inline calendar matrix table with selectable activity squares
+    """
+    if "selected_activity_date" not in st.session_state:
+        st.session_state.selected_activity_date = None
+
+    st.header("🏃‍♂️ Activity Dashboard Overview")
+    
+    # 1. Gather and sanitize input data log records
+    raw_activities = []
+    if hasattr(player, 'history_logs') and player.history_logs:
+        raw_activities = player.history_logs
+    if not raw_activities:
+        raw_activities = load_data_from_save_json()
+
+    if isinstance(raw_activities, str):
         try:
-            with open(json_path, "r", encoding="utf-8") as file_handle:
-                json_data = json.load(file_handle)
-            if isinstance(json_data, dict) and "history_logs" in json_data:
-                raw_records = [
-                    row for row in json_data["history_logs"] 
-                    if isinstance(row, dict) and 'Date' in row and 'Distance (Miles)' in row
-                ]
-        except Exception as file_err:
-            st.error(f"Error accessing training files: {file_err}")
+            raw_activities = json.loads(raw_activities)
+        except Exception:
+            raw_activities = []
 
-    if raw_records:
-        try: 
-            df = pd.DataFrame(raw_records)
-        except Exception as df_err: 
-            st.error(f"Error: {df_err}")
+    if isinstance(raw_activities, list):
+        raw_activities = [row for row in raw_activities if isinstance(row, dict)]
+    else:
+        raw_activities = []
 
-    if df.empty:
-        st.error("❌ Could not map valid training entries from 'history_logs'.")
+    if not raw_activities:
+        st.info("👋 Welcome! No fitness tracking history found in your save file.")
+        st.markdown("Please head over to the **Upload UI** page to import your Garmin data files.")
         return
 
-    # Standardize column headers and types
-    df['Date'] = pd.to_datetime(df['Date'])
-    mileage_col = 'Distance (Miles)'
-    df[mileage_col] = pd.to_numeric(df[mileage_col], errors='coerce').fillna(0.0)
-    df['Year'] = df['Date'].dt.year
-
-    if 'Elevation (ft)' in df.columns:
-        df['Elev_Clean'] = df['Elevation (ft)'].astype(str).str.replace('+', '', regex=False)
-        df['Elev_Clean'] = df['Elev_Clean'].str.replace('ft', '', regex=False).str.strip()
-        df['Elev_Clean'] = pd.to_numeric(df['Elev_Clean'], errors='coerce').fillna(0.0)
-    else:
-        df['Elev_Clean'] = 0.0
-
-    if 'Duration' in df.columns:
-        def duration_to_hours(val):
-            try:
-                parts = str(val).split(':')
-                return int(parts[0]) + int(parts[1])/60.0 + int(parts[2])/3600.0 if len(parts) == 3 else 0.0
-            except: 
-                return 0.0
-        df['Duration_Hours'] = df['Duration'].apply(duration_to_hours)
-    else:
-        df['Duration_Hours'] = 0.0
-# Part 2: source_payload.py (Filter System and Main Grid Interface)
-    # 2. FILTER INTERFACE BY YEAR
-    year_options = sorted(list(df['Year'].unique()), reverse=True)
-    if not year_options: 
-        year_options = [datetime.datetime.now().year]
-
-    if "selected_year_filter" not in st.session_state:
-        st.session_state["selected_year_filter"] = year_options[0]
-
-    try: 
-        radio_index = year_options.index(st.session_state["selected_year_filter"])
-    except ValueError: 
-        radio_index = 0
-
-    selected_year = st.radio(
-        "Select Filter Training Season:", options=year_options, index=radio_index, horizontal=True, key="year_radio_widget"
-    )
-    st.session_state["selected_year_filter"] = selected_year
-    year_df = df[df['Year'] == st.session_state["selected_year_filter"]].copy()
-    st.markdown("---")
-
-    month_order = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    year_df['Month'] = year_df['Date'].dt.strftime('%B')
-    monthly_grouped = year_df.groupby('Month')[mileage_col].sum().reindex(month_order).fillna(0.0).reset_index()
-
-    # 3. SIDE-BY-SIDE GRID GRAPH LAYOUT
-    col1, col2, col3 = st.columns(3)
+    # 2. Build Core DataFrame and Parse explicit Datetime Columns
+    df = pd.DataFrame(raw_activities)
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df['Distance (Miles)'] = pd.to_numeric(df['Distance (Miles)'], errors='coerce').fillna(0)
+    df = df.dropna(subset=['Date']).sort_values('Date')
     
-    with col2:
-        st.subheader(f"Monthly Distance ({st.session_state['selected_year_filter']})")
-        click_selector_month = alt.selection_point(fields=['Month'], name='select_month')
-        color_condition_month = alt.condition(click_selector_month, alt.value("#2ca02c"), alt.value("#a1d99b"))
-        
-        monthly_chart = alt.Chart(monthly_grouped).mark_bar().encode(
-            x=alt.X('Month:N', sort=month_order, title="Month"), y=alt.Y(f'{mileage_col}:Q', title="Miles Run"),
-            color=color_condition_month, tooltip=['Month', alt.Tooltip(f'{mileage_col}:Q', format='.2f')]
-        ).add_params(click_selector_month).properties(height=300)
-        selected_month_data = st.altair_chart(monthly_chart, use_container_width=True, on_select="rerun")
-        
-    active_month = None
-    if selected_month_data and 'selection' in selected_month_data and 'select_month' in selected_month_data['selection']:
-        points_m = selected_month_data['selection']['select_month']
-        if isinstance(points_m, list) and len(points_m) > 0: 
-            active_month = points_m[0].get('Month')
-        elif isinstance(points_m, dict): 
-            active_month = points_m.get('Month')
+    # Extract time dimensions for groupings and labels
+    df['Year'] = df['Date'].dt.year.astype(str)
+    df['Month_Period'] = df['Date'].dt.to_period('M')  
+    df['Month_Label'] = df['Date'].dt.strftime('%b %Y')  
+    df['Formatted_Date'] = df['Date'].dt.strftime('%Y-%m-%d')
 
+    # ==========================================
+    # UNIT CONVERSION SETTINGS (MILES ⇄ KM)
+    # ==========================================
+    st.subheader("🎛️ Unit & Filter Configuration")
+    config_col1, config_col2 = st.columns(2)
+    
+    with config_col2:
+        unit_system = st.selectbox(
+            label="🔄 Select System Unit:",
+            options=["Miles (mi)", "Kilometers (km)"],
+            index=0
+        )
+    
+    # Conversion multiplier variables
+    is_km = unit_system == "Kilometers (km)"
+    unit_abbr = "Km" if is_km else "Mi"
+    
+    # Apply conversions across the primary tracking vectors
+    df['Display_Distance'] = df['Distance (Miles)'] * (1.60934 if is_km else 1.0)
+
+    with config_col1:
+        unique_years = sorted(df['Year'].unique(), reverse=True)
+        selected_year = st.radio(
+            label="Select Tracking Year to Filter Below Trends:",
+            options=["All Years"] + unique_years,
+            index=0,
+            horizontal=True
+        )
+
+    # Apply Year Radio filters to the DataFrame segment
+    if selected_year != "All Years":
+        filtered_df = df[df['Year'] == selected_year].reset_index(drop=True)
+    else:
+        filtered_df = df.reset_index(drop=True)
+
+    st.write("---")
+
+    # ==========================================
+    # LAYOUT ENGINE: 3-COLUMN CHART ROW
+    # ==========================================
+    col1, col2, col3 = st.columns(3)
+
+    # ------------------------------------------
+    # COLUMN 1: DAILY RUN LOGS
+    # ------------------------------------------
     with col1:
-        if active_month:
-            st.subheader(f"Weekly Totals ({active_month})")
-            filtered_df = year_df[year_df['Month'] == active_month].copy()
+        st.subheader("🏃 Daily Activity")
+        total_daily_records = len(filtered_df)
+        
+        if total_daily_records > 0:
+            daily_range = st.slider(
+                label="Select Day Index Window Range:",
+                min_value=0,
+                max_value=total_daily_records - 1,
+                value=(max(0, total_daily_records - 15), total_daily_records - 1),
+                step=1,
+                key="daily_range_slider"
+            )
+            
+            start_daily, end_daily = daily_range
+            daily_plot_df = filtered_df.iloc[start_daily : end_daily + 1]
+            
+            st.bar_chart(
+                data=daily_plot_df,
+                x='Formatted_Date',
+                y='Display_Distance',
+                use_container_width=True
+            )
+            st.metric(f"Daily Segment Total ({unit_abbr})", f"{daily_plot_df['Display_Distance'].sum():,.2f} {unit_abbr}")
         else:
-            st.subheader(f"Weekly Totals (Full Year)")
-            filtered_df = year_df.copy()
-            
-        try:
-            year_start_date = pd.to_datetime(f"{st.session_state['selected_year_filter']}-01-01")
-            days_elapsed = (filtered_df['Date'] - year_start_date).dt.days
-            filtered_df['Week Number'] = (days_elapsed // 7 + 1)
-            
-            if active_month:
-                sample_dates = pd.date_range(start=f"{st.session_state['selected_year_filter']}-{active_month}-01", end=f"{st.session_state['selected_year_filter']}-{active_month}-28", freq='D')
-                target_weeks = sorted(list(set([((d - year_start_date).days // 7 + 1) for d in sample_dates])))
-                full_year_weeks = [w for w in target_weeks if 1 <= w <= 53]
-            else:
-                full_year_weeks = list(range(1, 53))
-                
-            base_weekly_template = pd.DataFrame({'Week Number': full_year_weeks, mileage_col: 0.0})
-            
-            if not filtered_df.empty:
-                real_weekly_totals = filtered_df.groupby('Week Number')[mileage_col].sum().reset_index()
-                combined_weekly = pd.merge(base_weekly_template, real_weekly_totals, on='Week Number', how='left', suffixes=('_base', '_real'))
-                combined_weekly[mileage_col] = combined_weekly[mileage_col + '_real'].fillna(0.0)
-            else:
-                combined_weekly = base_weekly_template
+            st.caption("No data for current filters.")
 
-            combined_weekly['Week Label'] = combined_weekly['Week Number'].astype(str)
-            weekly_altair_chart = alt.Chart(combined_weekly).mark_bar(color="#4c78a8").encode(
-                x=alt.X('Week Label:N', sort=combined_weekly['Week Number'].tolist(), title="Week Number"),
-                y=alt.Y(f'{mileage_col}:Q', title="Miles Run", scale=alt.Scale(domainMin=0)),
-                tooltip=['Week Label', alt.Tooltip(f'{mileage_col}:Q', format='.2f')]
-            ).properties(height=300)
-            st.altair_chart(weekly_altair_chart, use_container_width=True)
-        except Exception as weekly_err: 
-            st.error(f"Error: {weekly_err}")
+    # ------------------------------------------
+    # COLUMN 2: MONTHLY TREND AGGREGATION
+    # ------------------------------------------
+    with col2:
+        st.subheader("📅 Monthly Trends")
+        
+        if not filtered_df.empty:
+            monthly_df = filtered_df.groupby(['Month_Period', 'Month_Label'])['Display_Distance'].sum().reset_index()
+            monthly_df = monthly_df.sort_values('Month_Period').reset_index(drop=True)
+            total_months = len(monthly_df)
+            
+            month_range = st.slider(
+                label="Select Month Window Range:",
+                min_value=0,
+                max_value=total_months - 1,
+                value=(0, total_months - 1),
+                step=1,
+                key="month_range_slider"
+            )
+            
+            start_month, end_month = month_range
+            monthly_plot_df = monthly_df.iloc[start_month : end_month + 1]
+            
+            st.bar_chart(
+                data=monthly_plot_df,
+                x='Month_Label',
+                y='Display_Distance',
+                use_container_width=True
+            )
+            st.metric(f"Monthly Segment Total ({unit_abbr})", f"{monthly_plot_df['Display_Distance'].sum():,.2f} {unit_abbr}")
+        else:
+            st.caption("No data for current filters.")
 
+    # ------------------------------------------
+    # COLUMN 3: YEAR-OVER-YEAR HISTORICAL COMPARISON
+    # ------------------------------------------
     with col3:
-        st.subheader("All-Time Season Totals")
-        df['Year_Label'] = df['Year'].astype(str)
-        yearly_grouped = df.groupby('Year_Label')[mileage_col].sum().reset_index()
+        st.subheader("📈 Annual Totals")
         
-        click_selector_year = alt.selection_point(fields=['Year_Label'], name='select_year')
-        color_condition_year = alt.condition(alt.datum.Year_Label == str(st.session_state["selected_year_filter"]), alt.value("#ff7f0e"), alt.value("#1f77b4"))
+        yearly_df = df.groupby('Year')['Display_Distance'].sum().reset_index().sort_values('Year').reset_index(drop=True)
+        total_years = len(yearly_df)
         
-        yearly_chart = alt.Chart(yearly_grouped).mark_bar().encode(
-            x=alt.X('Year_Label:N', title="Year"), y=alt.Y(f'{mileage_col}:Q', title="Total Miles"),
-            color=color_condition_year, tooltip=['Year_Label', alt.Tooltip(f'{mileage_col}:Q', format='.2f')]
-        ).add_params(click_selector_year).properties(height=300)
-        selected_year_data = st.altair_chart(yearly_chart, use_container_width=True, on_select="rerun")
-# Part 3: source_payload.py (Moving Window Metrics & Dynamic Progression)
-    # 4. METRIC CORES
-    st.markdown(" ")
-    col1_sum, col2_sum, col3_sum = st.columns(3)
-    def format_hours(total_hours):
-        return f"{int(total_hours)}h {int((total_hours - int(total_hours)) * 60)}m"
-
-    with col1_sum:
-        sub_target = year_df[year_df['Month'] == active_month] if active_month else year_df
-        label_prefix = active_month if active_month else f"Full Year {st.session_state['selected_year_filter']}"
-        st.metric(label=f"📊 {label_prefix} Distance", value=f"{sub_target[mileage_col].sum():,.2f} mi")
-        st.write(f"⏱️ **Duration:** {format_hours(sub_target['Duration_Hours'].sum())}")
-        st.write(f"🏔️ **Elevation:** +{sub_target['Elev_Clean'].sum():,.1f} ft")
-    with col2_sum:
-        st.metric(label=f"📅 {st.session_state['selected_year_filter']} Season Distance", value=f"{year_df[mileage_col].sum():,.2f} mi")
-        st.write(f"⏱️ **Duration:** {format_hours(year_df['Duration_Hours'].sum())}")
-        st.write(f"🏔️ **Elevation:** +{year_df['Elev_Clean'].sum():,.1f} ft")
-    with col3_sum:
-        st.metric(label="🏆 Grand Total Distance", value=f"{df[mileage_col].sum():,.2f} mi")
-        st.write(f"⏱️ **Duration:** {format_hours(df['Duration_Hours'].sum())}")
-        st.write(f"🏔️ **Elevation:** +{df['Elev_Clean'].sum():,.1f} ft")
-
-    # 5. HIGH-IMPACT XP WINDOW PROCESSING
-    st.markdown("---")
-    st.header("⚔️ Character Attribute Mastery Levels (Impact-Decay Active)")
-
-    try:
-        timeline_df = df.sort_values('Date').copy()
-        timeline_df['End_Pts'] = (timeline_df[mileage_col] * 10) + timeline_df[mileage_col].apply(lambda m: 50 if m >= 10.0 else 0)
-        timeline_df['Pace_Pts'] = timeline_df['pace'].apply(lambda p: int((11.0 - p) * 20) if p < 11.0 else 0) + timeline_df['pace'].apply(lambda p: 100 if p < 7.0 else 0)
-        timeline_df['Elev_Pts'] = (timeline_df['Elev_Clean'] / 2) + timeline_df['Elev_Clean'].apply(lambda e: 75 if e >= 500.0 else 0)
-
-        timeline_df = timeline_df.set_index('Date')
-
-        # Acute Load (Last 30 Days) vs Chronic Baseline (Last 90 Days)
-        timeline_df['Acute_End'] = timeline_df['End_Pts'].rolling('30D', min_periods=1).sum()
-        timeline_df['Chronic_End'] = timeline_df['End_Pts'].rolling('90D', min_periods=1).mean() * 30.0
-
-        timeline_df['Acute_Pace'] = timeline_df['Pace_Pts'].rolling('30D', min_periods=1).sum()
-        timeline_df['Chronic_Pace'] = timeline_df['Pace_Pts'].rolling('90D', min_periods=1).mean() * 30.0
-
-        timeline_df['Acute_Elev'] = timeline_df['Elev_Pts'].rolling('30D', min_periods=1).sum()
-        timeline_df['Chronic_Elev'] = timeline_df['Elev_Pts'].rolling('90D', min_periods=1).mean() * 30.0
-
-        latest_row = timeline_df.iloc[-1]
-
-        def get_impact_stats(acute, chronic, factor):
-            ratio = acute / chronic if chronic > 0 else 1.0
-            base_xp = acute
-            # Compounding penalty if ratio < 1.0, bonus multiplier if ratio > 1.0
-            modified_xp = max(0, int(base_xp * (ratio ** 2)))
+        if total_years > 0:
+            year_range = st.slider(
+                label="Select Year Window Range:",
+                min_value=0,
+                max_value=total_years - 1,
+                value=(0, total_years - 1),
+                step=1,
+                key="year_range_slider"
+            )
             
-            lvl = int(math.floor(math.sqrt(modified_xp / factor))) + 1
-            pts_current = int(((lvl - 1) ** 2) * factor)
-            pts_next = int((lvl ** 2) * factor)
-            prog = min(1.0, max(0.0, (modified_xp - pts_current) / float(pts_next - pts_current))) if pts_next > pts_current else 0.0
-            return lvl, prog, modified_xp, ratio
-
-        e_lvl, e_prog, e_xp, e_ratio = get_impact_stats(latest_row['Acute_End'], latest_row['Chronic_End'], 100)
-        p_lvl, p_prog, p_xp, p_ratio = get_impact_stats(latest_row['Acute_Pace'], latest_row['Chronic_Pace'], 150)
-        h_lvl, h_prog, h_xp, h_ratio = get_impact_stats(latest_row['Acute_Elev'], latest_row['Chronic_Elev'], 120)
-
-        col_st1, col_st2, col_st3 = st.columns(3)
-        with col_st1:
-            st.subheader(f"🏃‍♂️ Endurance (Lv. {e_lvl})")
-            st.progress(e_prog)
-            st.caption(f"XP: **{e_xp:,}** | Modifier: **{e_ratio:.2f}x**")
-        with col_st2:
-            st.subheader(f"⚡ Agility Pace (Lv. {p_lvl})")
-            st.progress(p_prog)
-            st.caption(f"XP: **{p_xp:,}** | Modifier: **{p_ratio:.2f}x**")
-        with col_st3:
-            st.subheader(f"🏔️ Hill Force (Lv. {h_lvl})")
-            st.progress(h_prog)
-            st.caption(f"XP: **{h_xp:,}** | Modifier: **{h_ratio:.2f}x**")
-
-        # 6. HISTORICAL WORKLOAD BALANCE GRAPH (Flipped: Acute - Chronic)
-        st.markdown("---")
-        st.subheader("📉 Historical Workload Variance Balance")
-        st.caption("Green bars above 0 indicate volume surge milestones (like Aug & Sept 2025). Red bars below 0 isolate detraining dips (like June & July 2025).")
-        
-        monthly_series = timeline_df.resample('ME')[mileage_col].sum().reset_index()
-        monthly_series['Acute_Fatigue'] = monthly_series[mileage_col]
-        monthly_series['Chronic_Fitness'] = monthly_series[mileage_col].rolling(window=3, min_periods=1).mean()
-        monthly_series['Variance_Status'] = monthly_series['Acute_Fatigue'] - monthly_series['Chronic_Fitness']
-        monthly_series['Month_Label'] = monthly_series['Date'].dt.strftime('%b %Y')
-
-        load_chart = alt.Chart(monthly_series).mark_bar().encode(
-            x=alt.X('Month_Label:N', sort=monthly_series['Date'].tolist(), title="Training Month"),
-            y=alt.Y('Variance_Status:Q', title="Fitness Balance Variance"),
-            color=alt.condition(alt.datum.Variance_Status >= 0, alt.value("#2ca02c"), alt.value("#d62728")),
-            tooltip=['Month_Label', alt.Tooltip(mileage_col, title="Total Miles")]
-        ).properties(height=300)
-        st.altair_chart(load_chart, use_container_width=True)
-
-        # 7. CHRONOLOGICAL XP TIMELINE (Impact-Adjusted)
-        st.markdown("---")
-        st.subheader("📈 Chronological Skill XP Progression Timeline (Impact-Adjusted)")
-        
-        history_df = timeline_df.reset_index()
-        history_df['Hist_End_XP'] = history_df.apply(lambda r: max(0, int(r['Acute_End'] * ((r['Acute_End']/r['Chronic_End'])**2))) if r['Chronic_End'] > 0 else int(r['Acute_End']), axis=1)
-        history_df['Hist_Pace_XP'] = history_df.apply(lambda r: max(0, int(r['Acute_Pace'] * ((r['Acute_Pace']/r['Chronic_Pace'])**2))) if r['Chronic_Pace'] > 0 else int(r['Acute_Pace']), axis=1)
-        history_df['Hist_Elev_XP'] = history_df.apply(lambda r: max(0, int(r['Acute_Elev'] * ((r['Acute_Elev']/r['Chronic_Elev'])**2))) if r['Chronic_Elev'] > 0 else int(r['Acute_Elev']), axis=1)
-
-        melted_timeline = history_df.melt(id_vars=['Date'], value_vars=['Hist_End_XP', 'Hist_Pace_XP', 'Hist_Elev_XP'], var_name='Skill Attribute', value_name='Total XP')
-        melted_timeline['Skill Attribute'] = melted_timeline['Skill Attribute'].map({'Hist_End_XP': 'Endurance XP', 'Hist_Pace_XP': 'Agility Pace XP', 'Hist_Elev_XP': 'Hill Force XP'})
-
-        progression_chart = alt.Chart(melted_timeline).mark_line(strokeWidth=2.5).encode(
-            x=alt.X('Date:T', title="Timeline"), y=alt.Y('Total XP:Q', title="Active Skill XP"),
-            color=alt.Color('Skill Attribute:N', scale=alt.Scale(range=["#4c78a8", "#2ca02c", "#ff7f0e"])),
-            tooltip=['Date:T', 'Skill Attribute:N', 'Total XP:Q']
-        ).properties(height=350).interactive()
-        st.altair_chart(progression_chart, use_container_width=True)
-
-    except Exception as stat_err:
-        st.info(f"Log runs to initialize character skill tracking curves: {stat_err}")
-
-    # Year Selector Click Handler
-    if selected_year_data and 'selection' in selected_year_data and 'select_year' in selected_year_data['selection']:
-        points_y = selected_year_data['selection']['select_year']
-        target_item = None
-        if isinstance(points_y, list) and len(points_y) > 0: 
-            target_item = points_y[0]
-        elif isinstance(points_y, dict): 
-            target_item = points_y
+            start_year, end_year = year_range
+            yearly_plot_df = yearly_df.iloc[start_year : end_year + 1]
             
-        if target_item and target_item.get('Year_Label') is not None:
-            clicked_year = int(target_item.get('Year_Label'))
-            if clicked_year != st.session_state["selected_year_filter"]:
-                st.session_state["selected_year_filter"] = clicked_year
-                st.rerun()
+            st.bar_chart(
+                data=yearly_plot_df,
+                x='Year',
+                y='Display_Distance',
+                use_container_width=True
+            )
+            st.metric(f"All-Time History Total ({unit_abbr})", f"{df['Display_Distance'].sum():,.2f} {unit_abbr}")
+        else:
+            st.caption("No dynamic historical year structures found.")
+    # ==========================================
+    # GENERATE CUSTOM CALENDAR WITH BORDERS & SIDE INFO
+    # ==========================================
+    st.write("---")
+    st.subheader("📅 Training Calendar")
+    
+    qp = st.query_params
+    if "cal_select" in qp:
+        st.session_state.selected_activity_date = qp["cal_select"]
+
+    cal_df = df.copy()
+    cal_df['Year_Int'] = cal_df['Date'].dt.year
+    cal_df['Month_Int'] = cal_df['Date'].dt.month
+    years_available = sorted(cal_df['Year_Int'].unique(), reverse=True)
+    month_names = list(calendar.month_name)[1:]
+
+    # CRITICAL SECURITY FIX: Explicitly unpack index [0] to extract a single numeric year integer value instead of the list object
+    active_year_default = years_available[0] if years_available else datetime.now().year
+    raw_month_max = cal_df[cal_df['Year_Int'] == active_year_default]['Month_Int'].max()
+    active_month_default_idx = int(raw_month_max) - 1 if pd.notna(raw_month_max) else 0
+
+    if st.session_state.selected_activity_date:
+        try:
+            parsed_dt = datetime.strptime(st.session_state.selected_activity_date, '%Y-%m-%d')
+            if parsed_dt.year in years_available:
+                active_year_default = parsed_dt.year
+                active_month_default_idx = parsed_dt.month - 1
+        except Exception:
+            pass
+
+    sel_col1, sel_col2 = st.columns(2)
+    with sel_col1:
+        y_index = years_available.index(active_year_default) if active_year_default in years_available else 0
+        cal_year = st.selectbox("Year Filter:", years_available, index=y_index)
+    with sel_col2:
+        cal_month_name = st.selectbox("Month Filter:", month_names, index=max(0, min(active_month_default_idx, 11)))
+    
+    cal_month = month_names.index(cal_month_name) + 1
+
+    main_layout_col1, main_layout_col2 = st.columns([1.3, 0.7])
+
+    with main_layout_col1:
+        html_bits = []
+        html_bits.append("<style>")
+        html_bits.append(".calendar-container { border: 2px solid #888888; border-radius: 8px; padding: 12px; background-color: #2D3136; font-family: inherit; }")
+        html_bits.append(".calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; }")
+        html_bits.append(".day-header { font-weight: bold; font-size: 14px; color: #FFFFFF; padding-bottom: 6px; border-bottom: 2px solid #00FFCC; }")
+        html_bits.append(".cal-cell { border-radius: 4px; padding: 6px 2px; min-height: 58px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; border: 1px solid #555555; box-sizing: border-box; }")
+        html_bits.append(".even-day { background-color: #4E545C; color: #FFFFFF !important; }")
+        html_bits.append(".odd-day { background-color: #636B75; color: #FFFFFF !important; }")
+        html_bits.append(".active-run-link { text-decoration: none !important; color: #00FFFF !important; font-weight: bold; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }")
+        html_bits.append(".active-run-cell { border: 2px solid #00FFFF; background-color: #1A3D38 !important; box-shadow: 0px 0px 8px rgba(0, 255, 255, 0.4); }")
+        html_bits.append(".empty-cell { background: transparent; border: none; min-height: 58px; }")
+        html_bits.append(".metric-text { font-size: 11px; color: #E0E0E0; font-weight: bold; margin-top: 2px; }")
+        html_bits.append("</style>")
+        html_bits.append("<div class='calendar-container'><div class='calendar-grid'>")
+
+        days_headers = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        for day_name in days_headers:
+            html_bits.append(f"<div class='day-header'>{day_name}</div>")
+
+        cal_matrix = calendar.monthcalendar(cal_year, cal_month)
+        
+        for week in cal_matrix:
+            for idx, day in enumerate(week):
+                if day == 0:
+                    html_bits.append("<div class='empty-cell'></div>")
+                else:
+                    target_date_str = f"{cal_year}-{cal_month:02d}-{day:02d}"
+                    day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str]
+                    color_class = "even-day" if day % 2 == 0 else "odd-day"
+                    
+                    if not day_runs.empty:
+                        run_row = day_runs.iloc[0]
+                        run_dist = run_row['Display_Distance']
+                        run_time = run_row.get('Duration', '--:--')
+                        
+                        html_bits.append(f"<div class='cal-cell active-run-cell'><a class='active-run-link' href='?cal_select={target_date_str}' target='_self'><div>{day}</div><div class='metric-text'>{run_dist:.1f}{unit_abbr}</div><div class='metric-text'>{run_time}</div></a></div>")
+                    else:
+                        html_bits.append(f"<div class='cal-cell {color_class}'><span style='font-weight: 500;'>{day}</span><span style='color: transparent; font-size:9px;'>-</span><span style='color: transparent; font-size:9px;'>-</span></div>")
+                        
+        html_bits.append("</div></div>")
+        
+        full_html = "".join(html_bits)
+        st.markdown(full_html, unsafe_allow_html=True)
+
+    # ==========================================
+    # RIGHT SIDE COLUMN: RUN SUMMARY WITH GRAPH ABOVE STATS
+    # ==========================================
+    with main_layout_col2:
+        if st.session_state.selected_activity_date:
+            active_date = st.session_state.selected_activity_date
+            matched_runs = df[df['Formatted_Date'] == active_date]
+            
+            if not matched_runs.empty:
+                matched_run = matched_runs.iloc[0].to_dict()
+                st.markdown(f"### 📊 Run Summary: {active_date}")
+                
+                # A. BAR CHART PLOTTED FIRST (ABOVE DATA MATRIX)
+                if "splits" in matched_run and isinstance(matched_run["splits"], list) and len(matched_run["splits"]) > 0:
+                    splits_df = pd.DataFrame(matched_run["splits"])
+                    splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
+                    splits_df['Pace (Minutes)'] = splits_df['pace'].apply(pace_str_to_minutes)
+                    
+                    st.caption("⏱️ Lap Split Profiles (Shorter bars are faster)")
+                    st.bar_chart(data=splits_df, x='Split Mile', y='Pace (Minutes)', use_container_width=True)
+                    
+                    fastest_idx = splits_df['Pace (Minutes)'].idxmin()
+                    slowest_idx = splits_df['Pace (Minutes)'].idxmax()
+                    
+                    st.success(f"⚡ **Fastest Lap:** {splits_df.loc[fastest_idx, 'Split Mile']} ({splits_df.loc[fastest_idx, 'pace']})")
+                    st.error(f"🐢 **Slowest Lap:** {splits_df.loc[slowest_idx, 'Split Mile']} ({splits_df.loc[slowest_idx, 'pace']})")
+                    st.write("---")
+                else:
+                    st.info("No split milestones parsed for this workout data.")
+
+                # B. TOTAL DISTANCE, DURATION, AND PACE CARD BLOCK UNDERNEATH
+                st.metric("Total Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
+                st.metric("Duration", matched_run.get('Duration', 'N/A'))
+                if 'pace' in matched_run:
+                    st.metric("Average Overall Pace", f"{matched_run['pace']} min/{unit_abbr.lower()}")
+            else:
+                st.caption("Select a run date inside the grid to load data.")
+        else:
+            st.info("👈 Click any bright teal calendar square showing run text data to inspect lap metrics.")
 
