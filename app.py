@@ -7,6 +7,10 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from datetime import datetime, timedelta
+import numpy as np
+import matplotlib.pyplot as plt
+
+
 
 from models import Character
 #from services import parse_garmin_tcx, parse_garmin_sleep_csv, parse_garmin_gpx
@@ -14,7 +18,7 @@ from services import parse_garmin_tcx, parse_garmin_sleep_csv, parse_garmin_gpx,
 
 from coliseum_ui import render_coliseum
 from upload_ui import render_upload_interface
-from dashboard_ui import render_dashboard_overview
+from dashboard_ui import render_dashboard_overview,show_cal
 from shop_ui import render_shop_interface
 from character_profile import calculate_and_render_profile
 # FIXED CORES: Bind your newly isolated sub-module module file here [C3]
@@ -22,6 +26,119 @@ from ledger_ui import render_training_ledger
 
 FILE_PATH = 'save_file.json'
 st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎️", layout="wide")
+
+
+
+
+# ==========================================
+# 2. LOCAL DATA PERSISTENCE ENGINE
+# ==========================================
+def load_profile_state():
+    """Safely retrieves player progression stats from the save file."""
+    if not os.path.exists(FILE_PATH):
+        default_state = {
+            "endurance_level": 1,
+            "pace_level": 1,
+            "hill_climbing_level": 1,
+            "gold_balance": 500
+        }
+        with open(FILE_PATH, 'w') as f:
+            json.dump(default_state, f, indent=4)
+        return default_state
+    try:
+        with open(FILE_PATH, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return {"endurance_level": 1, "pace_level": 1, "hill_climbing_level": 1, "gold_balance": 0}
+
+
+# Load context profile into the running memory state
+if 'profile' not in st.session_state:
+    st.session_state.profile = load_profile_state()
+
+current_profile = st.session_state.profile
+
+# ==========================================
+# 3. INTERACTIVE RENDERING: NONAGON CHART
+# ==========================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+
+def generate_single_metric_nonagon(level_value, category_type):
+    """
+    Generates a true 9-sided nonagon chart with individual flat-edged slices,
+    visible slice divider lines, and a clean outer perimeter line.
+    """
+    num_slices = 9
+    level_value = max(0, min(int(level_value), 9))
+    
+    # 1. Establish clear visual color identities for each attribute
+    if category_type == 'Endurance':
+        chart_title = "Endurance"
+        fill_color = '#3b82f6'      # Blue fill
+        edge_color = '#1e3a8a'      # Dark Blue border
+    elif category_type == 'Speed':
+        chart_title = "Speed"
+        fill_color = '#22c55e'      # Green fill
+        edge_color = '#15803d'      # Dark Green border
+    else:
+        chart_title = "Elevation"
+        fill_color = '#f59e0b'      # Amber fill
+        edge_color = '#b45309'      # Dark Amber border
+
+    # 2. Initialize a compact polar grid and strip default round borders
+    fig, ax = plt.subplots(figsize=(1.6, 1.6), subplot_kw=dict(polar=True))
+    ax.set_theta_offset(np.pi / 2)  # Rotates the first slice vertex to the very top
+    ax.set_theta_direction(-1)     # Forces the progression to move clockwise
+    ax.grid(False)
+    ax.spines['polar'].set_visible(False)
+    
+    # 3. Calculate exact geometric angles for the 9 vertices
+    angles = np.linspace(0, 2 * np.pi, num_slices, endpoint=False)
+    
+    # 4. DRAW AND FILL EACH INDIVIDUAL SLICE WEDGE
+    for i in range(num_slices):
+        start_angle = angles[i]
+        end_angle = angles[(i + 1) % num_slices]
+        
+        # Coordinates tracing a single flat-edged triangle from center to the two outer vertices
+        wedge_theta = [0, start_angle, end_angle, 0]
+        wedge_radius = [0, 3, 3, 0]
+        
+        if i < level_value:
+            # Active slice: Filled completely with the metric color
+            ax.fill(wedge_theta, wedge_radius, color=fill_color, alpha=0.85, zorder=1)
+        else:
+            # Inactive slice: Filled with an off-white placeholder background
+            ax.fill(wedge_theta, wedge_radius, color='#f9fafb', alpha=1.0, zorder=1)
+
+    # 5. DRAW THE INTERNAL SLICE DIVIDER LINES (SPOKES)
+    for angle in angles:
+        ax.plot([angle, angle], [0, 3], color='#e2e8f0', linewidth=0.8, linestyle='solid', zorder=2)
+
+    # 6. DRAW THE SINGLE OUTER 9-SIDED OUTLINE
+    outline_angles = np.append(angles, angles[0])
+    outer_perimeter_radius = [3] * (num_slices + 1)
+    ax.plot(outline_angles, outer_perimeter_radius, color='#cbd5e1', linewidth=1.2, linestyle='solid', zorder=3)
+
+    # 7. Apply minimal numeric labels around the clean perimeter vertices
+    labels = [f"{i+1}" for i in range(num_slices)]
+    plt.xticks(angles, labels, color='#9ca3af', size=6)
+    plt.yticks([], [])
+    plt.ylim(0, 3)
+    
+    ax.set_title(chart_title, size=8, weight='bold', pad=4, color='#1f2937')
+    plt.tight_layout()
+    
+    return fig
+
+
 
 def load_player():
     if os.path.exists(FILE_PATH):
@@ -60,6 +177,50 @@ if player is not None and os.path.exists(FILE_PATH):
             player.level += 1
     except Exception: pass
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+calculate_and_render_profile(player)
+
+# 1. Read parameters using safe fallback defaults (now scaled 1-9)
+endurance = current_profile.get('endurance_level', 1)
+speed = current_profile.get('pace_level', 1)
+elevation = current_profile.get('hill_climbing_level', 1)
+
+# Create 5 columns total, leaving the edges as empty spacer buffers
+_, col1, col2, col3, _ = st.columns([1, 2, 2, 2, 1])
+
+with col1:
+    st.metric("🔋 Endurance", f"{endurance} / 9")
+    st.pyplot(generate_single_metric_nonagon(endurance, 'Endurance'))
+
+with col2:
+    st.metric("⚡ Speed", f"{speed} / 9")
+    st.pyplot(generate_single_metric_nonagon(speed, 'Speed'))
+
+with col3:
+    st.metric("⛰️ Elevation", f"{elevation} / 9")
+    st.pyplot(generate_single_metric_nonagon(elevation, 'Elevation'))
+
+
 # Master metrics banner layout strip
 hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6 = st.columns(6)
 with hud_col1: st.metric('Active Level', f'{player.level}')
@@ -69,10 +230,9 @@ with hud_col4: st.metric('Fatigue Accumulation', f'{int(getattr(player, "fatigue
 with hud_col5: st.metric('🏁 Checkered Flags', f'{getattr(player, "boss_clears", 0)} Wins')
 with hud_col6: st.metric('Stat Tokens', f'{getattr(player, "stat_points", 0)} Available')
 
-calculate_and_render_profile(player)
 
-tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    '🏠 Dashboard Overview', 'Telemetry Sync', 'Biometric Coliseum', 'Pro Shop & Garage', 'Performance Analytics', 'Training Ledger'
+tab0, tab1, tab2, tab3, tab4, tab5,tab6 = st.tabs([
+    '🏠 Dashboard Overview', 'Telemetry  Sync', 'Biometric Coliseum', 'Pro Shop & Garage', 'Performance Analytics', 'Training Ledger','Calendar'
 ])
 
 with tab0: 
@@ -125,4 +285,5 @@ with tab4:
 with tab5:
     # FIXED PANEL LOCATION: Render sub-module routing view call from newly isolated ledger file [C3]
     render_training_ledger(player)
-
+with tab6:
+     show_cal(player)
