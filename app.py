@@ -231,9 +231,20 @@ with hud_col5: st.metric('🏁 Checkered Flags', f'{getattr(player, "boss_clears
 with hud_col6: st.metric('Stat Tokens', f'{getattr(player, "stat_points", 0)} Available')
 
 
-tab0, tab1, tab2, tab3, tab4, tab5,tab6 = st.tabs([
-    '🏠 Dashboard Overview', 'Telemetry  Sync', 'Biometric Coliseum', 'Pro Shop & Garage', 'Performance Analytics', 'Training Ledger','Calendar'
-])
+
+
+# ==========================================
+# MASTER TAB CONTROLLERS (STANDARD ORDER)
+# ==========================================
+
+tab_titles = [
+    '🏠 Dashboard Overview', 'Telemetry Sync', 'Biometric Coliseum', 
+    'Pro Shop & Garage', 'Performance Analytics', 'Training Ledger', 'Calendar'
+]
+
+# Standard, pristine layout setup with no shifting lists or missing keyword parameters
+tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(tab_titles)
+
 
 with tab0: 
     render_dashboard_overview(player)
