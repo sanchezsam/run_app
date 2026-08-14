@@ -18,459 +18,82 @@ try:
 except ImportError:
     REPORTLAB_AVAILABLE = False
 
-# ==========================================
-# COLOR PALETTE CONFIGURATION (CUSTOMIZABLE)
-# ==========================================
-THEME_CONFIG = {
-    "CALENDAR_BG": "#1e222b",       # Base canvas bounding card background
-    "WEEKDAY_HEADER": "#ffffff",    # Day labels (Mon, Tue, etc.) text color
-    "REST_EVEN_BG": "#ffcc00",      # Bright yellow for even rest days
-    "REST_EVEN_TEXT": "#000000",    # Black text color for legibility on yellow
-    "REST_ODD_BG": "#e6b800",       # Slightly darker yellow for alternating odd rest days
-    "REST_ODD_TEXT": "#000000",     # Black text color for legibility on yellow
-    "RUN_EVEN_BG": "#1a3d38",       # Active workout cell background (even days)
-    "RUN_ODD_BG": "#112b27",        # Active workout cell background (odd days)
-    "RUN_DAY_TEXT": "#00ffff",      # Active workout primary text color
-    "RUN_DAY_BORDER": "#00ffff",    # High-contrast neon border accent
-    "NONAGON_LINE": "#00ffcc",      # Progression nonagon outer profile line
-    "NONAGON_FILL": "#00ffcc",      # Progression nonagon translucent fill region
-    "REST_DAY_BORDER": "#3e4452"    # Subtle structural border for rest cells
-}
+
 
 # ==========================================
-# UPGRADE 1: PERFORMANCE MEMORY CACHING
+# PATCH EXTENSION: RUN LAP METRICS WORKSPACE
 # ==========================================
-@st.cache_data(ttl=600)
-def load_data_from_save_json():
+def show_run_lap_breakdown(run_distance, average_pace_str):
     """
-    Reads save_file.json and caches the resulting raw activity list in memory.
-    Prevents repetitive disk reads on widget change cycles.
+    Calculates 1-mile splits and renders them in a neat Streamlit table.
+    Bound contextually to the right of the calendar view under the summary card.
+    Formats Cumulative Time to HH:MM:SS if duration exceeds 60 minutes.
     """
-    possible_paths = ['save_file.json', '../save_file.json', 'data/save_file.json']
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r') as f:
-                    data = json.load(f)
-                    if isinstance(data, dict):
-                        if "history_logs" in data:
-                            return data["history_logs"]
-                        for root_key in data.values():
-                            if isinstance(root_key, dict) and "history_logs" in root_key:
-                                return root_key["history_logs"]
-                    elif isinstance(data, list):
-                        return data
-            except Exception as e:
-                pass
-    return []
+    import pandas as pd
+    import streamlit as st
+    
+    st.markdown("---")
+    st.markdown("#### ⏱ Incremental Lap Split Analysis")
+    
+    if run_distance <= 0 or not average_pace_str or average_pace_str == "—":
+        st.info("No distance or pace metrics available to generate split profiles.")
+        return
 
-# ==========================================
-# DATA PARSING & UTILITY FORMULAS
-# ==========================================
-def pace_str_to_minutes(pace_str):
-    """Converts a pace string like '10:36' or a float number into total decimal minutes."""
-    if pd.isna(pace_str) or pace_str == "":
-        return 0.0
-    if isinstance(pace_str, (int, float)):
-        return float(pace_str)
     try:
-        parts = str(pace_str).strip().split(':')
-        if len(parts) == 2:
-            return int(parts[0]) + (int(parts[1]) / 60.0)
-        return float(pace_str)
-    except (ValueError, IndexError):
-        return 0.0
+        parts = str(average_pace_str).strip().split(':')
+        pace_seconds = int(parts) * 60 + int(parts) if len(parts) == 2 else float(average_pace_str) * 60
+    except Exception:
+        st.error("Unable to parse activity pace metrics configuration.")
+        return
 
-def minutes_to_pace_str(decimal_minutes):
-    """Converts decimal minutes back to a readable string format like '08:45'."""
-    if pd.isna(decimal_minutes) or decimal_minutes <= 0:
-        return "—"
-    minutes = int(decimal_minutes)
-    seconds = int(round((decimal_minutes - minutes) * 60))
-    if seconds == 60:
-        minutes += 1
-        seconds = 0
-    return f"{minutes:02d}:{seconds:02d}"
+    lap_records = []
+    cumulative_seconds = 0.0
+    remaining_distance = run_distance
+    lap_index = 1
 
-# ==========================================
-# UPGRADE 2: ADVANCED ANALYTICS CALCULATIONS
-# ==========================================
-def calculate_grade_adjusted_pace(flat_pace_minutes, elevation_gain_feet, distance_miles):
-    """
-    Calculates an estimated Grade-Adjusted Pace (GAP) using climbing metrics.
-    Adds a proportional penalty rule of roughly 15 seconds per 100 feet climbed per mile.
-    """
-    if distance_miles <= 0 or flat_pace_minutes <= 0:
-        return flat_pace_minutes
-    climb_per_mile = elevation_gain_feet / distance_miles
-    penalty_minutes = (climb_per_mile / 100.0) * (15.0 / 60.0)
-    return flat_pace_minutes + penalty_minutes
+    while remaining_distance > 0:
+        if remaining_distance >= 1.0:
+            current_lap_dist = 1.0
+            remaining_distance -= 1.0
+        else:
+            current_lap_dist = remaining_distance
+            remaining_distance = 0.0
 
-def analyze_weekly_mileage_spikes(df, current_year):
-    """
-    Audits the current calendar year dataset to check for week-over-week training increases.
-    Flags sequences that exceed the athletic 10% volume safety guideline.
-    """
-    year_df = df[df['Date'].dt.year == int(current_year)].copy()
-    if year_df.empty:
-        return []
-    
-    # Group logs by sequential ISO week indexes
-    year_df['ISO_Week'] = year_df['Date'].dt.isocalendar().week
-    weekly_summary = year_df.groupby('ISO_Week')['Display_Distance'].sum().reset_index()
-    weekly_summary = weekly_summary.sort_values('ISO_Week').reset_index(drop=True)
-    
-    warnings = []
-    for i in range(1, len(weekly_summary)):
-        prev_w = weekly_summary.loc[i-1, 'Display_Distance']
-        curr_w = weekly_summary.loc[i, 'Display_Distance']
-        week_num = weekly_summary.loc[i, 'ISO_Week']
-        
-        if prev_w > 5.0:  # Ignore baseline fluctuations
-            increase_pct = ((curr_w - prev_w) / prev_w) * 100.0
-            if increase_pct > 10.0:
-                warnings.append({
-                    "week": week_num,
-                    "prev_val": prev_w,
-                    "curr_val": curr_w,
-                    "pct": increase_pct
-                })
-    return warnings
+        lap_seconds = current_lap_dist * pace_seconds
+        cumulative_seconds += lap_seconds
 
-# ==========================================
-# PDF DOCUMENT COMPILER
-# ==========================================
-def generate_pdf_report(target_df, title_text, unit_abbr, total_miles, total_time, total_elev, view_mode="📅 Grid View", cal_month_name="January", cal_year=2026, cal_df=None):
-    if not REPORTLAB_AVAILABLE:
-        return None
+        # Standard lap split parsing (always MM:SS since a single mile is under an hour)
+        split_mins = int(lap_seconds) // 60
+        split_secs = int(round(lap_seconds % 60))
+        if split_secs == 60:
+            split_mins += 1
+            split_secs = 0
+        split_time_str = f"{split_mins:02d}:{split_secs:02d}"
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=40, bottomMargin=40)
-    story = []
-    styles = getSampleStyleSheet()
-    
-    title_style = ParagraphStyle(
-        'DocTitle', parent=styles['Heading1'], fontSize=18, spaceAfter=4, textColor=colors.HexColor('#1a334d')
-    )
-    meta_style = ParagraphStyle(
-        'DocMeta', parent=styles['Normal'], fontSize=9, spaceAfter=12, textColor=colors.HexColor('#5c6370')
-    )
-    
-    story.append(Paragraph(f"<b>Running Performance Log Report</b>", title_style))
-    story.append(Paragraph(f"Scope: {title_text} | Exported on: {datetime.now().strftime('%Y-%m-%d %H:%M')}", meta_style))
-    story.append(Spacer(1, 8))
-    
-    elev_cols = [col for col in target_df.columns if 'elev' in col.lower()]
-    month_names = list(calendar.month_name)[1:]
+        # Dynamic overall runtime helper formatting logic
+        def format_cumulative_time(total_secs):
+            total_secs_rounded = int(round(total_secs))
+            hrs = total_secs_rounded // 3600
+            mins = (total_secs_rounded % 3600) // 60
+            secs = total_secs_rounded % 60
+            
+            # Smart clock toggle switch based on 1-hour marker limits
+            if hrs > 0:
+                return f"{hrs:02d}:{mins:02d}:{secs:02d}"
+            else:
+                return f"{mins:02d}:{secs:02d}"
 
-    if view_mode == "📅 Grid View":
-        months_to_loop = range(1, 13) if cal_month_name == "All Months" else [month_names.index(cal_month_name) + 1]
-        
-        for loop_m in months_to_loop:
-            m_name = month_names[loop_m - 1]
-            story.append(Paragraph(f"<b>📅 {m_name.upper()} {cal_year}</b>", styles['Heading2']))
-            story.append(Spacer(1, 4))
-            
-            if cal_month_name == "All Months":
-                loop_m_df = cal_df[(cal_df['Year_Int'] == cal_year) & (cal_df['Month_Int'] == loop_m)] if cal_df is not None else pd.DataFrame()
-                m_miles = loop_m_df['Display_Distance'].sum() if not loop_m_df.empty else 0.0
-                
-                m_elev = 0.0
-                if elev_cols and not loop_m_df.empty:
-                    cleaned_m_elev = loop_m_df[elev_cols[0]].astype(str).str.replace(r'[^\d.]', '', regex=True)
-                    m_elev = pd.to_numeric(cleaned_m_elev, errors='coerce').fillna(0).sum()
-                    
-                m_seconds = 0
-                if not loop_m_df.empty:
-                    for dur in loop_m_df.get('Duration', []):
-                        if pd.notna(dur) and isinstance(dur, str) and ':' in dur:
-                            parts = dur.split(':')
-                            try:
-                                if len(parts) == 3:
-                                    m_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                                elif len(parts) == 2:
-                                    m_seconds += int(parts[0]) * 60 + int(parts[1])
-                            except ValueError:
-                                pass
-                                
-                m_hours = m_seconds // 3600
-                m_mins = (m_seconds % 3600) // 60
-                m_time_str = f"{m_hours}h {m_mins}m" if m_hours > 0 else f"{m_mins}m"
-                
-                m_summary_data = [
-                    ["Monthly Distance", "Monthly Duration", "Monthly Ascent"],
-                    [f"{m_miles:,.2f} {unit_abbr}", m_time_str, f"{m_elev:,.0f} ft"]
-                ]
-                m_summary_table = Table(m_summary_data, colWidths=[180, 180, 180])
-                m_summary_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f4f6f8')),
-                    ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#000000')),
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 9),
-                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dcdfe6')),
-                    ('TOPPADDING', (0, 0), (-1, -1), 4),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-                ]))
-                story.append(m_summary_table)
-                story.append(Spacer(1, 6))
-                
-            days_headers = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            grid_matrix = [days_headers]
-            loop_matrix = calendar.monthcalendar(cal_year, loop_m)
-            
-            m_table_styles = [
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c313c')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#3e4452')),
-                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ]
-            
-            cell_p_style_run = ParagraphStyle('CellRun', parent=styles['Normal'], alignment=1, fontSize=8, textColor=colors.HexColor(THEME_CONFIG["RUN_DAY_TEXT"]), fontName='Helvetica-Bold')
-            cell_p_style_rest_even = ParagraphStyle('CellRestEven', parent=styles['Normal'], alignment=1, fontSize=8, textColor=colors.HexColor(THEME_CONFIG["REST_EVEN_TEXT"]), fontName='Helvetica-Bold')
-            cell_p_style_rest_odd = ParagraphStyle('CellRestOdd', parent=styles['Normal'], alignment=1, fontSize=8, textColor=colors.HexColor(THEME_CONFIG["REST_ODD_TEXT"]), fontName='Helvetica-Bold')
-            cell_p_style_empty = ParagraphStyle('CellEmpty', parent=styles['Normal'], alignment=1, fontSize=8)
+        lap_records.append({
+            "Lap #": f"Lap {lap_index}" if current_lap_dist == 1.0 else f"Lap {lap_index} (Final)",
+            "Distance Included": f"{current_lap_dist:.2f} mi",
+            "Lap Split Time": split_time_str,
+            "Cumulative Run Time": format_cumulative_time(cumulative_seconds)
+        })
+        lap_index += 1
 
-            for r_idx, week in enumerate(loop_matrix):
-                row_cells = []
-                for c_idx, day in enumerate(week):
-                    if day == 0:
-                        row_cells.append(Paragraph("", cell_p_style_empty))
-                        m_table_styles.append(('BACKGROUND', (c_idx, r_idx + 1), (c_idx, r_idx + 1), colors.HexColor(THEME_CONFIG["CALENDAR_BG"])))
-                    else:
-                        target_date_str = f"{cal_year}-{loop_m:02d}-{day:02d}"
-                        day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str] if cal_df is not None else pd.DataFrame()
-                        parity_suffix = "even" if day % 2 == 0 else "odd"
-                        
-                        if not day_runs.empty:
-                            run_row = day_runs.iloc[0]
-                            run_dist = run_row['Display_Distance']
-                            run_time = run_row.get('Duration', '--:--')
-                            cell_text = f"<b>{day}</b><br/><br/><b>{run_dist:.1f}{unit_abbr}</b><br/>{run_time}"
-                            row_cells.append(Paragraph(cell_text, cell_p_style_run))
-                            
-                            bg_color = THEME_CONFIG["RUN_EVEN_BG"] if parity_suffix == "even" else THEME_CONFIG["RUN_ODD_BG"]
-                            m_table_styles.append(('BACKGROUND', (c_idx, r_idx + 1), (c_idx, r_idx + 1), colors.HexColor(bg_color)))
-                        else:
-                            cell_text = f"<b>{day}</b><br/><br/>—<br/>—"
-                            p_style = cell_p_style_rest_even if parity_suffix == "even" else cell_p_style_rest_odd
-                            row_cells.append(Paragraph(cell_text, p_style))
-                            
-                            bg_color = THEME_CONFIG["REST_EVEN_BG"] if parity_suffix == "even" else THEME_CONFIG["REST_ODD_BG"]
-                            m_table_styles.append(('BACKGROUND', (c_idx, r_idx + 1), (c_idx, r_idx + 1), colors.HexColor(bg_color)))
-                grid_matrix.append(row_cells)
-                
-            month_table = Table(grid_matrix, colWidths=[77]*7)
-            month_table.setStyle(TableStyle(m_table_styles))
-            story.append(month_table)
-            story.append(Spacer(1, 14))
-    else:
-        headers = ['Date', 'Activity Type', 'Distance', 'Duration', 'Pace']
-        if elev_cols:
-            headers.append('Ascent')
-            
-        table_matrix = [headers]
-        table_styles = [
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c313c')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e4e7ed')),
-            ('FONTSIZE', (0, 1), (-1, -1), 8.5),
-        ]
-        
-        months_in_report = sorted(target_df['Month_Int'].unique()) if not target_df.empty else []
-        
-        for m_idx in months_in_report:
-            m_matrix = calendar.monthcalendar(cal_year, m_idx)
-            m_name = month_names[m_idx - 1]
-            
-            header_row = [f"📅 {m_name.upper()} LOGS", "", "", "", ""]
-            if elev_cols:
-                header_row.append("")
-            table_matrix.append(header_row)
-            r_idx = len(table_matrix) - 1
-            table_styles.extend([
-                ('SPAN', (0, r_idx), (-1, r_idx)),
-                ('BACKGROUND', (0, r_idx), (-1, r_idx), colors.HexColor('#1a1c23')),
-                ('TEXTCOLOR', (0, r_idx), (-1, r_idx), colors.HexColor('#00ffcc')),
-                ('FONTNAME', (0, r_idx), (-1, r_idx), 'Helvetica-Bold'),
-            ])
-            
-            m_dist, m_seconds, m_elev = 0.0, 0, 0.0
-            
-            for w_idx, week in enumerate(m_matrix):
-                week_has_days = False
-                week_dist = 0.0
-                week_seconds = 0
-                week_elev = 0.0
-                week_rows = []
-                
-                for day in week:
-                    if day == 0:
-                        continue
-                    week_has_days = True
-                    target_date_str = f"{cal_year}-{m_idx:02d}-{day:02d}"
-                    day_runs = target_df[target_df['Formatted_Date'] == target_date_str]
-                    
-                    if not day_runs.empty:
-                        run_row = day_runs.iloc[0]
-                        run_dist = float(run_row['Display_Distance'])
-                        run_time = str(run_row.get('Duration', '--:--'))
-                        run_pace = f"{run_row.get('pace', '—')} min/{unit_abbr.lower()}"
-                        
-                        day_elevation = 0.0
-                        if elev_cols:
-                            raw_elev_val = run_row.get(elev_cols[0], "0")
-                            cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
-                            if cleaned_run_elev:
-                                day_elevation = float(cleaned_run_elev)
-                                
-                        week_dist += run_dist
-                        m_dist += run_dist
-                        week_elev += day_elevation
-                        m_elev += day_elevation
-                        
-                        if ':' in run_time:
-                            parts = run_time.split(':')
-                            try:
-                                if len(parts) == 3:
-                                    secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                                    week_seconds += secs
-                                    m_seconds += secs
-                                elif len(parts) == 2:
-                                    secs = int(parts[0]) * 60 + int(parts[1])
-                                    week_seconds += secs
-                                    m_seconds += secs
-                            except ValueError:
-                                pass
-                                
-                        day_cells = [target_date_str, "RUN", f"{run_dist:.2f} {unit_abbr}", run_time, run_pace]
-                        if elev_cols:
-                            day_cells.append(f"{day_elevation:,.0f} ft")
-                        week_rows.append(day_cells)
-                    else:
-                        day_cells = [target_date_str, "REST DAY", "—", "—", "—"]
-                        if elev_cols:
-                            day_cells.append("—")
-                        week_rows.append(day_cells)
-                        
-                if week_has_days:
-                    table_matrix.extend(week_rows)
-                    
-                    w_hours = week_seconds // 3600
-                    w_mins = (week_seconds % 3600) // 60
-                    w_time_str = f"{w_hours}h {w_mins}m" if w_hours > 0 else f"{w_mins}m"
-                    if week_seconds == 0:
-                        w_time_str = "—"
-                        
-                    w_row = [f"WEEK {w_idx + 1} TOTALS", "WEEK SUMMARY", f"{week_dist:.2f} {unit_abbr}", w_time_str, "—"]
-                    if elev_cols:
-                        w_row.append(f"{week_elev:,.0f} ft")
-                    table_matrix.append(w_row)
-                    r_idx = len(table_matrix) - 1
-                    table_styles.extend([
-                        ('BACKGROUND', (0, r_idx), (-1, r_idx), colors.HexColor('#0f3930')),
-                        ('TEXTCOLOR', (0, r_idx), (-1, r_idx), colors.HexColor('#00ffcc')),
-                        ('FONTNAME', (0, r_idx), (-1, r_idx), 'Helvetica-Bold'),
-                    ])
-                    
-            m_hours = m_seconds // 3600
-            m_mins = (m_seconds % 3600) // 60
-            m_time_str = f"{m_hours}h {m_mins}m" if m_hours > 0 else f"{m_mins}m"
-            if m_seconds == 0:
-                m_time_str = "—"
-                
-            m_row = [f"{m_name.upper()} TOTALS", "MONTH OVERVIEW", f"{m_dist:.2f} {unit_abbr}", m_time_str, "—"]
-            if elev_cols:
-                m_row.append(f"{m_elev:,.0f} ft")
-            table_matrix.append(m_row)
-            r_idx = len(table_matrix) - 1
-            table_styles.extend([
-                ('BACKGROUND', (0, r_idx), (-1, r_idx), colors.HexColor('#1a334d')),
-                ('TEXTCOLOR', (0, r_idx), (-1, r_idx), colors.HexColor('#00ffff')),
-                ('FONTNAME', (0, r_idx), (-1, r_idx), 'Helvetica-Bold'),
-            ])
-            
-        y_row = [f"🏆 {cal_year} YEAR TOTALS", "GRAND OVERVIEW", f"{total_miles:,.2f} {unit_abbr}", total_time, "—"]
-        if elev_cols:
-            y_row.append(f"{total_elev:,.0f} ft")
-        table_matrix.append(y_row)
-        r_idx = len(table_matrix) - 1
-        table_styles.extend([
-            ('BACKGROUND', (0, r_idx), (-1, r_idx), colors.HexColor('#332300')),
-            ('TEXTCOLOR', (0, r_idx), (-1, r_idx), colors.HexColor('#ffcc00')),
-            ('FONTNAME', (0, r_idx), (-1, r_idx), 'Helvetica-Bold'),
-        ])
-        
-        col_widths = [85, 80, 85, 85, 95]
-        if elev_cols:
-            col_widths.append(90)
-            
-        log_table = Table(table_matrix, colWidths=col_widths, repeatRows=1)
-        log_table.setStyle(TableStyle(table_styles))
-        story.append(log_table)
-        
-    doc.build(story)
-    buffer.seek(0)
-    return buffer
+    st.dataframe(pd.DataFrame(lap_records), use_container_width=True, hide_index=True)
 
-# ==========================================
-# UPGRADE 3: CHARTING RADAR NONAGON VISUALS
-# ==========================================
-def render_progression_nonagon(endurance_lvl, pace_lvl, hill_lvl):
-    """
-    Builds and returns a 9-slice polar chart representing progression levels.
-    """
-    num_slices = 9
-    labels = [
-        "Endur. L1", "Endur. L2", "Endur. L3",
-        "Pace L1", "Pace L2", "Pace L3",
-        "Hill L1", "Hill L2", "Hill L3"
-    ]
-    
-    values = [
-        min(endurance_lvl, 1), min(max(endurance_lvl - 1, 0), 1), min(max(endurance_lvl - 2, 0), 1),
-        min(pace_lvl, 1),      min(max(pace_lvl - 1, 0), 1),      min(max(pace_lvl - 2, 0), 1),
-        min(hill_lvl, 1),      min(max(hill_lvl - 1, 0), 1),      min(max(hill_lvl - 2, 0), 1)
-    ]
-    
-    display_values = [v * 3 for v in values]
-    angles = np.linspace(0, 2 * np.pi, num_slices, endpoint=False).tolist()
-    
-    display_values += display_values[:1]
-    angles += angles[:1]
-    
-    fig, ax = plt.subplots(figsize=(4.5, 4.5), subplot_kw=dict(polar=True))
-    ax.set_theta_offset(np.pi / 2)
-    ax.set_theta_direction(-1)
-    
-    plt.xticks(angles[:-1], labels, color='#ffffff', size=8)
-    ax.set_rlabel_position(0)
-    plt.yticks([1, 2, 3], ["L1", "L2", "L3"], color="#7e8794", size=7)
-    plt.ylim(0, 3)
-    
-    ax.plot(angles, display_values, color=THEME_CONFIG["NONAGON_LINE"], linewidth=2, linestyle='solid')
-    ax.fill(angles, display_values, color=THEME_CONFIG["NONAGON_FILL"], alpha=0.3)
-    
-    fig.patch.set_facecolor('#1e222b')
-    ax.set_facecolor('#1e222b')
-    ax.spines['polar'].set_color('#3e4452')
-    ax.grid(color='#3e4452', linestyle='--')
-    
-    return fig
 
-# ==========================================
-# MAIN INTERACTIVE UI DASHBOARD ELEMENT
-# ==========================================
 def render_dashboard_overview(player):
     if "selected_activity_date" not in st.session_state:
         st.session_state.selected_activity_date = None
@@ -1069,193 +692,82 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                                 st.session_state.selected_activity_date = target_date_str
                                                 st.rerun()
 
-    # ==========================================
-    # RIGHT SIDE PANEL: ADAPTIVE VIEWS & UPGRADES
-    # ==========================================
-    with main_layout_col2:
-        if st.session_state.selected_activity_date:
-            active_date = st.session_state.selected_activity_date
-            matched_runs = df[df['Formatted_Date'] == active_date]
-            
-            if not matched_runs.empty:
-                matched_run = matched_runs.iloc[0].to_dict()
-                st.markdown(f"### 📊 Run Summary: {active_date}")
-                
-                # Single Run Elevation parsing
-                run_elevation = 0.0
-                if elev_columns:
-                    raw_elev_val = matched_run.get(elev_columns[0], "0")
-                    cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
-                    parsed_elev = pd.to_numeric(cleaned_run_elev, errors='coerce')
-                    if pd.notna(parsed_elev): run_elevation = parsed_elev
+    
 
-                if "splits" in matched_run and isinstance(matched_run["splits"], list) and len(matched_run["splits"]) > 0:
-                    splits_df = pd.DataFrame(matched_run["splits"])
-                    splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
-                    splits_df['Pace (Minutes)'] = splits_df['pace'].apply(pace_str_to_minutes)
-                    
-                    st.caption("⏱️ Lap Split Profiles (Shorter bars are faster)")
-                    st.bar_chart(data=splits_df, x='Split Mile', y='Pace (Minutes)', use_container_width=True)
-                
-                st.metric("Total Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
-                st.metric("Duration", matched_run.get('Duration', 'N/A'))
-                
-                if 'pace' in matched_run:
-                    flat_pace = pace_str_to_minutes(matched_run['pace'])
-                    st.metric("Flat Overall Pace", f"{matched_run['pace']} min/{unit_abbr.lower()}")
-                    
-                    # Grade Adjusted Pace (GAP) calculation output
-                    gap_pace = calculate_grade_adjusted_pace(flat_pace, run_elevation, matched_run['Display_Distance'])
-                    st.metric("🔋 Grade-Adjusted Pace (GAP)", f"{minutes_to_pace_str(gap_pace)} min/{unit_abbr.lower()}", delta=f"{run_elevation:,.0f} ft climbing effort penalty" if run_elevation > 0 else None, delta_color="inverse")
-
-                if run_elevation > 0:
-                    st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
-            else:
-                st.caption("Select a run date inside the grid to load data.")
-            
-            if st.button("↩️ Close & View Radar Profile"):
-                st.session_state.selected_activity_date = None
-                st.rerun()
-        else:
-            # ==========================================
-            # UPGRADE 3: REAL-TIME OVERALL ANALYSIS & RADAR VISUALS
-            # ==========================================
-            st.markdown("### 🧬 Performance Analytics Panel")
-            
-            if not target_df.empty:
-                avg_dist = target_df['Display_Distance'].mean()
-                pace_mins = target_df['pace'].apply(pace_str_to_minutes)
-                avg_pace = pace_mins[pace_mins > 0].mean() if not pace_mins[pace_mins > 0].empty else 0.0
-                
-                avg_elev = 0.0
-                if elev_columns:
-                    c_elev = target_df[elev_columns[0]].astype(str).str.replace(r'[^\d.]', '', regex=True)
-                    avg_elev = pd.to_numeric(c_elev, errors='coerce').fillna(0).mean()
-                
-                # Dynamic mapping profile logic for the polar radar nonagon
-                endurance_score = 3 if avg_dist >= 8.0 else (2 if avg_dist >= 4.0 else 1)
-                pace_score = 3 if (0 < avg_pace <= 7.75) else (2 if (7.75 < avg_pace <= 9.75) else 1)
-                hill_score = 3 if avg_elev >= 250.0 else (2 if avg_elev >= 75.0 else 1)
-                
-                st.write("✨ **Progression Radar Athlete Matrix Profile**")
-                nonagon_fig = render_progression_nonagon(endurance_score, pace_score, hill_score)
-                st.pyplot(nonagon_fig)
-            else:
-                st.caption("No dynamic metrics data available to compile radar metrics.")
-            
-            # 10% Training Injury Spike Watchdog Alert Panel
-            st.write("---")
-            st.markdown("### ⚠️ Training Volume Monitor")
-            spikes = analyze_weekly_mileage_spikes(df, cal_year)
-            if spikes:
-                st.error(f"🚨 Workload Increase Flags detected for {cal_year}!")
-                for s in spikes[-2:]: # Show most recent 2 warnings
-                    st.warning(f"**Week {s['week']}:** Mileage jumped from {s['prev_val']:.1f} to {s['curr_val']:.1f} {unit_abbr} (+{s['pct']:.1f}% volume spike)")
-            else:
-                st.success("✅ Consistent structural building. No acute weekly mileage spikes over 10% encountered.")
-
-            # All-Time Hall of Fame Personal Records Panel
-            st.write("---")
-            st.markdown("### 🏆 All-Time Records PR Vault")
-            if not df.empty:
-                max_dist_row = df.loc[df['Display_Distance'].idxmax()]
-                st.metric("🥇 Longest Distance Record", f"{max_dist_row['Display_Distance']:.2f} {unit_abbr}", f"Achieved on {max_dist_row['Formatted_Date']}")
-                
-                if elev_columns:
-                    all_c_elev = df[elev_columns[0]].astype(str).str.replace(r'[^\d.]', '', regex=True)
-                    df['Numeric_Elev'] = pd.to_numeric(all_c_elev, errors='coerce').fillna(0)
-                    max_elev_row = df.loc[df['Numeric_Elev'].idxmax()]
-                    st.metric("⛰️ King of Mountain Climb", f"{max_elev_row['Numeric_Elev']:,.0f} ft", f"Achieved on {max_elev_row['Formatted_Date']}")
-
-
-def render_progression_nonagon(endurance_lvl, pace_lvl, hill_lvl):
+# ==========================================
+# PATCH EXTENSION: RUN LAP METRICS WORKSPACE
+# ==========================================
+def show_run_lap_breakdown(run_distance, average_pace_str):
     """
-    Builds and returns a 9-slice polar chart representing progression levels.
-    Expects levels between 0 and 3 for each attribute.
+    Calculates 1-mile splits and renders them in a neat Streamlit table.
+    Bound contextually to the right of the calendar view under the summary card.
+    Formats Cumulative Time to HH:MM:SS if duration exceeds 60 minutes.
     """
-    num_slices = 9
+    import pandas as pd
+    import streamlit as st
     
-    # Define labels for the 9 slices (3 slices per attribute category)
-    labels = [
-        "Endurance L1", "Endurance L2", "Endurance L3",
-        "Pace L1", "Pace L2", "Pace L3",
-        "Hill L1", "Hill L2", "Hill L3"
-    ]
+    st.markdown("---")
+    st.markdown("#### ⏱ Incremental Lap Split Analysis")
     
-    # Calculate step fills dynamically based on current levels (max value 3)
-    values = [
-        min(endurance_lvl, 1), min(max(endurance_lvl - 1, 0), 1), min(max(endurance_lvl - 2, 0), 1),
-        min(pace_lvl, 1),      min(max(pace_lvl - 1, 0), 1),      min(max(pace_lvl - 2, 0), 1),
-        min(hill_lvl, 1),      min(max(hill_lvl - 1, 0), 1),      min(max(hill_lvl - 2, 0), 1)
-    ]
-    
-    # Scale binary slice availability to uniform map steps
-    display_values = [v * 3 for v in values]
-    
-    # Calculate angles for a closed 9-sided nonagon
-    angles = np.linspace(0, 2 * np.pi, num_slices, endpoint=False).tolist()
-    
-    # Close the polygon loop mathematically
-    display_values += display_values[:1]
-    angles += angles[:1]
-    
-    # Instantiate figure canvas object
-    fig, ax = plt.subplots(figsize=(5, 5), subplot_kw=dict(polar=True))
-    
-    # Rotate layout so the first vertex is anchored cleanly at the top
-    ax.set_theta_offset(np.pi / 2)
-    ax.set_theta_direction(-1)
-    
-    # Apply labels and nonagon spine grid coordinates
-    plt.xticks(angles[:-1], labels, color='#333333', size=9)
-    ax.set_rlabel_position(0)
-    plt.yticks([1, 2, 3], ["L1", "L2", "L3"], color="grey", size=8)
-    plt.ylim(0, 3)
-    
-    # Plot outer border outline and inner area fills
-    ax.plot(angles, display_values, color='#2e7d32', linewidth=2, linestyle='solid')
-    ax.fill(angles, display_values, color='#81c784', alpha=0.5)
-    
-    return fig
+    if run_distance <= 0 or not average_pace_str or average_pace_str == "—":
+        st.info("No distance or pace metrics available to generate split profiles.")
+        return
 
-
-
-def load_data_from_save_json():
-    """
-    Directly reads save_file.json and extracts records from the 'history_logs' root key.
-    """
-    possible_paths = ['save_file.json', '../save_file.json', 'data/save_file.json']
-    
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r') as f:
-                    data = json.load(f)
-                    if isinstance(data, dict):
-                        if "history_logs" in data:
-                            return data["history_logs"]
-                        for root_key in data.values():
-                            if isinstance(root_key, dict) and "history_logs" in root_key:
-                                return root_key["history_logs"]
-                    elif isinstance(data, list):
-                        return data
-            except Exception as e:
-                st.error(f"Error reading save_file.json: {e}")
-    return []
-
-def pace_str_to_minutes(pace_str):
-    """Converts a pace string like '10:36' or a float number into total decimal minutes."""
-    if pd.isna(pace_str) or pace_str == "":
-        return 0.0
-    if isinstance(pace_str, (int, float)):
-        return float(pace_str)
     try:
-        parts = str(pace_str).strip().split(':')
-        if len(parts) == 2:
-            return int(parts[0]) + (int(parts[1]) / 60.0)
-        return float(pace_str)
-    except (ValueError, IndexError):
-        return 0.0
+        parts = str(average_pace_str).strip().split(':')
+        pace_seconds = int(parts) * 60 + int(parts) if len(parts) == 2 else float(average_pace_str) * 60
+    except Exception:
+        st.error("Unable to parse activity pace metrics configuration.")
+        return
+
+    lap_records = []
+    cumulative_seconds = 0.0
+    remaining_distance = run_distance
+    lap_index = 1
+
+    while remaining_distance > 0:
+        if remaining_distance >= 1.0:
+            current_lap_dist = 1.0
+            remaining_distance -= 1.0
+        else:
+            current_lap_dist = remaining_distance
+            remaining_distance = 0.0
+
+        lap_seconds = current_lap_dist * pace_seconds
+        cumulative_seconds += lap_seconds
+
+        # Standard lap split parsing (always MM:SS since a single mile is under an hour)
+        split_mins = int(lap_seconds) // 60
+        split_secs = int(round(lap_seconds % 60))
+        if split_secs == 60:
+            split_mins += 1
+            split_secs = 0
+        split_time_str = f"{split_mins:02d}:{split_secs:02d}"
+
+        # Dynamic overall runtime helper formatting logic
+        def format_cumulative_time(total_secs):
+            total_secs_rounded = int(round(total_secs))
+            hrs = total_secs_rounded // 3600
+            mins = (total_secs_rounded % 3600) // 60
+            secs = total_secs_rounded % 60
+            
+            # Smart clock toggle switch based on 1-hour marker limits
+            if hrs > 0:
+                return f"{hrs:02d}:{mins:02d}:{secs:02d}"
+            else:
+                return f"{mins:02d}:{secs:02d}"
+
+        lap_records.append({
+            "Lap #": f"Lap {lap_index}" if current_lap_dist == 1.0 else f"Lap {lap_index} (Final)",
+            "Distance Included": f"{current_lap_dist:.2f} mi",
+            "Lap Split Time": split_time_str,
+            "Cumulative Run Time": format_cumulative_time(cumulative_seconds)
+        })
+        lap_index += 1
+
+    st.dataframe(pd.DataFrame(lap_records), use_container_width=True, hide_index=True)
+
+
 def render_dashboard_overview(player):
     """
     Renders an interactive running dashboard featuring:
