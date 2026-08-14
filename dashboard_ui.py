@@ -1192,15 +1192,14 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                 try:
                     if "matched_run" in locals() and matched_run:
                         show_run_lap_breakdown(matched_run, unit_abbr=unit_abbr)
+                        # --------------------------------------------------------------
+                        # LAUNCH THE INTENSITY OCTAGON VISUALIZATION
+                        # --------------------------------------------------------------
+                        render_zone_octagon_display(matched_run)
+                        # --------------------------------------------------------------
+                        
                 except Exception:
                     pass
-                # ------------------------------------------------------------------
- 
-
-
-
-
-
 
 
                 if 'pace' in matched_run:
@@ -1370,6 +1369,8 @@ def render_dashboard_overview(player):
     - Miles vs Kilometers unit toggling
     - Custom monthly inline calendar matrix table with selectable activity squares
     """
+    import streamlit as st
+    import pandas as pd
     # Initialize structural session memory state for layout views if missing
     if "current_dashboard_tab" not in st.session_state:
         st.session_state.current_dashboard_tab = "📅 Training Data Perspectives"
@@ -1723,4 +1724,107 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
     st.markdown("##### 📈 Cumulative Runtime Build-up (Minutes)")
     chart_data = df_splits[["Split", "Cumulative Minutes"]].copy().set_index("Split")
     st.line_chart(chart_data, use_container_width=True)
+
+# ==============================================================================
+# EXTENSION: TRAINING ZONE INTENSITY GRAPHIC (FIXED DONUT POLYGON)
+# ==============================================================================
+def render_zone_octagon_display(matched_run_dict):
+    """
+    Simulates training zone distributions based on split velocities or pace logs,
+    generating a highly visible, native geometric donut ring representing percent execution.
+    """
+    import pandas as pd
+    import streamlit as st
+    import altair as alt
+
+    st.markdown("---")
+    st.markdown("#### 🛑 Intensity Zone Distribution")
+
+    if not matched_run_dict:
+        st.info("Select a workout day to review cardiovascular intensity zone matrices.")
+        return
+
+    # 1. Define Training Zone Baseline Metadata Attributes
+    zones = [
+        {"name": "Z1: Recovery", "color": "#00ffcc", "pct": 15},
+        {"name": "Z2: Endurance", "color": "#00ccff", "pct": 45},
+        {"name": "Z3: Tempo", "color": "#ffcc00", "pct": 20},
+        {"name": "Z4: Threshold", "color": "#ff6600", "pct": 15},
+        {"name": "Z5: Anaerobic", "color": "#ff3333", "pct": 5}
+    ]
+
+    # Try to extract real splits array list to distribute weights dynamically
+    raw_splits = matched_run_dict.get("splits", [])
+    if isinstance(raw_splits, list) and len(raw_splits) > 0:
+        paces = []
+        for s in raw_splits:
+            p_str = str(s.get("pace", "08:00"))
+            try:
+                parts = p_str.split(':')
+                if len(parts) == 2: 
+                    paces.append(int(parts[0])*60 + int(parts[1]))
+            except Exception: 
+                pass
+        
+        if len(paces) > 1:
+            slowest = max(paces)
+            fastest = min(paces)
+            span = max(1, slowest - fastest)
+            
+            z1, z2, z3, z4, z5 = 0, 0, 0, 0, 0
+            for p in paces:
+                rel = (slowest - p) / span  # 1.0 is fastest, 0.0 is slowest
+                if rel < 0.2: z1 += 1
+                elif rel < 0.5: z2 += 1
+                elif rel < 0.75: z3 += 1
+                elif rel < 0.92: z4 += 1
+                else: z5 += 1
+            
+            total = len(paces)
+            p1 = int((z1 / total) * 100)
+            p2 = int((z2 / total) * 100)
+            p3 = int((z3 / total) * 100)
+            p4 = int((z4 / total) * 100)
+            p5 = 100 - (p1 + p2 + p3 + p4)
+            
+            z_vals = [p1, p2, p3, p4, p5]
+            for idx, z_item in enumerate(zones):
+                z_item["pct"] = max(5, z_vals[idx])
+
+    # 2. Build a Clean Flat Dataset for Native Chart Processing
+    chart_rows = []
+    for z in zones:
+        chart_rows.append({
+            "Zone": z["name"],
+            "Percentage": z["pct"]
+        })
+    df_chart = pd.DataFrame(chart_rows)
+
+    # 3. Render Layout Columns Side-by-Side Natively
+    col_g1, col_g2 = st.columns([0.45, 0.55])
+    
+    with col_g1:
+        # Create a native geometric ring chart (donut polygon configuration)
+        donut_chart = alt.Chart(df_chart).mark_arc(innerRadius=30, stroke="#1e222b", strokeWidth=2).encode(
+            theta=alt.Theta(field="Percentage", type="quantitative"),
+            color=alt.Color(field="Zone", type="nominal", scale=alt.Scale(
+                domain=[z["name"] for z in zones],
+                range=[z["color"] for z in zones]
+            ), legend=None),
+            tooltip=["Zone", "Percentage"]
+        ).properties(
+            width=130,
+            height=130
+        )
+        
+        st.altair_chart(donut_chart, use_container_width=True)
+        
+    with col_g2:
+        st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+        for z in zones:
+            st.markdown(
+                f"<span style='color:{z['color']}; font-size:18px;'>■</span> "
+                f"**{z['name']}:** `{z['pct']}%` Time", 
+                unsafe_allow_html=True
+            )
 
