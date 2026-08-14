@@ -1164,6 +1164,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                 matched_run = matched_runs.iloc[0].to_dict()
                 st.markdown(f"### 📊 Run Summary: {active_date}")
                 
+    
                 # Single Run Elevation parsing
                 run_elevation = 0.0
                 if elev_columns:
@@ -1182,7 +1183,45 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                 
                 st.metric("Total Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
                 st.metric("Duration", matched_run.get('Duration', 'N/A'))
+                if run_elevation > 0:
+                    st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
+                    
+                # ------------------------------------------------------------------
+                # LAUNCH THE DYNAMIC LAP BREAKDOWN (Safely placed below the stats)
+                # ------------------------------------------------------------------
+                try:
+                    # Scan every single common variant name your schema uses for mileage records
+                    target_dist = 0.0
+                    for key_candidate in ['Distance (Miles)', 'Display_Distance', 'distance', 'distance_miles', 'miles']:
+                        if key_candidate in matched_run and matched_run[key_candidate] is not None:
+                            try:
+                                val = float(matched_run[key_candidate])
+                                if val > 0:
+                                    target_dist = val
+                                    break
+                            except ValueError:
+                                pass
+                    
+                    # Scan every common variant name your schema uses for pace records
+                    target_pace = '—'
+                    for pace_candidate in ['pace', 'Pace', 'average_pace', 'speed']:
+                        if pace_candidate in matched_run and matched_run[pace_candidate] is not None:
+                            target_pace = str(matched_run[pace_candidate])
+                            break
+                    
+                    # Pass the validated values directly into your table module
+                    show_run_lap_breakdown(target_dist, target_pace)
+                except Exception:
+                    pass
+                # ------------------------------------------------------------------
                 
+
+
+
+
+
+
+
                 if 'pace' in matched_run:
                     flat_pace = pace_str_to_minutes(matched_run['pace'])
                     st.metric("Flat Overall Pace", f"{matched_run['pace']} min/{unit_abbr.lower()}")
@@ -1195,6 +1234,10 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                     st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
             else:
                 st.caption("Select a run date inside the grid to load data.")
+
+
+
+
             
             if st.button("↩️ Close & View Radar Profile"):
                 st.session_state.selected_activity_date = None
@@ -1526,3 +1569,91 @@ def render_dashboard_overview(player):
             st.metric(f"All-Time History Total ({unit_abbr})", f"{df['Display_Distance'].sum():,.2f} {unit_abbr}")
         else:
             st.caption("No dynamic historical year structures found.")
+
+
+# ==============================================================================
+# EXTENSION: INCREMENTAL LAP SPLIT PROFILER
+# ==============================================================================
+def show_run_lap_breakdown(run_distance, average_pace_str):
+    """
+    Calculates 1-mile splits and renders them in a neat Streamlit table.
+    Formats Cumulative Time to HH:MM:SS if duration exceeds 60 minutes.
+    """
+    import pandas as pd
+    import streamlit as st
+    
+    st.markdown("---")
+    st.markdown("#### ⏱ 1-Mile Split Analysis")
+    
+    # Force convert to float immediately to catch subtle key definitions
+    try:
+        run_distance = float(run_distance)
+    except (ValueError, TypeError):
+        run_distance = 0.0
+    
+    if run_distance <= 0 or not average_pace_str or average_pace_str == "—":
+        st.info("No distance or pace metrics available to generate split profiles.")
+        return
+
+    # Safely convert MM:SS pace string or raw minute floats into integer seconds
+    try:
+        if ":" in str(average_pace_str):
+            parts = str(average_pace_str).strip().split(':')
+            if len(parts) == 2:
+                pace_seconds = int(parts[0]) * 60 + int(parts[1])
+            elif len(parts) == 3:
+                pace_seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+            else:
+                pace_seconds = float(average_pace_str) * 60
+        else:
+            pace_seconds = float(average_pace_str) * 60
+    except Exception:
+        st.error("Unable to accurately compute split velocities from pace logs.")
+        return
+
+    lap_records = []
+    cumulative_seconds = 0.0
+    remaining_distance = run_distance
+    lap_index = 1
+
+    while remaining_distance > 0:
+        if remaining_distance >= 1.0:
+            current_lap_dist = 1.0
+            remaining_distance -= 1.0
+        else:
+            current_lap_dist = remaining_distance
+            remaining_distance = 0.0
+
+        lap_seconds = current_lap_dist * pace_seconds
+        cumulative_seconds += lap_seconds
+
+        # 1. Lap split parsing (always MM:SS since a single mile is under an hour)
+        split_mins = int(lap_seconds) // 60
+        split_secs = int(round(lap_seconds % 60))
+        if split_secs == 60:
+            split_mins += 1
+            split_secs = 0
+        split_time_str = f"{split_mins:02d}:{split_secs:02d}"
+
+        # 2. Dynamic overall runtime formatting logic (Toggles HH:MM:SS past 60 mins)
+        def format_cumulative_clock(total_secs):
+            total_secs_rounded = int(round(total_secs))
+            hrs = total_secs_rounded // 3600
+            mins = (total_secs_rounded % 3600) // 60
+            secs = total_secs_rounded % 60
+            
+            if hrs > 0:
+                return f"{hrs:02d}:{mins:02d}:{secs:02d}"
+            else:
+                return f"{mins:02d}:{secs:02d}"
+
+        lap_records.append({
+            "Split": f"Mile {lap_index}" if current_lap_dist == 1.0 else f"Mile {lap_index} (Final)",
+            "Distance": f"{current_lap_dist:.2f} mi",
+            "Split Pace": split_time_str,
+            "Total Time": format_cumulative_clock(cumulative_seconds)
+        })
+        lap_index += 1
+
+    st.dataframe(pd.DataFrame(lap_records), use_container_width=True, hide_index=True)
+
