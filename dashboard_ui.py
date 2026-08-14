@@ -472,6 +472,10 @@ def render_progression_nonagon(endurance_lvl, pace_lvl, hill_lvl):
 # MAIN INTERACTIVE UI DASHBOARD ELEMENT
 # ==========================================
 def render_dashboard_overview(player):
+    # Establish persistent application tab memory mapping
+    if "current_dashboard_tab" not in st.session_state:
+        st.session_state.current_dashboard_tab = "📅 Training Data Perspectives"
+        
     if "selected_activity_date" not in st.session_state:
         st.session_state.selected_activity_date = None
 
@@ -601,9 +605,20 @@ def render_dashboard_overview(player):
         else:
             st.caption("No dynamic historical year structures found.")
 
-    show_cal(player=None, external_df=df, unit_abbr=unit_abbr)
+    # Force component retention through click execution loops
+    if "current_dashboard_tab" not in st.session_state:
+        st.session_state.current_dashboard_tab = "📅 Training Data Perspectives"
+    # Force component view retention through click execution loops
+    if st.session_state.get('current_dashboard_tab') == "📅 Training Data Perspectives":
+        show_cal(player=None, external_df=df, unit_abbr=unit_abbr)
+    else:
+        show_cal(player=None, external_df=df, unit_abbr=unit_abbr)
 
 def show_cal(player=None, external_df=None, unit_abbr="Mi"):
+    # Intercept session dictionary allocations to prevent page-snapping loops
+    for state_key in ["sidebar_nav", "main_menu", "app_tabs", "navigation_options", "page_selection"]:
+        if state_key in st.session_state:
+            st.session_state[state_key] = "📅 Training Data Perspectives" 
     if "selected_activity_date" not in st.session_state:
         st.session_state.selected_activity_date = None
 
@@ -658,13 +673,24 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
     with sel_col1:
         if st.session_state.grid_year_dropdown not in years_available:
             st.session_state.grid_year_dropdown = years_available[0] if years_available else active_year_default
-        cal_year = st.selectbox("Select Display Year:", years_available, key="grid_year_dropdown")
+        # Dynamic index calculation logic
+        year_idx = years_available.index(st.session_state.grid_year_dropdown) if st.session_state.grid_year_dropdown in years_available else 0
+        cal_year = st.selectbox("Select Display Year:", years_available, index=year_idx)
+        
     with sel_col2:
         is_year_view = st.session_state.calendar_display_view == "📆 Full Year View"
         month_options = ["All Months"] + month_names
         if st.session_state.grid_month_dropdown not in month_options:
             st.session_state.grid_month_dropdown = month_options[1]
-        cal_month_name = st.selectbox(label="Select Display Month:", options=month_options, key="grid_month_dropdown", disabled=is_year_view)
+        # Dynamic index calculation logic
+        month_idx = month_options.index(st.session_state.grid_month_dropdown) if st.session_state.grid_month_dropdown in month_options else 1
+        cal_month_name = st.selectbox(label="Select Display Month:", options=month_options, index=month_idx, disabled=is_year_view)
+
+
+
+
+
+
 
     cal_month = 1 if cal_month_name == "All Months" else month_names.index(cal_month_name) + 1
 
@@ -682,15 +708,32 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
         has_prev = (prev_year >= min_date.year) if pd.notna(min_date) else False
         has_next = (next_year <= max_date.year) if pd.notna(max_date) else False
     else:
+        # Standard parent level alignment (8 spaces from the margin)
         has_prev = (prev_year > min_date.year) or (prev_year == min_date.year and prev_month >= min_date.month) if pd.notna(min_date) else False
         has_next = (next_year < max_date.year) or (next_year == max_date.year and next_month <= max_date.month) if pd.notna(max_date) else False
 
+    # REALIGNED TO 4 SPACES: Keep the function definition aligned with your column blocks
     def handle_navigation_callback(target_year, target_month_name):
         st.session_state.grid_year_dropdown = target_year
         st.session_state.grid_month_dropdown = target_month_name
-
+        st.session_state.selected_activity_date = None
+        
+        # 1. Enforce global page persistence variables across ALL common app tabs monikers
+        # This stops app.py from resetting your tab selection on a rerun cycle
+        for state_key in [
+            'sidebar_nav', 'main_menu', 'app_tabs', 'navigation_options', 
+            'page_selection', 'current_tab', 'view_selection', 'menu_selection'
+        ]:
+            st.session_state[state_key] = '📅 Training Data Perspectives'
+            
+        # 2. Synchronize full year parameters 
+        if "calendar_display_view" not in st.session_state:
+            st.session_state.calendar_display_view = "📆 Full Year View"
+            
+        # 3. Fire off the synchronized interface refresh
+        st.rerun() 
+    # Standard child block layout alignment (4 spaces from the margin)
     main_layout_col1, main_layout_col2 = st.columns([1.3, 0.7])
-
     with main_layout_col1:
         st.markdown(
             f"""
@@ -851,14 +894,54 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                 )
                 if pdf_data_stream:
                     st.download_button(label="📄 Export Data to PDF Report", data=pdf_data_stream, file_name=f"running_report_{cal_year}_{cal_month_name.replace(' ', '_')}.pdf", mime="application/pdf")
-
+            # 1. Create your layout navigation columns
             nav_col1, nav_col2, nav_col3 = st.columns([0.15, 0.7, 0.15])
+
+            # 2. Extract current integers dynamically from your app's session state dropdown records
+            current_year_int = int(st.session_state.grid_year_dropdown)
+            
+            # Map month name back to a 1-12 integer for math parsing
+            current_month_str = st.session_state.grid_month_dropdown
+            if current_month_str in month_names:
+                current_month_int = month_names.index(current_month_str) + 1
+            else:
+                current_month_int = 1 # Fallback default to January if viewing 'All Months'
+
+            # 3. Calculate adjacent dates cleanly in background memory
+            prev_month = current_month_int - 1 if current_month_int > 1 else 12
+            prev_year = current_year_int if current_month_int > 1 else current_year_int - 1
+            next_month = current_month_int + 1 if current_month_int < 12 else 1
+            next_year = current_year_int if current_month_int < 12 else current_year_int + 1
+
+            # 4. Convert math results into string configuration tags for your button args
+            month_options_list = ["All Months"] + month_names
+            prev_month_str = month_options_list[prev_month] if current_month_str != "All Months" else "All Months"
+            next_month_str = month_options_list[next_month] if current_month_str != "All Months" else "All Months"
+        
+            # 5. Render your directional arrows safely
             with nav_col1:
-                if has_prev: st.button("◀", key="prev_navigation_btn", use_container_width=True, on_click=handle_navigation_callback, args=(prev_year, cal_month_name))
+                if has_prev: 
+                    st.button(
+                        "◀", 
+                        key=f"prev_nav_btn_{st.session_state.grid_year_dropdown}_{st.session_state.grid_month_dropdown}", 
+                        use_container_width=True, 
+                        on_click=handle_navigation_callback, 
+                        args=(prev_year, prev_month_str)
+                    )
+
             with nav_col2:
                 st.markdown(f"<h3 style='text-align: center; color: white; margin-top: 5px; margin-bottom: 5px; letter-spacing: 1px;'>{current_header_title}</h3>", unsafe_allow_html=True)
             with nav_col3:
-                if has_next: st.button("▶", key="next_navigation_btn", use_container_width=True, on_click=handle_navigation_callback, args=(next_year, cal_month_name))
+
+                if has_next: st.button("▶", key=f"next_nav_btn_{st.session_state.grid_year_dropdown}_{st.session_state.grid_month_dropdown}", use_container_width=True, on_click=handle_navigation_callback, args=(next_year, next_month_str))
+
+
+
+
+
+
+
+
 
             # Full Year View
             if is_year_view:
@@ -1263,6 +1346,10 @@ def render_dashboard_overview(player):
     - Miles vs Kilometers unit toggling
     - Custom monthly inline calendar matrix table with selectable activity squares
     """
+    # Initialize structural session memory state for layout views if missing
+    if "current_dashboard_tab" not in st.session_state:
+        st.session_state.current_dashboard_tab = "📅 Training Data Perspectives"
+        
     if "selected_activity_date" not in st.session_state:
         st.session_state.selected_activity_date = None
 
