@@ -1725,13 +1725,20 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
     chart_data = df_splits[["Split", "Cumulative Minutes"]].copy().set_index("Split")
     st.line_chart(chart_data, use_container_width=True)
 
+
+
+
+
+
+
 # ==============================================================================
-# EXTENSION: TRAINING ZONE INTENSITY GRAPHIC (FIXED DONUT POLYGON)
+# EXTENSION: TRAINING ZONE INTENSITY GRAPHIC (WITH TIME DURATION CODES)
 # ==============================================================================
 def render_zone_octagon_display(matched_run_dict):
     """
     Simulates training zone distributions based on split velocities or pace logs,
-    generating a highly visible, native geometric donut ring representing percent execution.
+    calculates exact time spent in each zone using the overall run duration,
+    and generates a native geometric donut ring.
     """
     import pandas as pd
     import streamlit as st
@@ -1744,7 +1751,7 @@ def render_zone_octagon_display(matched_run_dict):
         st.info("Select a workout day to review cardiovascular intensity zone matrices.")
         return
 
-    # 1. Define Training Zone Baseline Metadata Attributes
+    # 1. Base Setup and Percentage Allocation
     zones = [
         {"name": "Z1: Recovery", "color": "#00ffcc", "pct": 15},
         {"name": "Z2: Endurance", "color": "#00ccff", "pct": 45},
@@ -1753,7 +1760,7 @@ def render_zone_octagon_display(matched_run_dict):
         {"name": "Z5: Anaerobic", "color": "#ff3333", "pct": 5}
     ]
 
-    # Try to extract real splits array list to distribute weights dynamically
+    # Parse real splits array to distribute percentages dynamically
     raw_splits = matched_run_dict.get("splits", [])
     if isinstance(raw_splits, list) and len(raw_splits) > 0:
         paces = []
@@ -1773,7 +1780,7 @@ def render_zone_octagon_display(matched_run_dict):
             
             z1, z2, z3, z4, z5 = 0, 0, 0, 0, 0
             for p in paces:
-                rel = (slowest - p) / span  # 1.0 is fastest, 0.0 is slowest
+                rel = (slowest - p) / span
                 if rel < 0.2: z1 += 1
                 elif rel < 0.5: z2 += 1
                 elif rel < 0.75: z3 += 1
@@ -1791,7 +1798,29 @@ def render_zone_octagon_display(matched_run_dict):
             for idx, z_item in enumerate(zones):
                 z_item["pct"] = max(5, z_vals[idx])
 
-    # 2. Build a Clean Flat Dataset for Native Chart Processing
+    # 2. NEW LOGIC: Parse run duration into total seconds to calculate exact zone times
+    duration_str = str(matched_run_dict.get('Duration', '00:00')).strip()
+    total_duration_seconds = 0
+    
+    try:
+        time_parts = duration_str.split(':')
+        if len(time_parts) == 2:  # MM:SS format
+            total_duration_seconds = int(time_parts[0]) * 60 + int(time_parts[1])
+        elif len(time_parts) == 3:  # HH:MM:SS format
+            total_duration_seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + int(time_parts[2])
+    except Exception:
+        total_duration_seconds = 2400  # Fallback baseline (40 minutes) if parsing fails
+
+    # Helper function to convert seconds back to a nice time string
+    def format_seconds_to_clock(secs):
+        hrs = secs // 3600
+        mins = (secs % 3600) // 60
+        secs = secs % 60
+        if hrs > 0:
+            return f"{hrs:02d}:{mins:02d}:{secs:02d}"
+        return f"{mins:02d}:{secs:02d}"
+
+    # 3. Build Dataset for Charting
     chart_rows = []
     for z in zones:
         chart_rows.append({
@@ -1799,13 +1828,12 @@ def render_zone_octagon_display(matched_run_dict):
             "Percentage": z["pct"]
         })
     df_chart = pd.DataFrame(chart_rows)
-
-    # 3. Render Layout Columns Side-by-Side Natively
-    col_g1, col_g2 = st.columns([0.45, 0.55])
+    # 4. Render Layout Columns Side-by-Side Natively (UPSCALED CHART SIZING)
+    col_g1, col_g2 = st.columns([0.5, 0.5])
     
     with col_g1:
-        # Create a native geometric ring chart (donut polygon configuration)
-        donut_chart = alt.Chart(df_chart).mark_arc(innerRadius=30, stroke="#1e222b", strokeWidth=2).encode(
+        # Increased innerRadius to 45, width/height to 170 for a significantly larger visual display
+        donut_chart = alt.Chart(df_chart).mark_arc(innerRadius=45, stroke="#1e222b", strokeWidth=2).encode(
             theta=alt.Theta(field="Percentage", type="quantitative"),
             color=alt.Color(field="Zone", type="nominal", scale=alt.Scale(
                 domain=[z["name"] for z in zones],
@@ -1813,18 +1841,26 @@ def render_zone_octagon_display(matched_run_dict):
             ), legend=None),
             tooltip=["Zone", "Percentage"]
         ).properties(
-            width=130,
-            height=130
+            width=170,
+            height=170
         )
         
         st.altair_chart(donut_chart, use_container_width=True)
         
     with col_g2:
-        st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
         for z in zones:
+            zone_color = z["color"]
+            zone_name = z["name"]
+            zone_pct = z["pct"]
+            
+            # Calculate exact seconds spent in this zone based on its percentage weight
+            zone_seconds = int(round(total_duration_seconds * (zone_pct / 100.0)))
+            zone_time_str = format_seconds_to_clock(zone_seconds)
+            
             st.markdown(
-                f"<span style='color:{z['color']}; font-size:18px;'>■</span> "
-                f"**{z['name']}:** `{z['pct']}%` Time", 
+                f"<span style='color:{zone_color}; font-size:18px;'>■</span> "
+                f"**{zone_name}**: `{zone_pct}%` ({zone_time_str})", 
                 unsafe_allow_html=True
             )
 
