@@ -9,6 +9,9 @@ import time
 from datetime import datetime, timedelta
 from services import parse_garmin_fit
 import pandas as pd
+from typing import List
+from metrics_config import FINAL_METRIC_CONFIG
+
 
 def render_upload_interface(player, FILE_PATH, database_file_path=None):
     st.markdown('## 🛰️ Telemetry Sync Dashboard')
@@ -275,10 +278,103 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                 if not hasattr(player, 'history_logs'): player.history_logs = []
                 
                 for s in staged_sessions:
-                    gold_rewarded = int(s['dist'] * 10)
-                    xp_gained = int(s['dist'] * 50)
-                    total_gold_rewarded += gold_rewarded
-                    total_xp_gained += xp_gained
+                    #gold_rewarded = int(s['dist'] * 10)
+                    #xp_gained = int(s['dist'] * 50)
+                    #total_gold_rewarded += gold_rewarded
+                    #total_xp_gained += xp_gained
+
+                    # --- ENHANCED INGESTION ATTRIBUTE DISTRIBUTOR LOOP ---
+                    total_gold_rewarded = 0
+                    total_xp_gained = 0
+                    
+                    # Initialize missing player attributes
+                    for attr in ['stamina_xp', 'agility_xp', 'power_xp']:
+                        if not hasattr(player, attr): setattr(player, attr, 0)
+            
+                    for s in staged_sessions:
+                        dist_val = float(s['dist'])
+                        base_xp = int(dist_val * 10)
+                        
+                        # Read split variations out of raw Garmin tracks to calculate true zone times
+                        s_splits = s.get('splits', [])
+                        z1, z2, z3, z4, z5 = 15, 45, 20, 15, 5  # Fallback
+                        
+                        if isinstance(s_splits, list) and len(s_splits) > 0:
+                            paces = []
+                            for s_item in s_splits:
+                                p_str = str(s_item.get('pace', s_item.get('Pace (/mi)', '08:00')))
+                                try:
+                                    parts = p_str.split(':')
+                                    if len(parts) == 2: paces.append(int(parts[0])*60 + int(parts[1]))
+                                except Exception: pass
+                            
+                            if len(paces) > 1:
+                                slowest, fastest = max(paces), min(paces)
+                                span = max(1, slowest - fastest)
+                                rz1, rz2, rz3, rz4, rz5 = 0, 0, 0, 0, 0
+                                for p in paces:
+                                    rel = (slowest - p) / span
+                                    if rel < 0.2: rz1 += 1
+                                    elif rel < 0.5: rz2 += 1
+                                    elif rel < 0.75: rz3 += 1
+                                    elif rel < 0.92: rz4 += 1
+                                    else: rz5 += 1
+                                tot = len(paces)
+                                z1, z2, z3, z4, z5 = int((rz1/tot)*100), int((rz2/tot)*100), int((rz3/tot)*100), int((rz4/tot)*100), 100-(int((rz1/tot)*100)+int((rz2/tot)*100)+int((rz3/tot)*100)+int((rz4/tot)*100))
+            
+                        # Distribute weights directly onto your character attributes
+                        stamina_xp = max(5, int(base_xp * (z1 + z2) / 50.0)) if dist_val > 0 else 0
+                        agility_xp = max(0, int(base_xp * (z3 + z4) / 50.0)) if dist_val > 0 else 0
+                        power_xp = max(0, int(base_xp * (z5 * 3) / 50.0)) if dist_val > 0 else 0
+                        gold_rewarded = max(2, int(dist_val * 5 + (stamina_xp + agility_xp + power_xp) * 0.1)) if dist_val > 0 else 0
+                        # ==================================================================
+                        # ADD THIS LINE RIGHT HERE: Sum the attributes to fix the missing variable
+                        # ==================================================================
+                        xp_gained = stamina_xp + agility_xp + power_xp
+                        # ==================================================================
+
+                        # Accumulate and update player stats
+                        total_gold_rewarded += gold_rewarded
+                        total_xp_gained += xp_gained
+            
+                        # Accumulate and update player stats
+                        player.stamina_xp = getattr(player, 'stamina_xp', 0) + stamina_xp
+                        player.agility_xp = getattr(player, 'agility_xp', 0) + agility_xp
+                        player.power_xp = getattr(player, 'power_xp', 0) + power_xp
+            
+                        text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Earned +{gold_rewarded}g | +{stamina_xp} Stamina, +{agility_xp} Agility, +{power_xp} Power XP."
+            
+                        # Re-index history_logs to store the new data
+                        structured_log = {
+                            "Date": s['date'], "Name": s.get('name', 'Run'), "Distance (Miles)": dist_val,
+                            "Duration": s['duration'], "text_payload": text_sentence,
+                            "z1_pct": z1, "z2_pct": z2, "z3_pct": z3, "z4_pct": z4, "z5_pct": z5
+                        }
+                        class LegacyStringDict(dict):
+                            def __str__(self): return self["text_payload"]
+                        player.history_logs.append(LegacyStringDict(structured_log))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########
                     
                     text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Duration: {s['duration']} | Pace: {s['pace']:.2f} min/mi | Elevation Climbed: +{s['ele']} ft. [REWARD] Earned +{gold_rewarded}g and +{xp_gained} XP."
                     
@@ -298,6 +394,32 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                 player.total_xp = getattr(player, 'total_xp', 0) + total_xp_gained
                 
                 save_data = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
+                # 2. TRIGGER THE AUTOMATIC REWARD SYSTEM UPDATES
+                # Pass the most recently added run log from your history list into the pipeline
+                if "history_logs" in save_data and len(save_data["history_logs"]) > 0:
+                    latest_run = save_data["history_logs"][-1]
+                    
+                    # This runs the math parser, awards patches, and appends the trophy cases
+                    process_and_award_metrics(latest_run)
+                    
+                    # 3. KEEP ACTIVE VARIABLES IN SYNC
+                    # Re-read the updated file structure back into your active player instance 
+                    # so your live application dashboard doesn't experience state desynchronization
+                    with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
+                        updated_profile_data = json.load(db_file)
+                        
+                    # Sync the live runtime object with the file's fresh calculations
+                    if hasattr(player, 'final_metric_data'):
+                        player.final_metric_data = updated_profile_data.get("final_metric_data", {})
+                    if hasattr(player, 'unlocked_badges'):
+                        player.unlocked_badges = updated_profile_data.get("unlocked_badges", [])
+                    if hasattr(player, 'lifetime_elevation_gain'):
+                        player.lifetime_elevation_gain = updated_profile_data.get("lifetime_elevation_gain", 0.0)
+       
+
+
+
+
                 with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
                     json.dump(save_data, db_file, default=str, indent=4)
                 
@@ -345,4 +467,259 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                 st.text(str(log))
     else:
         st.info('No recorded activity logs found inside save database memory.')
+
+def pace_to_seconds(pace_str: str) -> int:
+    """Converts a pace string 'MM:SS' into total raw seconds."""
+    try:
+        parts = pace_str.strip().split(":")
+        if len(parts) == 2:
+            return int(parts[0]) * 60 + int(parts[1])
+        return 0
+    except (ValueError, AttributeError):
+        return 0
+
+def calculate_split_variance(splits_list: List[str], total_distance: float) -> float:
+    """
+    Drops the first split (warm-up mile) and calculates the delta 
+    between the slowest and fastest remaining miles.
+    Returns variance in seconds, or -1.0 if ineligible.
+    """
+    # Rule validation: Must be at least 3 miles and have matching splits data
+    if total_distance < 3.0 or len(splits_list) < 3:
+        return -1.0
+        
+    # Surgical removal of the first warm-up mile split
+    remaining_splits = splits_list[1:]
+    
+    # Convert all remaining splits to seconds for precise arithmetic
+    splits_in_seconds = [pace_to_seconds(s) for s in remaining_splits if pace_to_seconds(s) > 0]
+    
+    if not splits_in_seconds:
+        return -1.0
+        
+    # Calculate absolute delta between the slowest (max seconds) and fastest (min seconds)
+    variance_seconds = max(splits_in_seconds) - min(splits_in_seconds)
+    return float(variance_seconds)
+def calculate_final_kick(avg_pace_str: str, final_mile_str: str) -> float:
+    """
+    Calculates what percentage faster the final mile was compared to the average pace.
+    Formula: (Avg Pace Seconds - Final Mile Seconds) / Avg Pace Seconds * 100
+    """
+    avg_seconds = pace_to_seconds(avg_pace_str)
+    final_seconds = pace_to_seconds(final_mile_str)
+    
+    if avg_seconds <= 0 or final_seconds <= 0:
+        return 0.0
+        
+    # If final mile is slower than average, percentage is <= 0 (no patch earned)
+    delta = avg_seconds - final_seconds
+    kick_percent = (delta / avg_seconds) * 100.0
+    return round(kick_percent, 2)
+
+def check_single_run_patches(new_run_log: dict) -> list:
+    """
+    Evaluates a single run's data payload against all 8 single_run_patches 
+    defined in metrics_config.py. Returns a list of earned patch dictionaries.
+    """
+    earned_patches = []
+    
+    # 1. Extract values using our payload keys and conversion helpers
+    # 1. Extract values using our payload keys and conversion helpers
+    import math
+
+    run_distance = float(new_run_log.get("Distance (Miles)", 0.0))
+    
+    # Safely handle the decimal pace value
+    raw_pace_val = new_run_log.get("pace", 0.0)
+    if raw_pace_val is None or (isinstance(raw_pace_val, float) and math.isnan(raw_pace_val)) or raw_pace_val <= 0:
+        raw_pace_val = 0.0
+
+    run_pace_seconds = decimal_pace_to_seconds(raw_pace_val)
+    run_elevation = clean_elevation_string(new_run_log.get("Elevation (ft)", "0"))
+    
+    raw_splits_array = new_run_log.get("splits", [])
+    pace_splits_list = [item.get("pace", "") for item in raw_splits_array if "pace" in item]
+    final_mile_str = pace_splits_list[-1] if pace_splits_list else ""
+    
+    # FIXED: Added fallback protection before running integer truncation conversion
+    if raw_pace_val > 0:
+        avg_min = int(raw_pace_val)
+        avg_sec = int(round((raw_pace_val - avg_min) * 60))
+        if avg_sec == 60:
+            avg_min += 1
+            avg_sec = 0
+    else:
+        avg_min, avg_sec = 0, 0
+        
+    avg_pace_str = f"{avg_min:02d}:{avg_sec:02d}"
+    
+    final_kick_percent = calculate_final_kick(avg_pace_str, final_mile_str)
+    split_variance = calculate_split_variance(pace_splits_list, run_distance)
+            
+    # 2. Map our calculated numbers to match our config keys exactly
+    compiled_run_metrics = {
+        "average_pace_seconds": run_pace_seconds,
+        "total_elevation_gain_ft": run_elevation,
+        "final_mile_kick_percent": final_kick_percent,
+        "total_distance_miles": run_distance,
+        "split_variance_seconds": split_variance
+    }
+
+    # 3. Dynamic loop through your configuration file rules
+    for pillar_id, config in FINAL_METRIC_CONFIG["single_run_patches"].items():
+        m_key = config["metric_key"]
+        val = compiled_run_metrics.get(m_key)
+        
+        # Skip if missing heart rate/weather data or flagged as uncalculated (-1.0)
+        if val is None or val == -1.0:
+            continue
+            
+        # Enforce minimum distance criteria rules (like Pillar 5's 3-mile rule)
+        if "requires_min_distance" in config and run_distance < config["requires_min_distance"]:
+            continue
+            
+        # Evaluate bounds based on inversion rules
+        for tier in config["tiers"]:
+            if config.get("is_inverted"):
+                # Fast paces/low deltas: Smaller numbers are superior
+                if tier["min_val"] <= val <= tier["max_val"]:
+                    earned_patches.append({
+                        "pillar": pillar_id,
+                        "id": tier["id"],
+                        "name": tier["name"],
+                        "icon": tier["icon"]
+                    })
+                    break  # Found our tier match, exit to next pillar
+            else:
+                # High volume/high climbing: Bigger numbers are superior
+                if tier["min_val"] <= val <= tier["max_val"]:
+                    earned_patches.append({
+                        "pillar": pillar_id,
+                        "id": tier["id"],
+                        "name": tier["name"],
+                        "icon": tier["icon"]
+                    })
+                    break
+                    
+    return earned_patches
+def process_and_award_metrics(new_run_log: dict):
+    """
+    Main evaluation pipeline. Processes incoming run payloads, updates 
+    profile statistics counters, awards single-run patches, and appends earned trophies.
+    """
+    SAVE_FILE = "save_file.json"
+    
+    if not os.path.exists(SAVE_FILE):
+        print(f"Error: {SAVE_FILE} not found during metric integration.")
+        return
+        
+    # 1. Read your existing profile data safely
+    with open(SAVE_FILE, "r", encoding="utf-8") as f:
+        profile = json.load(f)
+        
+    # Safeguard initialization if user hasn't run the migration snippet yet
+    if "final_metric_data" not in profile:
+        print("Warning: final_metric_data container missing from save file. Run initializer.")
+        return
+        
+    m_data = profile["final_metric_data"]
+    
+    # --- A. DATA CONVERSION EXTRACTORS ---
+    run_distance = float(new_run_log.get("Distance (Miles)", 0.0))
+    run_pace_seconds = decimal_pace_to_seconds(new_run_log.get("pace", 0.0))
+    run_elevation = clean_elevation_string(new_run_log.get("Elevation (ft)", "0"))
+    
+    # --- B. EXECUTE THE SINGLE-RUN PATCH ROUTINE (INTEGRATED HERE) ---
+    run_patches = check_single_run_patches(new_run_log)
+    
+    # Attach the badges permanently inside the individual workout log dictionary object
+    new_run_log["earned_patches"] = run_patches
+    
+    # Also push any unique patches to your permanent top-level unlocked list
+    for patch in run_patches:
+        if patch["id"] not in profile["unlocked_badges"]:
+            profile["unlocked_badges"].append(patch["id"])
+
+    # =========================================================================
+    # 💥 CRITICAL FIX: APPEND RUN TO CALENDAR ARRAY LIST IF NOT PRESENT 💥
+    # =========================================================================
+    if "history_logs" not in profile:
+        profile["history_logs"] = []
+        
+    # Cross-check date and distance to prevent adding duplicate rows
+    is_duplicate = any(
+        run.get("Date") == new_run_log.get("Date") and 
+        abs(float(run.get("Distance (Miles)", 0.0)) - run_distance) < 0.01
+        for run in profile["history_logs"] if isinstance(run, dict)
+    )
+    
+    if not is_duplicate:
+        profile["history_logs"].append(new_run_log)
+    else:
+        print(f"ℹ️ Duplicate Filter: Activity on {new_run_log.get('Date')} already saved in history.")
+    # =========================================================================
+    
+    # --- C. TICK UP LIFETIME ODOMETERS & COUNTERS ---
+    m_data["lifetime_odometer_miles"] = round(m_data["lifetime_odometer_miles"] + run_distance, 2)
+    
+    # Estimate standard average metabolic running burn of 100 kcal per mile for your logs
+    run_calories = int(run_distance * 100) 
+    m_data["lifetime_calories_burned"] += run_calories
+    
+    # Update your original game profile total elevation value to keep everything synchronized
+    profile["lifetime_elevation_gain"] = float(profile.get("lifetime_elevation_gain", 0.0)) + run_elevation
+    
+    # --- D. EVALUATE THREE-SHELF TROPHY CABINETS ---
+    # Shelf A: Mileage
+    mileage_config = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_a_mileage"]
+    for trophy in mileage_config["trophies"]:
+        if m_data["lifetime_odometer_miles"] >= trophy["threshold"] and trophy["id"] not in m_data["trophy_cabinet"]["shelf_a_mileage"]:
+            m_data["trophy_cabinet"]["shelf_a_mileage"].append(trophy["id"])
+            
+    # Shelf B: Elevation
+    elev_config = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_b_elevation"]
+    for trophy in elev_config["trophies"]:
+        if profile["lifetime_elevation_gain"] >= trophy["threshold"] and trophy["id"] not in m_data["trophy_cabinet"]["shelf_b_elevation"]:
+            m_data["trophy_cabinet"]["shelf_b_elevation"].append(trophy["id"])
+            
+    # Shelf C: Calories
+    cal_config = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_c_calories"]
+    for trophy in cal_config["trophies"]:
+        if m_data["lifetime_calories_burned"] >= trophy["threshold"] and trophy["id"] not in m_data["trophy_cabinet"]["shelf_c_calories"]:
+            m_data["trophy_cabinet"]["shelf_c_calories"].append(trophy["id"])
+
+    # --- E. INFINITE PRESTIGE PROGRESSION LOOPS ---
+    if m_data["lifetime_odometer_miles"] > 2000:
+        extra_miles = m_data["lifetime_odometer_miles"] - 2000
+        m_data["trophy_cabinet"]["prestige_loops"]["mileage_loops_count"] = int(extra_miles // mileage_config["loop_increment"])
+        
+    if profile["lifetime_elevation_gain"] > 100000:
+        extra_vert = profile["lifetime_elevation_gain"] - 100000
+        m_data["trophy_cabinet"]["prestige_loops"]["elevation_loops_count"] = int(extra_vert // elev_config["loop_increment"])
+
+    if m_data["lifetime_calories_burned"] > 100000:
+        extra_cal = m_data["lifetime_calories_burned"] - 100000
+        m_data["trophy_cabinet"]["prestige_loops"]["calorie_loops_count"] = int(extra_cal // cal_config["loop_increment"])
+
+    # --- F. WRITE EVERYTHING REFRESHED BACK TO YOUR DATABASE ---
+    with open(SAVE_FILE, "w", encoding="utf-8") as f:
+        json.dump(profile, f, indent=4, ensure_ascii=False)
+    print("Ledger Complete: Lifelong odometers, patches, and award cases refreshed successfully.")
+
+def decimal_pace_to_seconds(decimal_pace: float) -> int:
+    """Converts a decimal pace float (like 8.82) into raw total seconds."""
+    try:
+        minutes = int(decimal_pace)
+        seconds = int(round((decimal_pace - minutes) * 60))
+        return (minutes * 60) + seconds
+    except (ValueError, TypeError):
+        return 0
+
+def clean_elevation_string(elev_str: str) -> int:
+    """Strips formatting symbols '+', 'ft', and whitespace to return a clean integer."""
+    try:
+        cleaned = elev_str.replace("+", "").replace("ft", "").strip()
+        return int(float(cleaned))
+    except (ValueError, AttributeError):
+        return 0
 

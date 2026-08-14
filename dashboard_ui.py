@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 import io
+from metrics_config import FINAL_METRIC_CONFIG
 
 # Optional ReportLab integration for PDF generation
 try:
@@ -41,6 +42,208 @@ THEME_CONFIG = {
 # UPGRADE 1: PERFORMANCE MEMORY CACHING
 # ==========================================
 @st.cache_data(ttl=600)
+
+
+
+def ensure_metrics_schema_is_initialized():
+    """
+    Surgically checks your player profile file at startup to verify that your 
+    high-performance tracking containers exist. If missing, injects them seamlessly.
+    """
+    # 1. Identify which save file string name your active player configuration uses
+    # If your player model saves to save.json or save_file.json, map it here:
+    TARGET_DB = "save_file.json" 
+    
+    if not os.path.exists(TARGET_DB):
+        # Base template file initialization if completely empty
+        base_struct = {"history_logs": [], "unlocked_badges": []}
+        with open(TARGET_DB, "w", encoding="utf-8") as f:
+            json.dump(base_struct, f, indent=4)
+
+    with open(TARGET_DB, "r", encoding="utf-8") as f:
+        try:
+            profile_data = json.load(f)
+        except Exception:
+            return
+
+    # 2. Check for the final_metric_data dictionary layer
+    if "final_metric_data" not in profile_data:
+        profile_data["final_metric_data"] = {
+            "lifetime_odometer_miles": 0.0,
+            "lifetime_calories_burned": 0,
+            "current_streak_tracker": {
+                "current_week_runs_count": 0,
+                "last_tracked_week_start": "",
+                "consecutive_4_run_weeks": 0,
+                "consecutive_52_run_weeks": 0
+            },
+            "trophy_cabinet": {
+                "shelf_a_mileage": [],
+                "shelf_b_elevation": [],
+                "shelf_c_calories": [],
+                "prestige_loops": {
+                    "mileage_loops_count": 0,
+                    "elevation_loops_count": 0,
+                    "calorie_loops_count": 0
+                }
+            },
+            "all_time_personal_records": {
+                "fastest_1_mile_seconds": 99999,
+                "fastest_5k_seconds": 99999,
+                "fastest_10k_seconds": 99999,
+                "longest_single_run_miles": 0.0
+            }
+        }
+        if "unlocked_badges" not in profile_data:
+            profile_data["unlocked_badges"] = []
+            
+        # Write the completed schema back down to your workspace directory
+        with open(TARGET_DB, "w", encoding="utf-8") as f:
+            json.dump(profile_data, f, indent=4, ensure_ascii=False)
+
+# 🛑 EXECUTE THIS TRIGGER LINE AT THE VERY START OF YOUR DASHBOARD TO LOCK IN THE SCHEMA
+ensure_metrics_schema_is_initialized()
+
+
+
+
+
+def render_final_metric_dashboard(player_data: dict, target_col1, target_col2):
+    """
+    Renders the final_metric ledger using an advanced row-and-grid architecture.
+    Col 1 displays the Telemetry Row-Matrix. Col 2 displays the Trophy Shelf-Grid.
+    """
+    # 1. Safely extract your metric profile containers
+    m_data = player_data.get("final_metric_data", {})
+    if not m_data:
+        with target_col1:
+            st.warning("⚠️ Telemetry ledger uninitialized. Upload a .fit track to activate.")
+        return
+
+    cabinet = m_data.get("trophy_cabinet", {})
+    prestige = cabinet.get("prestige_loops", {})
+    unlocked_badges = player_data.get("unlocked_badges", [])
+
+    # =========================================================================
+    # ROW/GRID MATRIX 1: DAILY TELEMETRY PATCHES (COLUMN 1 TARGET)
+    # =========================================================================
+    with target_col1:
+        st.markdown("### 🎽 Telemetry Patch Ledger")
+        st.caption("Performance badges earned on individual workouts")
+        st.write("")
+
+        # Loop over the 8 pillars, turning each one into a clean, horizontal row
+        for p_id, p_config in FINAL_METRIC_CONFIG["single_run_patches"].items():
+            
+            # Wrap the row inside a styled container block for visual spacing
+            with st.container(border=True):
+                # Row Header Component
+                st.markdown(f"**Pillar: {p_config['name']}**")
+                
+                # Nested 3-Column Item Grid for Bronze, Silver, and Gold tiers
+                item_grid = st.columns(3)
+                for idx, tier in enumerate(p_config["tiers"]):
+                    with item_grid[idx]:
+                        is_badge_unlocked = tier["id"] in unlocked_badges
+                        
+                        # Render item container box
+                        if is_badge_unlocked:
+                            # Full-color unlocked state
+                            st.markdown(f"<div style='text-align: center;'><h2>{tier['icon']}</h2>"
+                                        f"<p style='color:#2ECC71; font-weight:bold; font-size:12px; margin:0;'>{tier['name']}</p>"
+                                        f"<p style='color:#7F8C8D; font-size:10px; margin:0;'><i>{tier['desc']}</i></p></div>", 
+                                        unsafe_allow_html=True)
+                        else:
+                            # Dimmed locked state with visual anchor
+                            st.markdown(f"<div style='text-align: center; opacity: 0.45;'><h2>🔘</h2>"
+                                        f"<p style='color:#7F8C8D; font-size:12px; margin:0;'>{tier['name']}</p>"
+                                        f"<p style='color:#95A5A6; font-size:10px; margin:0;'><i>{tier['desc']}</i></p></div>", 
+                                        unsafe_allow_html=True)
+
+    # =========================================================================
+    # ROW/GRID MATRIX 2: MULTI-SHELF TROPHY CABINET (COLUMN 2 TARGET)
+    # =========================================================================
+    with target_col2:
+        st.markdown("### 🏆 Milestone Trophy Case")
+        st.caption("Lifelong cumulative odometers and metabolic energy counters")
+        st.write("")
+
+        # ---------------------------------------------------------------------
+        # ROW ROW: MILEAGE SHELF TRACKER
+        # ---------------------------------------------------------------------
+        mile_cfg = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_a_mileage"]
+        earned_miles = cabinet.get("shelf_a_mileage", [])
+        mile_loops = prestige.get("mileage_loops_count", 0)
+
+        with st.container(border=True):
+            # Shelf header with raw telemetry data readout metric widget
+            st.markdown(f"#### 🗺️ {mile_cfg['name']}")
+            st.metric(label="Total Distance Covered", value=f"{m_data.get('lifetime_odometer_miles', 0.0):,} Miles")
+            
+            # 4-Column Shelf Grid layout for items
+            shelf_a_grid = st.columns(4)
+            for idx, trophy in enumerate(mile_cfg["trophies"]):
+                with shelf_a_grid[idx]:
+                    if trophy["id"] in earned_miles:
+                        st.markdown(f"<div style='text-align: center;'><h1>{trophy['icon']}</h1><b style='font-size:11px;'>{trophy['name']}</b><br><small style='color:#7F8C8D;'>{trophy['threshold']:,} mi</small></div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<div style='text-align: center; opacity: 0.35;'><h1>🔒</h1><span style='color:#7F8C8D; font-size:11px;'>{trophy['name']}</span><br><small>{trophy['threshold']:,} mi</small></div>", unsafe_allow_html=True)
+            
+            if mile_loops > 0:
+                st.markdown(f"⭐ **Prestige Loop Active**: `+{mile_loops}` Infinite Odometer Expansions completed!")
+
+        st.write("") # Spacing row
+
+        # ---------------------------------------------------------------------
+        # ROW ROW: ELEVATION VERT VAULT SHELF
+        # ---------------------------------------------------------------------
+        elev_cfg = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_b_elevation"]
+        earned_elev = cabinet.get("shelf_b_elevation", [])
+        vert_loops = prestige.get("elevation_loops_count", 0)
+
+        with st.container(border=True):
+            st.markdown(f"#### 🏔️ {elev_cfg['name']}")
+            st.metric(label="Total Vertical Foot Climb", value=f"{player_data.get('lifetime_elevation_gain', 0.0):,} Vert Feet")
+            
+            shelf_b_grid = st.columns(4)
+            for idx, trophy in enumerate(elev_cfg["trophies"]):
+                with shelf_b_grid[idx]:
+                    if trophy["id"] in earned_elev:
+                        st.markdown(f"<div style='text-align: center;'><h1>{trophy['icon']}</h1><b style='font-size:11px;'>{trophy['name']}</b><br><small style='color:#7F8C8D;'>{trophy['threshold']:,} ft</small></div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<div style='text-align: center; opacity: 0.35;'><h1>🔒</h1><span style='color:#7F8C8D; font-size:11px;'>{trophy['name']}</span><br><small>{trophy['threshold']:,} ft</small></div>", unsafe_allow_html=True)
+            
+            if vert_loops > 0:
+                st.markdown(f"🏔️ **Prestige Vert Loop Active**: `+{vert_loops}` Alpine Summits cleared!")
+
+        st.write("") # Spacing row
+
+        # ---------------------------------------------------------------------
+        # ROW ROW: METABOLIC BURN MENU SHELF
+        # ---------------------------------------------------------------------
+        cal_cfg = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_c_calories"]
+        earned_cals = cabinet.get("shelf_c_calories", [])
+        cal_loops = prestige.get("calorie_loops_count", 0)
+
+        with st.container(border=True):
+            st.markdown(f"#### 🍕 {cal_cfg['name']}")
+            st.metric(label="Total Cumulative Energy Burned", value=f"{m_data.get('lifetime_calories_burned', 0):,} Calories")
+            
+            shelf_c_grid = st.columns(4)
+            for idx, trophy in enumerate(cal_cfg["trophies"]):
+                with shelf_c_grid[idx]:
+                    if trophy["id"] in earned_cals:
+                        st.markdown(f"<div style='text-align: center;'><h1>{trophy['icon']}</h1><b style='font-size:11px;'>{trophy['name']}</b><br><small style='color:#7F8C8D;'>{trophy['threshold']:,} kcal</small></div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<div style='text-align: center; opacity: 0.35;'><h1>🔒</h1><span style='color:#7F8C8D; font-size:11px;'>{trophy['name']}</span><br><small>{trophy['threshold']:,} kcal</small></div>", unsafe_allow_html=True)
+            
+            if cal_loops > 0:
+                st.markdown(f"👨‍🍳 **Infinite Feast Loop Active**: Conquered `+{cal_loops}` additional major banquet tables!")
+
+
+
+
+
 def load_data_from_save_json():
     """
     Reads save_file.json and caches the resulting raw activity list in memory.
@@ -969,7 +1172,113 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                 run_row = day_runs.iloc[0]
                                 run_dist = run_row['Display_Distance']
                                 run_time = run_row.get('Duration', '--:--')
-                                run_pace = f"{run_row.get('pace', '—')} min/{unit_abbr.lower()}"
+                                # 🧮 UPGRADED LIVE CALCULATOR FIX:
+                                raw_p = run_row.get('pace', '—')
+                                
+                                # Convert duration string "HH:MM:SS" or "MM:SS" into total minutes
+                                def duration_str_to_minutes(d_str):
+                                    try:
+                                        parts = [int(p) for p in str(d_str).strip().split(':')]
+                                        if len(parts) == 3:   # HH:MM:SS
+                                            return parts[0]*60 + parts[1] + parts[2]/60.0
+                                        elif len(parts) == 2: # MM:SS
+                                            return parts[0] + parts[1]/60.0
+                                        return 0.0
+                                    except Exception:
+                                        return 0.0
+
+                                # 1. If the direct pace value is valid, attempt to read it
+                                is_invalid_pace = pd.isna(raw_p) or str(raw_p).lower() == "nan" or raw_p == "—"
+                                
+                                if not is_invalid_pace:
+                                    try:
+                                        float_p = float(raw_p)
+                                        run_pace_decimal = float_p if float_p > 0 else 0.0
+                                    except (ValueError, TypeError):
+                                        run_pace_decimal = 0.0
+                                else:
+                                    run_pace_decimal = 0.0
+
+                                # 2. BACKUP CALCULATOR IN ACTION: If missing, calculate it right now from Time & Distance!
+                                if run_pace_decimal == 0.0 and run_dist > 0:
+                                    total_minutes = duration_str_to_minutes(run_time)
+                                    if total_minutes > 0:
+                                        run_pace_decimal = total_minutes / run_dist
+
+                                # 3. Convert the finalized decimal into clean, professional MM:SS text layout
+                                if run_pace_decimal > 0:
+                                    m_part = int(run_pace_decimal)
+                                    s_part = int(round((run_pace_decimal - m_part) * 60))
+                                    if s_part == 60:
+                                        m_part += 1
+                                        s_part = 0
+                                    run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
+                                else:
+                                    run_pace = f"— min/{unit_abbr.lower()}"
+                                # --- 🎽 PATCH ROW VISUAL INJECTOR ---
+                                # Extract the patch dictionary list attached to this run row object
+                                run_patches_list = run_row.get('earned_patches', [])
+                                
+                                # Safety conversion check: Handle string entries or list data frames safely
+                                if isinstance(run_patches_list, str):
+                                    try:
+                                        # Parse string literal structures if stored as flat text data fields
+                                        run_patches_list = json.loads(run_patches_list.replace("'", '"'))
+                                    except Exception:
+                                        run_patches_list = []
+                                        
+                                # Pull out just the iconic emojis from the patch dictionary objects
+                                if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
+                                    # Extracts and merges emojis into a clean visual row (e.g. "🐇 🏔️ 📜")
+                                    patch_emoji_string = " ".join([p.get('icon', '') for p in run_patches_list if isinstance(p, dict) and 'icon' in p])
+                                else:
+                                    patch_emoji_string = ""
+
+                                # Append the visual achievement badges onto your calendar pace label
+                                if patch_emoji_string:
+                                    run_pace = f"{run_pace}   {patch_emoji_string}"
+                                # --- 🎽 PATCH ROW VISUAL INJECTOR ---
+                                # Extract the patch dictionary list attached to this run row object
+                                run_patches_list = run_row.get('earned_patches', [])
+                                
+                                # Safety conversion check: Handle string entries or list data frames safely
+                                if isinstance(run_patches_list, str):
+                                    try:
+                                        # Parse string literal structures if stored as flat text data fields
+                                        run_patches_list = json.loads(run_patches_list.replace("'", '"'))
+                                    except Exception:
+                                        run_patches_list = []
+                                        
+                                # Pull out just the iconic emojis from the patch dictionary objects
+                                if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
+                                    # Extracts and merges emojis into a clean visual row (e.g. "🐇 🏔️ 📜")
+                                    patch_emoji_string = " ".join([p.get('icon', '') for p in run_patches_list if isinstance(p, dict) and 'icon' in p])
+                                else:
+                                    patch_emoji_string = ""
+
+                                # Append the visual achievement badges onto your calendar pace label
+                                if patch_emoji_string:
+                                    run_pace = f"{run_pace}   {patch_emoji_string}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                 
                                 day_elevation = 0.0
                                 if run_elev_cols := [c for c in m_df.columns if 'elev' in c.lower()]:
@@ -1032,23 +1341,66 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                             week_has_days = True
                             target_date_str = f"{cal_year}-{loop_m:02d}-{day:02d}"
                             day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str]
-                            
+
                             if not day_runs.empty:
                                 run_row = day_runs.iloc[0]
                                 run_dist = run_row['Display_Distance']
                                 run_time = run_row.get('Duration', '--:--')
-                                run_pace = f"{run_row.get('pace', '—')} min/{unit_abbr.lower()}"
                                 
+                                # 🧮 UPGRADED LIVE CALCULATOR FIX:
+                                raw_p = run_row.get('pace', '—')
+                                
+                                # Convert duration string "HH:MM:SS" or "MM:SS" into total minutes
+                                def duration_str_to_minutes(d_str):
+                                    try:
+                                        parts = [int(p) for p in str(d_str).strip().split(':')]
+                                        if len(parts) == 3:   # HH:MM:SS
+                                            return parts[0]*60 + parts[1] + parts[2]/60.0
+                                        elif len(parts) == 2: # MM:SS
+                                            return parts[0] + parts[1]/60.0
+                                        return 0.0
+                                    except Exception:
+                                        return 0.0
+
+                                # 1. If the direct pace value is valid, attempt to read it
+                                is_invalid_pace = pd.isna(raw_p) or str(raw_p).lower() == "nan" or raw_p == "—"
+                                
+                                if not is_invalid_pace:
+                                    try:
+                                        float_p = float(raw_p)
+                                        run_pace_decimal = float_p if float_p > 0 else 0.0
+                                    except (ValueError, TypeError):
+                                        run_pace_decimal = 0.0
+                                else:
+                                    run_pace_decimal = 0.0
+
+                                # 2. BACKUP CALCULATOR IN ACTION: If missing, calculate it right now from Time & Distance!
+                                if run_pace_decimal == 0.0 and run_dist > 0:
+                                    total_minutes = duration_str_to_minutes(run_time)
+                                    if total_minutes > 0:
+                                        run_pace_decimal = total_minutes / run_dist
+
+                                # 3. Convert the finalized decimal into clean, professional MM:SS text layout
+                                if run_pace_decimal > 0:
+                                    m_part = int(run_pace_decimal)
+                                    s_part = int(round((run_pace_decimal - m_part) * 60))
+                                    if s_part == 60:
+                                        m_part += 1
+                                        s_part = 0
+                                    run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
+                                else:
+                                    run_pace = f"— min/{unit_abbr.lower()}"
+
                                 day_elevation = 0.0
                                 if elev_columns:
                                     raw_elev_val = run_row.get(elev_columns[0], "0")
                                     cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
                                     parsed_elev = pd.to_numeric(cleaned_run_elev, errors='coerce')
                                     if pd.notna(parsed_elev): day_elevation = parsed_elev
-                                    
+
                                 week_dist += run_dist
                                 week_elev += day_elevation
-                                
+ 
                                 if isinstance(run_time, str) and ':' in run_time:
                                     parts = run_time.split(':')
                                     try:
@@ -1498,11 +1850,21 @@ def render_dashboard_overview(player):
             monthly_df = monthly_df.sort_values('Month_Period').reset_index(drop=True)
             total_months = len(monthly_df)
             
+            min_month_val = 1
+            max_month_val = 12
+        
+            if min_month_val == max_month_val:
+                if min_month_val == 12:
+                    min_month_val = 11  # Slide minimum down if locked at December
+                else:
+                    max_month_val = min_month_val + 1  # Pad maximum up by 1 month
+        
+            # 2. Update your st.slider widget on Line 1853 to look exactly like this:
             month_range = st.slider(
-                label="Select Month Window Range:",
-                min_value=0,
-                max_value=total_months - 1,
-                value=(0, total_months - 1),
+                label="📅 Filter Workout Month Range",
+                min_value=int(min_month_val),
+                max_value=int(max_month_val),
+                value=(int(min_month_val), int(max_month_val)),
                 step=1,
                 key="month_range_slider"
             )
@@ -1530,11 +1892,30 @@ def render_dashboard_overview(player):
         total_years = len(yearly_df)
         
         if total_years > 0:
+            if 'min_year' in locals() or 'max_year' in locals():
+                # If your code uses variables named min_year / max_year
+                if min_year == max_year or min_year == 0:
+                    if min_year == 0 or min_year == 0.0:
+                        min_year, max_year = 2022, 2023
+                    else:
+                        max_year = min_year + 1
+            else:
+                # If your code uses a pandas DataFrame column to extract values on the fly:
+                try:
+                    # Check what your min/max extraction variables are named
+                    min_year = int(cal_df['Year'].min()) if not cal_df.empty else 2022
+                    max_year = int(cal_df['Year'].max()) if not cal_df.empty else 2022
+                    if min_year == max_year:
+                        max_year = min_year + 1
+                except Exception:
+                    min_year, max_year = 2022, 2023
+        
+            # 2. Update your slider on Line 1895 to use these guarded boundaries:
             year_range = st.slider(
-                label="Select Year Window Range:",
-                min_value=0,
-                max_value=total_years - 1,
-                value=(0, total_years - 1),
+                label="📅 Filter Workout Year Range",
+                min_value=int(min_year),
+                max_value=int(max_year),
+                value=(int(min_year), int(max_year)),
                 step=1,
                 key="year_range_slider"
             )
@@ -1863,4 +2244,53 @@ def render_zone_octagon_display(matched_run_dict):
                 f"**{zone_name}**: `{zone_pct}%` ({zone_time_str})", 
                 unsafe_allow_html=True
             )
+
+
+# ==============================================================================
+# EXTENSION: RPG CHARACTER TRAINING LEDGER REWARDS (READ ONLY CALENDAR CAPTURE)
+# ==============================================================================
+def render_rpg_xp_rewards(matched_run_dict, player_profile_obj=None):
+    """
+    Displays historical summary receipts of character attributes and currency earned 
+    from real-world workouts. Submissions are read-only to prevent farming loops.
+    """
+    import streamlit as st
+
+    st.markdown("---")
+    st.markdown("#### ⚔️ Coliseum Training Attribute Rewards")
+
+    if not matched_run_dict:
+        st.info("Select a completed activity day to view rewarded training attributes.")
+        return
+
+    try:
+        distance = float(matched_run_dict.get('Display_Distance', 0.0))
+        if distance <= 0:
+            distance = float(matched_run_dict.get('Distance (Miles)', 0.0))
+    except Exception:
+        distance = 0.0
+
+    base_xp = int(distance * 10)  # 10 Base XP per Mile
+    
+    # Isolate nested split percentage logs
+    z1 = matched_run_dict.get('z1_pct', 15)
+    z2 = matched_run_dict.get('z2_pct', 45)
+    z3 = matched_run_dict.get('z3_pct', 20)
+    z4 = matched_run_dict.get('z4_pct', 15)
+    z5 = matched_run_dict.get('z5_pct', 5)
+
+    stamina_xp = max(5, int(base_xp * (z1 + z2) / 50.0)) if distance > 0 else 0
+    agility_xp = max(0, int(base_xp * (z3 + z4) / 50.0)) if distance > 0 else 0
+    power_xp = max(0, int(base_xp * (z5 * 3) / 50.0)) if distance > 0 else 0
+    gold_earned = max(2, int(distance * 5 + (stamina_xp + agility_xp + power_xp) * 0.1)) if distance > 0 else 0
+
+    col_xp1, col_xp2 = st.columns([0.5, 0.5])
+    with col_xp1:
+        st.markdown(f"🟢 **Stamina XP:** `+{stamina_xp} XP` *(Z1/Z2 Engine)*")
+        st.markdown(f"🟡 **Agility XP:** `+{agility_xp} XP` *(Z3/Z4 Tempo)*")
+        st.markdown(f"🔴 **Power XP:** `+{power_xp} XP` *(Z5 Anaerobic)*")
+        
+    with col_xp2:
+        st.markdown(f"🪙 **Gold Shards:** `+{gold_earned} Gold`")
+        st.markdown("✨ **Status:** `🛡️ Claimed & Processed`")
 

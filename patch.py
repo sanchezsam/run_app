@@ -1,60 +1,65 @@
+import json
 import os
-import re
 
-def apply_app_tabs_patch():
-    target_file = "app.py"
-    if not os.path.exists(target_file):
-        print(f"❌ Error: {target_file} not found.")
+FILENAME = "save_file.json"
+
+def safely_inject_final_metric():
+    if not os.path.exists(FILENAME):
+        print(f"Error: Could not locate '{FILENAME}' in this directory.")
         return
 
-    with open(target_file, "r", encoding="utf-8") as f:
-        content = f.read()
+    # 1. Read existing data safely
+    try:
+        with open(FILENAME, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Critical Error: '{FILENAME}' has broken formatting or was cut off: {e}")
+        print("Fix the trailing brackets in your editor before running this script.")
+        return
 
-    # Define replacement strings for tabs based on the issue [INDEX]
-    new_tabs_segment = """# ==========================================
-# MASTER TAB CONTROLLERS (STATE PERSISTENT)
-# ==========================================
+    # 2. Check for existence to prevent overwriting your progress
+    if "final_metric_data" in data:
+        print("Database Verification: 'final_metric_data' container is already safely installed.")
+        return
 
-if "active_tab_selection" not in st.session_state:
-    st.session_state.active_tab_selection = "Calendar"
+    print("Target Found. Initializing surgical integration of 'final_metric_data'...")
 
-tab_titles = [
-    '🏠 Dashboard Overview', 'Telemetry Sync', 'Biometric Coliseum',
-    'Pro Shop & Garage', 'Performance Analytics', 'Training Ledger', 'Calendar'
-]
-
-# Render interactive radio layout inside a container
-st.session_state.active_tab_selection = st.radio(
-    label="Navigate Viewports:",
-    options=tab_titles,
-    index=tab_titles.index(st.session_state.active_tab_selection) if st.session_state.active_tab_selection in tab_titles else 6,
-    horizontal=True,
-    label_visibility="collapsed"
-)
-
-# Convert stateless 'with' blocks into state-persistent conditional routing
-if st.session_state.active_tab_selection == '🏠 Dashboard Overview':"""
-
-    # Apply structural changes via regex to handle whitespace variations [INDEX]
-    pattern = r"tab_titles\s*=\s*\[.*?\]\s*tab0,\s*tab1,.*?=\s*st\.\s*tabs\(.*?\)\s*with\s*tab0\s*:"
-    content = re.sub(pattern, new_tabs_segment, content, flags=re.DOTALL)
-
-    # Convert remaining 'with tabX:' blocks to state checks
-    replacements = {
-        "with tab1:": "if st.session_state.active_tab_selection == 'Telemetry Sync':",
-        "with tab2:": "if st.session_state.active_tab_selection == 'Biometric Coliseum':",
-        "with tab3:": "if st.session_state.active_tab_selection == 'Pro Shop & Garage':",
-        "with tab4:": "if st.session_state.active_tab_selection == 'Performance Analytics':",
-        "with tab5:": "if st.session_state.active_tab_selection == 'Training Ledger':",
-        "with tab6:": "if st.session_state.active_tab_selection == 'Calendar':"
+    # 3. Create the clean container right alongside your levels and gear
+    data["final_metric_data"] = {
+        "lifetime_odometer_miles": 0.0,
+        "lifetime_calories_burned": 0,
+        "current_streak_tracker": {
+            "current_week_runs_count": 0,
+            "last_tracked_week_start": "",
+            "consecutive_4_run_weeks": 0,
+            "consecutive_52_run_weeks": 0
+        },
+        "trophy_cabinet": {
+            "shelf_a_mileage": [],
+            "shelf_b_elevation": [],
+            "shelf_c_calories": [],
+            "prestige_loops": {
+                "mileage_loops_count": 0,
+                "elevation_loops_count": 0,
+                "calorie_loops_count": 0
+            }
+        },
+        "all_time_personal_records": {
+            "fastest_1_mile_seconds": 99999,
+            "fastest_5k_seconds": 99999,
+            "fastest_10k_seconds": 99999,
+            "longest_single_run_miles": 0.0
+        }
     }
-    for old, new in replacements.items():
-        content = content.replace(old, new)
 
-    with open(target_file, "w", encoding="utf-8") as f:
-        f.write(content)
-    print("🎉 app.py successfully refactored!")
+    # 4. Safe write back, preserving all your original game variables
+    try:
+        with open(FILENAME, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        print("Success! 'final_metric_data' has been seamlessly added without touching other stats.")
+    except Exception as e:
+        print(f"Error writing to file: {e}")
 
 if __name__ == "__main__":
-    apply_app_tabs_patch()
+    safely_inject_final_metric()
 
