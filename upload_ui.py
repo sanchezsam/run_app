@@ -13,6 +13,98 @@ from typing import List
 from metrics_config import FINAL_METRIC_CONFIG
 
 
+
+import re
+import math
+
+def compute_current_ratings(logs_array, current_fuel_rating=100, current_nitro_rating=100, current_torque_rating=100):
+    """
+    Calculates dynamic upward and downward level trends based on comparative 
+    performance intensity rather than strict calendar date expiration gates.
+    """
+    # Baseline expected targets per current level ranking tier
+    fuel_level = max(1, min(9, int(current_fuel_rating / 100) + 1))
+    nitro_level = max(1, min(9, int(current_nitro_rating / 100) + 1))
+    torque_level = max(1, min(9, int(current_torque_rating / 100) + 1))
+    
+    # Calculate baseline expectations based on current tier ranks
+    expected_distance = fuel_level * 2.0     # Level 3 expects 6 miles
+    expected_pace = 11.0 - (nitro_level * 0.5) # Level 6 expects an 8:00 min/mi pace
+    expected_elevation = torque_level * 150.0  # Level 4 expects 600 ft of climbing
+    
+    total_rolling_miles = 0.0
+    
+    # Process only the single incoming run batch to calculate trend deltas
+    for entry in logs_array[-1:]:  # Focus strictly on processing the latest ingestion log
+        if isinstance(entry, dict):
+            dist = float(entry.get("Distance (Miles)", entry.get("dist", 0.0)))
+            pace = float(entry.get("pace", 0.0))
+            
+            ele = entry.get("Elevation (ft)", entry.get("ele", 0.0))
+            if isinstance(ele, str):
+                ele = float(ele.replace('+', '').replace('ft', '').strip())
+            ele = float(ele)
+        else:
+            # Fallback regex parsing for raw text log blocks
+            entry_str = str(entry)
+            d_m = re.search(r'(?:Run|run|ran|distance):?\s*([0-9.]+)', entry_str, re.IGNORECASE)
+            p_m = re.search(r'(?:Pace|pace):\s*([0-9.]+)', entry_str, re.IGNORECASE)
+            e_m = re.search(r'(?:Elevation|elevation|Climbed):\s*\+?([0-9.]+)', entry_str, re.IGNORECASE)
+            
+            dist = float(d_m.group(1)) if d_m else 0.0
+            pace = float(p_m.group(1)) if p_m else 0.0
+            ele = float(e_m.group(1)) if e_m else 0.0
+
+        if dist <= 0:
+            continue
+            
+        total_rolling_miles += dist
+
+        # 🔋 1. ENDURANCE TREND (FUEL)
+        dist_delta = dist - expected_distance
+        if dist_delta >= 0:
+            # Upward Trend: Earn more points for pushing past your current target
+            current_fuel_rating += int(dist_delta * 15) + 10
+        else:
+            # Downward Trend: Lose rating points if the run was shorter than expected
+            current_fuel_rating += int(dist_delta * 8) - 5
+
+        # ⚡ 2. SPEED TREND (NITRO)
+        if pace > 3.0:
+            pace_delta = expected_pace - pace # Positive means you ran faster than expected
+            if pace_delta >= 0:
+                # Upward Trend
+                current_nitro_rating += int(pace_delta * 40) + 12
+            else:
+                # Downward Trend
+                current_nitro_rating += int(pace_delta * 20) - 8
+
+        # 🏔️ 3. ELEVATION TREND (TORQUE)
+        ele_delta = ele - expected_elevation
+        if ele_delta >= 0:
+            # Upward Trend
+            current_torque_rating += int(ele_delta * 0.15) + 10
+        else:
+            # Downward Trend
+            current_torque_rating += int(ele_delta * 0.08) - 5
+
+    # Enforce minimum boundaries and maximum caps [Level 1 to Level 9]
+    current_fuel_rating = max(0, min(899, current_fuel_rating))
+    current_nitro_rating = max(0, min(899, current_nitro_rating))
+    current_torque_rating = max(0, min(899, current_torque_rating))
+
+    # Recalculate level outputs dynamically from the updated rating numbers
+    final_fuel_lvl = int(current_fuel_rating / 100) + 1
+    final_nitro_lvl = int(current_nitro_rating / 100) + 1
+    final_torque_lvl = int(current_torque_rating / 100) + 1
+
+    return final_fuel_lvl, final_nitro_lvl, final_torque_lvl, total_rolling_miles, current_fuel_rating, current_nitro_rating, current_torque_rating
+
+
+
+
+
+
 def render_upload_interface(player, FILE_PATH, database_file_path=None):
     st.markdown('## 🛰️ Telemetry Sync Dashboard')
     st.markdown('Ingest fresh Garmin GPX/FIT workout tracking files to update your odometer, generate career experience, and harvest performance gold.')
@@ -249,10 +341,13 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
              try:
                  if not hasattr(player, 'history_logs'):
                      player.history_logs = []
+                 if not hasattr(player, 'unlocked_badges'):
+                     player.unlocked_badges = []
     
-                 total_gold_rewarded, total_xp_gained = 0, 0
-                 newly_earned_patches_count = 0  # Dynamic counter for this batch sequence
+                 # 1. Take a baseline snapshot of your career badges before running calculations
+                 pre_upload_badge_count = len(player.unlocked_badges)
                  
+                 total_gold_rewarded, total_xp_gained = 0, 0
                  for s in staged_sessions:
                      z1, z2, z3, z4, z5 = 15, 45, 20, 15, 5 
                      gold = max(2, int(float(s['dist']) * 10))
@@ -268,7 +363,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                          clean_pace_val = float(raw_s_pace)
                          pace_text = f"{clean_pace_val:.2f}"
 
-                     text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Pace: {pace_text} min/mi | [REWARD] +{gold}g, +{xp} XP."
+                     # FIXED: Added explicit labels so the regex text parser can read elevation metrics safely
+                     text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Pace: {pace_text} min/mi | Elevation Climbed: +{s.get('ele', 0)} ft | [REWARD] +{gold}g, +{xp} XP."
                      
                      structured_log = {
                          "Date": s['date'], 
@@ -283,34 +379,64 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                          "ambient_temp_f": float(s.get("ambient_temp_f", 72.0)),
                          "zone_1_2_duration_percent": round(((z1 + z2) / max(1, z1 + z2 + z3 + z4 + z5)) * 100.0, 2)
                      }
-                     
-                     # Check single run patches BEFORE compiling profile array 
-                     # to count newly unlocked milestones dynamically
-                     if 'check_single_run_patches' in globals() or 'check_single_run_patches' in locals():
-                         run_patch_awards = check_single_run_patches(structured_log)
-                         newly_earned_patches_count += len(run_patch_awards)
-                         
                      player.history_logs.append(structured_log)
          
-                 # Update core character stats values
+                 # Update core profile character values
                  player.gold = getattr(player, 'gold', 50) + total_gold_rewarded
                  player.total_xp = getattr(player, 'total_xp', 0) + total_xp_gained
                  
-                 save_data = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
-                 if save_data.get("history_logs"):
-                     process_and_award_metrics(save_data["history_logs"][-1])
+                 # 2. EXTRACT OR SAFE-INITIALIZE TREND SKILL RATINGS
+                 f_rating = getattr(player, 'fuel_rating', 100)
+                 n_rating = getattr(player, 'nitro_rating', 100)
+                 t_rating = getattr(player, 'torque_rating', 100)
 
-                 # Lock the core snapshot and batch counts into memory
+                 # Run the rating trend calculator engine
+                 post_f, post_n, post_t, miles_added, new_f, new_n, new_t = compute_current_ratings(
+                     player.history_logs, f_rating, n_rating, t_rating
+                 )
+                 
+                 # Assign the updated trends directly back onto your live player object
+                 player.fuel_rating = new_f
+                 player.nitro_rating = new_n
+                 player.torque_rating = new_t
+                 
+                 # Assign calculated integer ranks back to display level states
+                 player.fuel_level = post_f
+                 player.nitro_level = post_n
+                 player.torque_level = post_t
+
+                 # FIXED: Removed the extra, unparameterized compute_current_ratings call that was causing the overwrite bug
+                 
+                 # Save base runtime updates to disk FIRST so the award pipeline reads accurate data
+                 save_data = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
+                 with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
+                     json.dump(save_data, db_file, default=str, indent=4)
+
+                 # 3. RUN AWARD CALCULATOR SECOND
+                 if player.history_logs:
+                     process_and_award_metrics(player.history_logs[-1])
+
+                 # 4. DISK FILE STRUCT RE-ALIGNMENT RESYNC
+                 with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
+                     fresh_disk_data = json.load(db_file)
+                     
+                 # Inject calculated lists updates back to live RAM variables
+                 player.unlocked_badges = fresh_disk_data.get("unlocked_badges", [])
+                 if hasattr(player, 'final_metric_data'):
+                     player.final_metric_data = fresh_disk_data.get("final_metric_data", {})
+
+                 # Calculate the true mathematical badge delta updates
+                 post_upload_badges = fresh_disk_data.get("unlocked_badges", [])
+                 true_batch_earned = max(0, len(post_upload_badges) - pre_upload_badge_count)
+
+                 # Lock the core snapshot and batch counts into session state memory
                  st.session_state.last_sync_deltas = {
                      "gold": total_gold_rewarded, 
                      "xp": total_xp_gained, 
                      "count": len(staged_sessions),
                      "miles_added": sum(float(s['dist']) for s in staged_sessions),
-                     "batch_patches_earned": newly_earned_patches_count # Dynamic payload variable
+                     "batch_patches_earned": true_batch_earned  
                  }
-
-                 with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
-                     json.dump(save_data, db_file, default=str, indent=4)
 
                  st.cache_data.clear()
                  st.session_state.uploader_reset_token += 1
@@ -319,7 +445,6 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                  
              except Exception as e:
                  st.error(f"Save batch error: {str(e)}")
-
 
 
 
@@ -489,93 +614,186 @@ def check_single_run_patches(new_run_log: dict) -> list:
     """
     Evaluates a single run's data payload against all 8 single_run_patches 
     defined in metrics_config.py. Returns a list of earned patch dictionaries.
-    """
+    """          
     earned_patches = []
     import math
+                 
+    # 1. Check all potential key variations for distance and elevation safely
+    run_distance = float(new_run_log.get("Distance (Miles)", new_run_log.get("dist", 0.0)))
+    raw_ele_val = new_run_log.get("Elevation (ft)", new_run_log.get("ele", new_run_log.get("Elevation", "0")))
+    run_elevation = clean_elevation_string(str(raw_ele_val))
 
-    run_distance = float(new_run_log.get("Distance (Miles)", 0.0))
-    
-    # Safely handle the decimal pace value
+    # 2. Safe conversion handling for plain decimal floats (e.g., 8.45 -> 8 min 45 sec)
     raw_pace_val = new_run_log.get("pace", 0.0)
-    
-    # FIXED: Check for NaN, None, or zero. If it's missing/invalid, mark as None to skip speed checks
     if raw_pace_val is None or (isinstance(raw_pace_val, float) and (math.isnan(raw_pace_val) or raw_pace_val <= 0)):
         run_pace_seconds = None
         avg_pace_str = "00:00"
-    else:
-        run_pace_seconds = decimal_pace_to_seconds(float(raw_pace_val))
-        avg_min = int(raw_pace_val)
-        avg_sec = int(round((raw_pace_val - avg_min) * 60))
-        if avg_sec == 60:
-            avg_min += 1
-            avg_sec = 0
+    else:            
+        pace_float = float(raw_pace_val)
+        avg_min = int(pace_float)
+        avg_sec = int(round((pace_float - avg_min) * 100))
+        if avg_sec >= 60:
+            avg_sec = min(59, avg_sec)
+            
+        run_pace_seconds = (avg_min * 60) + avg_sec
         avg_pace_str = f"{avg_min:02d}:{avg_sec:02d}"
 
-    run_elevation = clean_elevation_string(new_run_log.get("Elevation (ft)", "0"))
-    
+    # 3. Parse splits arrays and structure variables
     raw_splits_array = new_run_log.get("splits", [])
-    pace_splits_list = [item.get("pace", "") for item in raw_splits_array if isinstance(item, dict) and "pace" in item]
+    if isinstance(raw_splits_array, list):
+        pace_splits_list = [item.get("pace", "") for item in raw_splits_array if isinstance(item, dict) and "pace" in item]
+    else:
+        pace_splits_list = []
+        
     final_mile_str = pace_splits_list[-1] if pace_splits_list else ""
     
-    final_kick_percent = calculate_final_kick(avg_pace_str, final_mile_str) if run_pace_seconds else -1.0
-    split_variance = calculate_split_variance(pace_splits_list, run_distance)
+    if run_pace_seconds and final_mile_str:
+        final_kick_percent = calculate_final_kick(avg_pace_str, final_mile_str)
+    else:
+        final_kick_percent = 0.0
+        
+    split_variance = calculate_split_variance(pace_splits_list, run_distance) if pace_splits_list else 0.0
             
-    # Map raw numbers to match our config keys exactly
+    # 4. Map calculated numbers to match config keys exactly
     compiled_run_metrics = {
         "average_pace_seconds": run_pace_seconds,
         "total_elevation_gain_ft": run_elevation,
         "final_mile_kick_percent": final_kick_percent,
         "total_distance_miles": run_distance,
         "split_variance_seconds": split_variance,
-        "aerobic_decoupling_percent": new_run_log.get("aerobic_decoupling_percent", -1.0),
-        "ambient_temp_f": new_run_log.get("ambient_temp_f", -1.0),
-        "zone_1_2_duration_percent": new_run_log.get("zone_1_2_duration_percent", -1.0)
+        "aerobic_decoupling_percent": float(new_run_log.get("aerobic_decoupling_percent", 0.0)),
+        "ambient_temp_f": float(new_run_log.get("ambient_temp_f", 72.0)),
+        "zone_1_2_duration_percent": float(new_run_log.get("zone_1_2_duration_percent", 50.0))
     }
 
-    # Dynamic loop through your configuration file rules
+    # 5. Dynamic loop through configuration file rules
     for pillar_id, config in FINAL_METRIC_CONFIG["single_run_patches"].items():
         m_key = config["metric_key"]
         val = compiled_run_metrics.get(m_key)
         
-        # FIXED: Skipping if value is explicitly None or -1.0 prevents fake 0-second Cheetah patches
+        # Skip if missing valid telemetry numbers
         if val is None or val == -1.0:
             continue
             
-        # Enforce minimum distance criteria rules (like Pillar 5's 3-mile rule)
+        # Enforce minimum distance rules
         if "requires_min_distance" in config and run_distance < config["requires_min_distance"]:
             continue
             
-        # Evaluate bounds based on inversion rules
+        # Evaluate tier bounds based on inversion properties
         for tier in config["tiers"]:
+            # FIXED: Added fallback protection to prevent KeyError crashes on special non-bounded tiers
             if "min_val" not in tier or "max_val" not in tier:
-                continue # Skip custom metrics like weather if bounds are missing
-                
+                continue
+
             min_bound = float(tier["min_val"])
             max_bound = float(tier["max_val"])
             
             if config.get("is_inverted"):
-                # Fast paces/low deltas: Smaller numbers are superior
                 if min_bound <= val <= max_bound:
                     earned_patches.append({
-                        "pillar": pillar_id,
-                        "id": tier["id"],
-                        "name": tier["name"],
-                        "icon": tier["icon"]
+                        "pillar": pillar_id, "id": tier["id"], "name": tier["name"], "icon": tier["icon"]
                     })
                     break  
             else:
-                # High volume/high climbing: Bigger numbers are superior
                 if min_bound <= val <= max_bound:
                     earned_patches.append({
-                        "pillar": pillar_id,
-                        "id": tier["id"],
-                        "name": tier["name"],
-                        "icon": tier["icon"]
+                        "pillar": pillar_id, "id": tier["id"], "name": tier["name"], "icon": tier["icon"]
                     })
                     break
                     
     return earned_patches
+def check_single_run_patches(new_run_log: dict) -> list:
+    """
+    Evaluates a single run's data payload against all 8 single_run_patches 
+    defined in metrics_config.py. Returns a list of earned patch dictionaries.
+    """          
+    earned_patches = []
+    import math
+                 
+    # 1. Check all potential key variations for distance and elevation safely
+    run_distance = float(new_run_log.get("Distance (Miles)", new_run_log.get("dist", 0.0)))
+    raw_ele_val = new_run_log.get("Elevation (ft)", new_run_log.get("ele", new_run_log.get("Elevation", "0")))
+    run_elevation = clean_elevation_string(str(raw_ele_val))
 
+    # 2. Safe conversion handling for plain decimal floats (e.g., 8.45 -> 8 min 45 sec)
+    raw_pace_val = new_run_log.get("pace", 0.0)
+    if raw_pace_val is None or (isinstance(raw_pace_val, float) and (math.isnan(raw_pace_val) or raw_pace_val <= 0)):
+        run_pace_seconds = None
+        avg_pace_str = "00:00"
+    else:            
+        pace_float = float(raw_pace_val)
+        avg_min = int(pace_float)
+        avg_sec = int(round((pace_float - avg_min) * 100))
+        if avg_sec >= 60:
+            avg_sec = min(59, avg_sec)
+            
+        run_pace_seconds = (avg_min * 60) + avg_sec
+        avg_pace_str = f"{avg_min:02d}:{avg_sec:02d}"
+
+    # 3. Parse splits arrays and structure variables
+    raw_splits_array = new_run_log.get("splits", [])
+    if isinstance(raw_splits_array, list):
+        pace_splits_list = [item.get("pace", "") for item in raw_splits_array if isinstance(item, dict) and "pace" in item]
+    else:
+        pace_splits_list = []
+        
+    final_mile_str = pace_splits_list[-1] if pace_splits_list else ""
+    
+    if run_pace_seconds and final_mile_str:
+        final_kick_percent = calculate_final_kick(avg_pace_str, final_mile_str)
+    else:
+        final_kick_percent = 0.0
+        
+    split_variance = calculate_split_variance(pace_splits_list, run_distance) if pace_splits_list else 0.0
+            
+    # 4. Map calculated numbers to match config keys exactly
+    compiled_run_metrics = {
+        "average_pace_seconds": run_pace_seconds,
+        "total_elevation_gain_ft": run_elevation,
+        "final_mile_kick_percent": final_kick_percent,
+        "total_distance_miles": run_distance,
+        "split_variance_seconds": split_variance,
+        "aerobic_decoupling_percent": float(new_run_log.get("aerobic_decoupling_percent", 0.0)),
+        "ambient_temp_f": float(new_run_log.get("ambient_temp_f", 72.0)),
+        "zone_1_2_duration_percent": float(new_run_log.get("zone_1_2_duration_percent", 50.0))
+    }
+
+    # 5. Dynamic loop through configuration file rules
+    for pillar_id, config in FINAL_METRIC_CONFIG["single_run_patches"].items():
+        m_key = config["metric_key"]
+        val = compiled_run_metrics.get(m_key)
+        
+        # Skip if missing valid telemetry numbers
+        if val is None or val == -1.0:
+            continue
+            
+        # Enforce minimum distance rules
+        if "requires_min_distance" in config and run_distance < config["requires_min_distance"]:
+            continue
+            
+        # Evaluate tier bounds based on inversion properties
+        for tier in config["tiers"]:
+            # FIXED: Added fallback protection to prevent KeyError crashes on special non-bounded tiers
+            if "min_val" not in tier or "max_val" not in tier:
+                continue
+
+            min_bound = float(tier["min_val"])
+            max_bound = float(tier["max_val"])
+            
+            if config.get("is_inverted"):
+                if min_bound <= val <= max_bound:
+                    earned_patches.append({
+                        "pillar": pillar_id, "id": tier["id"], "name": tier["name"], "icon": tier["icon"]
+                    })
+                    break  
+            else:
+                if min_bound <= val <= max_bound:
+                    earned_patches.append({
+                        "pillar": pillar_id, "id": tier["id"], "name": tier["name"], "icon": tier["icon"]
+                    })
+                    break
+                    
+    return earned_patches
 
 
 

@@ -70,6 +70,9 @@ import matplotlib.pyplot as plt
 
 
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 def generate_single_metric_nonagon(level_value, category_type):
     """
     Generates a true 9-sided nonagon chart with individual flat-edged slices,
@@ -115,8 +118,9 @@ def generate_single_metric_nonagon(level_value, category_type):
             # Active slice: Filled completely with the metric color
             ax.fill(wedge_theta, wedge_radius, color=fill_color, alpha=0.85, zorder=1)
         else:
-            # Inactive slice: Filled with an off-white placeholder background
-            ax.fill(wedge_theta, wedge_radius, color='#f9fafb', alpha=1.0, zorder=1)
+            # FIXED: Changed from a solid, opaque white (alpha=1.0) to a light, subtle off-white overlay (alpha=0.12).
+            # This allows the background slices to look locked without drawing over and erasing your unlocked levels!
+            ax.fill(wedge_theta, wedge_radius, color='#000000', alpha=0.04, zorder=1)
 
     # 5. DRAW THE INTERNAL SLICE DIVIDER LINES (SPOKES)
     for angle in angles:
@@ -133,11 +137,14 @@ def generate_single_metric_nonagon(level_value, category_type):
     plt.yticks([], [])
     plt.ylim(0, 3)
     
+    # RESTORED: Explicit light-theme background canvas settings to match your original UI
+    fig.patch.set_facecolor('#ffffff')
+    ax.set_facecolor('#ffffff')
+    
     ax.set_title(chart_title, size=8, weight='bold', pad=4, color='#1f2937')
     plt.tight_layout()
     
     return fig
-
 
 
 def load_player():
@@ -200,26 +207,29 @@ if player is not None and os.path.exists(FILE_PATH):
 
 calculate_and_render_profile(player)
 
-# 1. Read parameters using safe fallback defaults (now scaled 1-9)
-endurance = current_profile.get('endurance_level', 1)
-speed = current_profile.get('pace_level', 1)
-elevation = current_profile.get('hill_climbing_level', 1)
+#endurance = current_profile.get('fuel_level', current_profile.get('endurance_level', 1))
+#speed     = current_profile.get('nitro_level', current_profile.get('pace_level', 1))
+#elevation = current_profile.get('torque_level', current_profile.get('hill_climbing_level', 1))
 
+endurance = final_fuel_lvl if 'final_fuel_lvl' in locals() else 3
+speed     = final_nitro_lvl if 'final_nitro_lvl' in locals() else 6
+elevation = final_torque_lvl if 'final_torque_lvl' in locals() else 3
+
+        
 # Create 5 columns total, leaving the edges as empty spacer buffers
 _, col1, col2, col3, _ = st.columns([1, 2, 2, 2, 1])
 
-with col1:
-    st.metric("🔋 Endurance", f"{endurance} / 9")
+with col1: 
+    #st.metric("🔋 Endurance", f"{endurance} / 9")
     st.pyplot(generate_single_metric_nonagon(endurance, 'Endurance'))
-
-with col2:
-    st.metric("⚡ Speed", f"{speed} / 9")
+        
+with col2:  
+    #st.metric("⚡ Speed", f"{speed} / 9")
     st.pyplot(generate_single_metric_nonagon(speed, 'Speed'))
 
 with col3:
-    st.metric("⛰️ Elevation", f"{elevation} / 9")
+    #st.metric("⛰️  Elevation", f"{elevation} / 9")
     st.pyplot(generate_single_metric_nonagon(elevation, 'Elevation'))
-
 
 # Master metrics banner layout strip
 hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6 = st.columns(6)

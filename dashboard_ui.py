@@ -9,6 +9,13 @@ import matplotlib.pyplot as plt
 import io
 from metrics_config import FINAL_METRIC_CONFIG
 
+
+
+
+
+
+
+
 # Optional ReportLab integration for PDF generation
 try:
     from reportlab.lib.pagesizes import letter
@@ -628,9 +635,13 @@ def generate_pdf_report(target_df, title_text, unit_abbr, total_miles, total_tim
 # ==========================================
 # UPGRADE 3: CHARTING RADAR NONAGON VISUALS
 # ==========================================
+import numpy as np
+import matplotlib.pyplot as plt
+
 def render_progression_nonagon(endurance_lvl, pace_lvl, hill_lvl):
     """
-    Builds and returns a 9-slice polar chart representing progression levels.
+    REVERTED: Builds a traditional 9-slice polar radar chart representing 
+    overlapping progression levels across 3 target training pillars.
     """
     num_slices = 9
     labels = [
@@ -638,37 +649,53 @@ def render_progression_nonagon(endurance_lvl, pace_lvl, hill_lvl):
         "Pace L1", "Pace L2", "Pace L3",
         "Hill L1", "Hill L2", "Hill L3"
     ]
-    
+   
+    # Calculate the fractional fills across your legacy 3-tier sub-slots
     values = [
         min(endurance_lvl, 1), min(max(endurance_lvl - 1, 0), 1), min(max(endurance_lvl - 2, 0), 1),
         min(pace_lvl, 1),      min(max(pace_lvl - 1, 0), 1),      min(max(pace_lvl - 2, 0), 1),
         min(hill_lvl, 1),      min(max(hill_lvl - 1, 0), 1),      min(max(hill_lvl - 2, 0), 1)
     ]
-    
+   
+    # Multiply by 3 to scale out to the radial plot geometry boundaries
     display_values = [v * 3 for v in values]
     angles = np.linspace(0, 2 * np.pi, num_slices, endpoint=False).tolist()
-    
+
+    # Close the circular visual line loops path cleanly
     display_values += display_values[:1]
     angles += angles[:1]
-    
+
+    # Initialize standard Matplotlib polar grid panels
     fig, ax = plt.subplots(figsize=(4.5, 4.5), subplot_kw=dict(polar=True))
     ax.set_theta_offset(np.pi / 2)
     ax.set_theta_direction(-1)
-    
+
+    # Set up peripheral axis ticks and sub-tier rings labels
     plt.xticks(angles[:-1], labels, color='#ffffff', size=8)
     ax.set_rlabel_position(0)
     plt.yticks([1, 2, 3], ["L1", "L2", "L3"], color="#7e8794", size=7)
     plt.ylim(0, 3)
-    
-    ax.plot(angles, display_values, color=THEME_CONFIG["NONAGON_LINE"], linewidth=2, linestyle='solid')
-    ax.fill(angles, display_values, color=THEME_CONFIG["NONAGON_FILL"], alpha=0.3)
-    
+
+    # Draw the boundary contours and alpha area fill layers
+    theme_line = THEME_CONFIG["NONAGON_LINE"] if 'THEME_CONFIG' in globals() else "#4ade80"
+    theme_fill = THEME_CONFIG["NONAGON_FILL"] if 'THEME_CONFIG' in globals() else "#4ade80"
+
+    ax.plot(angles, display_values, color=theme_line, linewidth=2, linestyle='solid')
+    ax.fill(angles, display_values, color=theme_fill, alpha=0.3)
+
+    # Apply Cabinet Color Palette Background Styling Panel
     fig.patch.set_facecolor('#1e222b')
     ax.set_facecolor('#1e222b')
     ax.spines['polar'].set_color('#3e4452')
     ax.grid(color='#3e4452', linestyle='--')
-    
+
     return fig
+
+
+
+
+
+
 
 # ==========================================
 # MAIN INTERACTIVE UI DASHBOARD ELEMENT
@@ -1651,6 +1678,21 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                 hill_score = 3 if avg_elev >= 250.0 else (2 if avg_elev >= 75.0 else 1)
                 
                 st.write("✨ **Progression Radar Athlete Matrix Profile**")
+                # FIXED: Pull the dynamically calculated trend levels straight from the active player state
+                # FIXED: Checks every potential attribute naming variation to ensure your real values are captured
+                current_endurance = getattr(player, 'fuel_level', getattr(player, 'endurance_level', 1))
+                current_pace      = getattr(player, 'nitro_level', getattr(player, 'pace_level', 1))
+                current_hill      = getattr(player, 'torque_level', getattr(player, 'hill_level', 1))
+               
+                # Generate the graphic using the verified values
+                fig = render_progression_nonagon(
+                    endurance_lvl=current_endurance,
+                    pace_lvl=current_pace,
+                    hill_lvl=current_hill
+                )
+                
+
+
                 nonagon_fig = render_progression_nonagon(endurance_score, pace_score, hill_score)
                 st.pyplot(nonagon_fig)
             else:
@@ -1681,55 +1723,6 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                     st.metric("⛰️ King of Mountain Climb", f"{max_elev_row['Numeric_Elev']:,.0f} ft", f"Achieved on {max_elev_row['Formatted_Date']}")
 
 
-def render_progression_nonagon(endurance_lvl, pace_lvl, hill_lvl):
-    """
-    Builds and returns a 9-slice polar chart representing progression levels.
-    Expects levels between 0 and 3 for each attribute.
-    """
-    num_slices = 9
-    
-    # Define labels for the 9 slices (3 slices per attribute category)
-    labels = [
-        "Endurance L1", "Endurance L2", "Endurance L3",
-        "Pace L1", "Pace L2", "Pace L3",
-        "Hill L1", "Hill L2", "Hill L3"
-    ]
-    
-    # Calculate step fills dynamically based on current levels (max value 3)
-    values = [
-        min(endurance_lvl, 1), min(max(endurance_lvl - 1, 0), 1), min(max(endurance_lvl - 2, 0), 1),
-        min(pace_lvl, 1),      min(max(pace_lvl - 1, 0), 1),      min(max(pace_lvl - 2, 0), 1),
-        min(hill_lvl, 1),      min(max(hill_lvl - 1, 0), 1),      min(max(hill_lvl - 2, 0), 1)
-    ]
-    
-    # Scale binary slice availability to uniform map steps
-    display_values = [v * 3 for v in values]
-    
-    # Calculate angles for a closed 9-sided nonagon
-    angles = np.linspace(0, 2 * np.pi, num_slices, endpoint=False).tolist()
-    
-    # Close the polygon loop mathematically
-    display_values += display_values[:1]
-    angles += angles[:1]
-    
-    # Instantiate figure canvas object
-    fig, ax = plt.subplots(figsize=(5, 5), subplot_kw=dict(polar=True))
-    
-    # Rotate layout so the first vertex is anchored cleanly at the top
-    ax.set_theta_offset(np.pi / 2)
-    ax.set_theta_direction(-1)
-    
-    # Apply labels and nonagon spine grid coordinates
-    plt.xticks(angles[:-1], labels, color='#333333', size=9)
-    ax.set_rlabel_position(0)
-    plt.yticks([1, 2, 3], ["L1", "L2", "L3"], color="grey", size=8)
-    plt.ylim(0, 3)
-    
-    # Plot outer border outline and inner area fills
-    ax.plot(angles, display_values, color='#2e7d32', linewidth=2, linestyle='solid')
-    ax.fill(angles, display_values, color='#81c784', alpha=0.5)
-    
-    return fig
 
 
 
