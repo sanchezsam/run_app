@@ -1341,7 +1341,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
 
 
 
-            # Spreadsheet View
+# Spreadsheet View
             elif st.session_state.calendar_display_view == "📊 Spreadsheet View":
                 table_body_html = ""
                 months_to_loop = range(1, 13) if cal_month_name == "All Months" else [cal_month]
@@ -1368,14 +1368,56 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                 run_row = day_runs.iloc[0]
                                 run_dist = float(run_row['Display_Distance'])
                                 run_time = str(run_row.get('Duration', '--:--'))
-                                run_pace = f"{run_row.get('pace', '—')} min/{unit_abbr.lower()}"
+                                raw_p = run_row.get('pace', '—')
+
+                                # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
+                                def duration_str_to_minutes(d_str):
+                                    try:
+                                        parts = [int(p) for p in str(d_str).strip().split(':')]
+                                        if len(parts) == 3:   # HH:MM:SS
+                                            return parts[0]*60 + parts[1] + parts[2]/60.0
+                                        elif len(parts) == 2: # MM:SS
+                                            return parts[0] + parts[1]/60.0
+                                        return 0.0
+                                    except Exception:
+                                        return 0.0
+
+                                # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES SAFELY
+                                raw_p_str = str(raw_p).strip().lower()
+                                is_invalid_pace = pd.isna(raw_p) or raw_p_str in ["nan", "—", "-", ""]
+                                
+                                run_pace_decimal = 0.0
+                                if not is_invalid_pace:
+                                    try:
+                                        float_p = float(raw_p)
+                                        if float_p > 0:
+                                            run_pace_decimal = float_p
+                                    except (ValueError, TypeError):
+                                        pass
+
+                                # 🧮 3. BACKUP TIME-DISTANCE RECALCULATOR IF VALUES ARE EMPTY
+                                if run_pace_decimal == 0.0 and run_dist > 0:
+                                    total_minutes = duration_str_to_minutes(run_time)
+                                    if total_minutes > 0:
+                                        run_pace_decimal = total_minutes / run_dist
+
+                                # 🧮 4. BUILD THE STANDARDIZED PACE TEXT FIELD STRING
+                                if run_pace_decimal > 0:
+                                    m_part = int(run_pace_decimal)
+                                    s_part = int(round((run_pace_decimal - m_part) * 60))
+                                    if s_part == 60:
+                                        m_part += 1
+                                        s_part = 0
+                                    run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
+                                else:
+                                    run_pace = f"— min/{unit_abbr.lower()}"
+
                                 # =====================================================================
                                 # 🎽 AMBIGUITY-SAFE: SPREADSHEET VIEW PATCH INJECTOR
                                 # =====================================================================
                                 raw_p_cell = run_row.get("earned_patches", [])
                                 run_patches_list = []
                                 
-                                # Use isinstance checks instead of pd.notna to block array ambiguity crashes
                                 if isinstance(raw_p_cell, list):
                                     run_patches_list = raw_p_cell
                                 elif isinstance(raw_p_cell, str):

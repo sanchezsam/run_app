@@ -1,18 +1,18 @@
 {
-    "name": "Racer 1",
+    "name": "Athlete",
     "bodyweight": 180,
     "level": 1,
-    "total_xp": 175,
+    "total_xp": 618,
     "running_level": 1,
     "vo2_max": 40.0,
     "avg_heart_rate": 150,
     "resting_heart_rate": 65,
-    "lifetime_elevation_gain": 1600.0,
+    "lifetime_elevation_gain": 800.0,
     "cadence_history": [],
     "elevation_milestone_history": [],
     "deep_rem_streak": 0,
     "stat_points": 0,
-    "gold": 102,
+    "gold": 245,
     "inventory": [],
     "equipped_gear": {
         "feet": "None",
@@ -41,87 +41,213 @@
     "synced_garmin_activities": [],
     "history_logs": [
         {
-            "Date": "2022-01-02",
-            "Name": "2022-01-02-18-19-02.fit",
-            "Distance (Miles)": 7.02,
-            "Duration": "01:02:02",
-            "text_payload": "[2022-01-02] Run: 7.02 miles | Earned +52g | +121 Stamina, +0 Agility, +54 Power XP.",
-            "z1_pct": 25,
-            "z2_pct": 62,
-            "z3_pct": 0,
+            "Date": "2023-05-21",
+            "Name": "2023-05-21-12-01-35.fit",
+            "Distance (Miles)": 26.74,
+            "Duration": "03:27:52",
+            "text_payload": "[2023-05-21] Run: 26.74 miles | Earned +195g | +432 Stamina, +58 Agility, +128 Power XP.",
+            "z1_pct": 7,
+            "z2_pct": 74,
+            "z3_pct": 11,
             "z4_pct": 0,
-            "z5_pct": 13
+            "z5_pct": 8
         },
         {
-            "Date": "2022-01-02",
-            "Name": "2022-01-02-18-19-02.fit",
-            "Distance (Miles)": 7.02,
-            "Duration": "01:02:02",
-            "pace": 8.842604400880013,
-            "Elevation (ft)": "+387.8 ft",
+            "Date": "2023-05-21",
+            "Name": "2023-05-21-12-01-35.fit",
+            "Distance (Miles)": 26.74,
+            "Duration": "03:27:52",
+            "pace": 7.774322014763363,
+            "Elevation (ft)": "+2091.2 ft",
             "splits": [
                 {
                     "split_num": 1,
                     "distance_mi": 1.0,
-                    "time": "10:42",
-                    "pace": "10:42"
+                    "time": "08:35",
+                    "pace": "8:35"
                 },
                 {
                     "split_num": 2,
                     "distance_mi": 1.0,
-                    "time": "05:33",
-                    "pace": "5:33"
+                    "time": "08:02",
+                    "pace": "8:02"
                 },
                 {
                     "split_num": 3,
                     "distance_mi": 1.0,
-                    "time": "09:00",
-                    "pace": "9:00"
+                    "time": "07:44",
+                    "pace": "7:44"
                 },
                 {
                     "split_num": 4,
                     "distance_mi": 1.0,
-                    "time": "09:20",
-                    "pace": "9:20"
+                    "time": "07:51",
+                    "pace": "7:51"
                 },
                 {
                     "split_num": 5,
                     "distance_mi": 1.0,
-                    "time": "09:01",
-                    "pace": "9:01"
+                    "time": "07:28",
+                    "pace": "7:28"
                 },
                 {
                     "split_num": 6,
                     "distance_mi": 1.0,
-                    "time": "09:15",
-                    "pace": "9:15"
+                    "time": "07:53",
+                    "pace": "7:53"
                 },
                 {
                     "split_num": 7,
                     "distance_mi": 1.0,
-                    "time": "08:58",
-                    "pace": "8:58"
+                    "time": "08:02",
+                    "pace": "8:02"
                 },
                 {
                     "split_num": 8,
-                    "distance_mi": 0.01,
-                    "time": "00:09",
-                    "pace": "11:28"
+                    "distance_mi": 1.0,
+                    "time": "07:48",
+                    "pace": "7:48"
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "07:53",
+                    "pace": "7:53"
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 1.0,
+                    "time": "07:53",
+                    "pace": "7:53"
+                },
+                {
+                    "split_num": 11,
+                    "distance_mi": 1.0,
+                    "time": "07:48",
+                    "pace": "7:48"
+                },
+                {
+                    "split_num": 12,
+                    "distance_mi": 1.0,
+                    "time": "08:02",
+                    "pace": "8:02"
+                },
+                {
+                    "split_num": 13,
+                    "distance_mi": 1.0,
+                    "time": "07:56",
+                    "pace": "7:56"
+                },
+                {
+                    "split_num": 14,
+                    "distance_mi": 1.0,
+                    "time": "07:51",
+                    "pace": "7:51"
+                },
+                {
+                    "split_num": 15,
+                    "distance_mi": 1.0,
+                    "time": "08:12",
+                    "pace": "8:12"
+                },
+                {
+                    "split_num": 16,
+                    "distance_mi": 1.0,
+                    "time": "07:37",
+                    "pace": "7:37"
+                },
+                {
+                    "split_num": 17,
+                    "distance_mi": 1.0,
+                    "time": "07:32",
+                    "pace": "7:32"
+                },
+                {
+                    "split_num": 18,
+                    "distance_mi": 1.0,
+                    "time": "07:44",
+                    "pace": "7:44"
+                },
+                {
+                    "split_num": 19,
+                    "distance_mi": 1.0,
+                    "time": "07:42",
+                    "pace": "7:42"
+                },
+                {
+                    "split_num": 20,
+                    "distance_mi": 1.0,
+                    "time": "07:36",
+                    "pace": "7:36"
+                },
+                {
+                    "split_num": 21,
+                    "distance_mi": 1.0,
+                    "time": "07:44",
+                    "pace": "7:44"
+                },
+                {
+                    "split_num": 22,
+                    "distance_mi": 1.0,
+                    "time": "08:04",
+                    "pace": "8:04"
+                },
+                {
+                    "split_num": 23,
+                    "distance_mi": 1.0,
+                    "time": "07:54",
+                    "pace": "7:54"
+                },
+                {
+                    "split_num": 24,
+                    "distance_mi": 1.0,
+                    "time": "06:26",
+                    "pace": "6:26"
+                },
+                {
+                    "split_num": 25,
+                    "distance_mi": 1.0,
+                    "time": "07:19",
+                    "pace": "7:19"
+                },
+                {
+                    "split_num": 26,
+                    "distance_mi": 1.0,
+                    "time": "07:26",
+                    "pace": "7:26"
+                },
+                {
+                    "split_num": 27,
+                    "distance_mi": 0.74,
+                    "time": "04:51",
+                    "pace": "6:33"
                 }
             ],
-            "text_payload": "[2022-01-02] Run: 7.02 miles | Duration: 01:02:02 | Pace: 8.84 min/mi | Elevation Climbed: +387.8 ft. [REWARD] Earned +52g and +175 XP.",
+            "text_payload": "[2023-05-21] Run: 26.74 miles | Duration: 03:27:52 | Pace: 7.77 min/mi | Elevation Climbed: +2091.2 ft. [REWARD] Earned +195g and +618 XP.",
             "earned_patches": [
                 {
+                    "pillar": "pillar_1_velocity",
+                    "id": "rabbit",
+                    "name": "Rabbit Cruise Node",
+                    "icon": "🐇"
+                },
+                {
                     "pillar": "pillar_2_elevation",
-                    "id": "marmot",
-                    "name": "Marmot Traction Unit",
-                    "icon": "🐿️"
+                    "id": "mountain_goat",
+                    "name": "Mountain Goat Apex Shield",
+                    "icon": "🐐"
+                },
+                {
+                    "pillar": "pillar_3_strategy",
+                    "id": "overdrive",
+                    "name": "Overdrive Finisher Core",
+                    "icon": "💥"
                 },
                 {
                     "pillar": "pillar_4_volume",
-                    "id": "stride_tracker",
-                    "name": "Stride Tracker Array",
-                    "icon": "👣"
+                    "id": "endurance_laurel",
+                    "name": "Endurance Laurel Shield",
+                    "icon": "📜"
                 }
             ]
         },
@@ -191,10 +317,9 @@
     "exponent": 1.8,
     "last_distance": 0.0,
     "last_pace": 0.0,
-    "weight_kg": 75.0,
     "final_metric_data": {
-        "lifetime_odometer_miles": 20.0,
-        "lifetime_calories_burned": 2000,
+        "lifetime_odometer_miles": 10.0,
+        "lifetime_calories_burned": 1000,
         "current_streak_tracker": {
             "current_week_runs_count": 0,
             "last_tracked_week_start": "",
@@ -218,7 +343,7 @@
             "longest_single_run_miles": 0.0
         }
     },
-    "stamina_xp": 121,
-    "agility_xp": 0,
-    "power_xp": 54
+    "stamina_xp": 432,
+    "agility_xp": 58,
+    "power_xp": 128
 }
