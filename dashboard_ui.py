@@ -745,16 +745,16 @@ def render_dashboard_overview(player):
     st.subheader("🎛️ Unit & Filter Configuration")
     config_col1, config_col2 = st.columns(2)
     
-    with config_col2:
-        unit_system = st.selectbox(
-            label="🔄 Select System Unit:",
-            options=["Miles (mi)", "Kilometers (km)"],
-            index=0
-        )
-    
-    is_km = unit_system == "Kilometers (km)"
-    unit_abbr = "Km" if is_km else "Mi"
-    df['Display_Distance'] = df['Distance (Miles)'] * (1.60934 if is_km else 1.0)
+    #with config_col2:
+    #    unit_system = st.selectbox(
+    #        label="🔄 Select System Unit:",
+    #        options=["Miles (mi)", "Kilometers (km)"],
+    #        index=0
+    #    )
+    #
+    is_km = False
+    unit_abbr = "Mi"
+    df['Display_Distance'] = df['Distance (Miles)'] * 1.0
 
     with config_col1:
         unique_years = sorted(df['Year'].unique(), reverse=True)
@@ -1821,20 +1821,17 @@ def render_dashboard_overview(player):
     st.subheader("🎛️ Unit & Filter Configuration")
     config_col1, config_col2 = st.columns(2)
     
-    with config_col2:
-        unit_system = st.selectbox(
-            label="🔄 Select System Unit:",
-            options=["Miles (mi)", "Kilometers (km)"],
-            index=0
-        )
+    #with config_col2:
+    #    unit_system = st.selectbox(
+    #        label="🔄 Select System Unit:",
+    #        options=["Miles (mi)", "Kilometers (km)"],
+    #        index=0
+    #    )
     
     # Conversion multiplier variables
-    is_km = unit_system == "Kilometers (km)"
-    unit_abbr = "Km" if is_km else "Mi"
-    
-    # Apply conversions across the primary tracking vectors
-    df['Display_Distance'] = df['Distance (Miles)'] * (1.60934 if is_km else 1.0)
-
+    is_km = False
+    unit_abbr = "Mi"
+    df['Display_Distance'] = df['Distance (Miles)'] * 1.0
     with config_col1:
         unique_years = sorted(df['Year'].unique(), reverse=True)
         selected_year = st.radio(
@@ -1857,139 +1854,600 @@ def render_dashboard_overview(player):
     # ==========================================
     col1, col2, col3 = st.columns(3)
 
-    # ------------------------------------------
-    # COLUMN 1: DAILY RUN LOGS
-    # ------------------------------------------
+
+    # ==============================================================================
+    # 🎨 GLOBAL MASTER COLOR REGISTRY (PLACE DIRECTLY ABOVE st.columns(3))
+    # ==============================================================================
+    
+    # 1. Establish your curated fixed palette array once at the top
+    racing_colors = ['#3b82f6', '#22c55e', '#f59e0b', '#f43f5e', '#a855f7']
+    
+    # 2. Extract and sort every available unique year dynamically from the active data
+    if 'filtered_df' in locals() and not filtered_df.empty:
+        master_years_source = filtered_df
+    elif 'df' in locals() and not df.empty:
+        master_years_source = df
+    else:
+        master_years_source = pd.DataFrame({'Year': [2022, 2023, 2024, 2025, 2026]})
+    
+    global_sorted_years = sorted(master_years_source['Year'].dropna().astype(str).unique().tolist())
+    
+    # 3. Build the global map using a cyclic index % pattern to prevent out-of-range errors
+    global_year_color_map = {
+        yr: racing_colors[idx % len(racing_colors)] 
+        for idx, yr in enumerate(global_sorted_years)
+    }
+    
+    # 4. Provide a reliable default color code fallback for unmapped variables
+    default_fallback_color = racing_colors[0]
+
+
+
+
+    # ==============================================================================
+    # 🏃 COLUMN 1: WEEKLY TOTALS TRAINING METRICS & CHRONOLOGICAL OVERVIEW
+    # ==============================================================================
+    st.markdown("""
+            <style>
+                div[data-testid="stMetricValue"] > div { font-size: 1.15rem !important; font-weight: 700; }
+                div[data-testid="stMetricLabel"] > div { font-size: 0.75rem !important; opacity: 0.85; }
+            </style>
+        """, unsafe_allow_html=True)
+
+
+
+
+#COL1
+    # ==============================================================================
+    # 📊 COLUMN 1: PART 1 - BASE HEADER AND WEEK SLIDER SETUP
+    # ==============================================================================
     with col1:
-        st.subheader("🏃 Daily Activity")
-        total_daily_records = len(filtered_df)
-        
-           
-        if total_daily_records > 0:
-            # 🛑 THE RANGE GUARD: Establish clean integer boundaries if there's only 1 record
-            min_slider_bound = 0
-            max_slider_bound = total_daily_records - 1
-            
-            if min_slider_bound == max_slider_bound:
-                # If there is only one run in the dataset, expand the upper limit safely to 1
-                max_slider_bound = min_slider_bound + 1
-                
-            # 2. Update your slider call on Line 1826 to use these guarded boundaries:
-            daily_range = st.slider(
-                label="Select Day Index Window Range:",
-                min_value=int(min_slider_bound),
-                max_value=int(max_slider_bound),
-                value=(max(0, total_daily_records - 15), total_daily_records - 1),
-                step=1,
-                key="daily_range_slider"
-            )
- 
-            start_daily, end_daily = daily_range
-            daily_plot_df = filtered_df.iloc[start_daily : end_daily + 1]
-            
-            st.bar_chart(
-                data=daily_plot_df,
-                x='Formatted_Date',
-                y='Display_Distance',
-                use_container_width=True
-            )
-            st.metric(f"Daily Segment Total ({unit_abbr})", f"{daily_plot_df['Display_Distance'].sum():,.2f} {unit_abbr}")
-        else:
-            st.caption("No data for current filters.")
+        st.markdown("<h3 style='margin:0 0 2px 0; padding:0; display:inline-block; min-height:32px;'>📊 Weekly Stats</h3>", unsafe_allow_html=True)
 
-    # ------------------------------------------
-    # COLUMN 2: MONTHLY TREND AGGREGATION
-    # ------------------------------------------
-    with col2:
-        st.subheader("📅 Monthly Trends")
-        
+        import altair as alt
+
+        # 1. Base 53-week layout template skeleton tracking 
+        standard_weeks = pd.DataFrame({
+            'Week_Period': list(range(1, 54)),
+            'Week_Label': [f"Wk {w}" for w in range(1, 54)]
+        })
+
+        # 2. Interactive Week Filter Slider
+        week_range = st.slider(
+            label="📊 Filter Workout Week Range",
+            min_value=1,
+            max_value=53,
+            value=(1, 26),
+            step=1,
+            key="col1_week_slider_unique_final"
+        )
+        start_week, end_week = week_range
+        # ==============================================================================
+        # 📊 COLUMN 1: PART 2 - TIMELINE SCAFFOLDING & ALTAIR CHART CANVAS
+        # ==============================================================================
         if not filtered_df.empty:
-            monthly_df = filtered_df.groupby(['Month_Period', 'Month_Label'])['Display_Distance'].sum().reset_index()
-            monthly_df = monthly_df.sort_values('Month_Period').reset_index(drop=True)
-            total_months = len(monthly_df)
-            
-            min_month_val = 1
-            max_month_val = 12
-        
-            if min_month_val == max_month_val:
-                if min_month_val == 12:
-                    min_month_val = 11  # Slide minimum down if locked at December
-                else:
-                    max_month_val = min_month_val + 1  # Pad maximum up by 1 month
-        
-            # 2. Update your st.slider widget on Line 1853 to look exactly like this:
-            month_range = st.slider(
-                label="📅 Filter Workout Month Range",
-                min_value=int(min_month_val),
-                max_value=int(max_month_val),
-                value=(int(min_month_val), int(max_month_val)),
-                step=1,
-                key="month_range_slider"
-            )
-            
-            start_month, end_month = month_range
-            monthly_plot_df = monthly_df.iloc[start_month : end_month + 1]
-            
-            st.bar_chart(
-                data=monthly_plot_df,
-                x='Month_Label',
-                y='Display_Distance',
-                use_container_width=True
-            )
-            st.metric(f"Monthly Segment Total ({unit_abbr})", f"{monthly_plot_df['Display_Distance'].sum():,.2f} {unit_abbr}")
-        else:
-            st.caption("No data for current filters.")
+            df_working_col1 = filtered_df.copy()
 
-    # ------------------------------------------
-    # COLUMN 3: YEAR-OVER-YEAR HISTORICAL COMPARISON
-    # ------------------------------------------
-    with col3:
-        st.subheader("📈 Annual Totals")
-        
-        yearly_df = df.groupby('Year')['Display_Distance'].sum().reset_index().sort_values('Year').reset_index(drop=True)
-        total_years = len(yearly_df)
-        
-        if total_years > 0:
-            if 'min_year' in locals() or 'max_year' in locals():
-                # If your code uses variables named min_year / max_year
-                if min_year == max_year or min_year == 0:
-                    if min_year == 0 or min_year == 0.0:
-                        min_year, max_year = 2022, 2023
-                    else:
-                        max_year = min_year + 1
-            else:
-                # If your code uses a pandas DataFrame column to extract values on the fly:
+            # 3. Safe date column discovery loop
+            date_col = None
+            for col in ['Date', 'Calendar Date', 'Date_Time', 'timestamp']:
+                if col in df_working_col1.columns:
+                    date_col = col
+                    break
+            
+            if date_col is not None:
+                parsed_dates = pd.to_datetime(df_working_col1[date_col], errors='coerce')
+                # 🔥 FIXED: Swapped out broken .dt.week attribute for robust .dt.isocalendar().week method
+                df_working_col1['Week_Period'] = parsed_dates.dt.isocalendar().week
+            
+            df_working_col1['Week_Period'] = pd.to_numeric(df_working_col1['Week_Period'], errors='coerce').fillna(1).astype(int)
+            df_working_col1['Year_Tag'] = df_working_col1['Year'].astype(str)
+
+            # 4. Group data array bounds by training year and calendar week slots
+            weekly_df = df_working_col1.groupby(['Year_Tag', 'Week_Period'])['Display_Distance'].sum().reset_index()
+            weekly_df['Week_Period'] = weekly_df['Week_Period'].astype(int)
+
+            # 5. Check if filtering a single distinct year
+            is_single_year = False
+            if 'Year' in df_working_col1.columns and df_working_col1['Year'].nunique() == 1:
+                is_single_year = True
+            elif 'year_range_slider' in st.session_state and st.session_state.year_range_slider is not None:
                 try:
-                    # Check what your min/max extraction variables are named
-                    min_year = int(cal_df['Year'].min()) if not cal_df.empty else 2022
-                    max_year = int(cal_df['Year'].max()) if not cal_df.empty else 2022
-                    if min_year == max_year:
-                        max_year = min_year + 1
+                    sy, ey = st.session_state.year_range_slider
+                    if sy == ey:
+                        is_single_year = True
                 except Exception:
-                    min_year, max_year = 2022, 2023
-        
-            # 2. Update your slider on Line 1895 to use these guarded boundaries:
-            year_range = st.slider(
-                label="📅 Filter Workout Year Range",
-                min_value=int(min_year),
-                max_value=int(max_year),
-                value=(int(min_year), int(max_year)),
-                step=1,
-                key="year_range_slider"
-            )
+                    pass
+
+            # 6. Route metrics array into target timeline scaffolds
+            if is_single_year:
+                single_year_value_col1 = df_working_col1['Year_Tag'].iloc if not df_working_col1.empty else "2026"
+                weekly_plot_df = pd.merge(standard_weeks, weekly_df, on='Week_Period', how='left')
+                weekly_plot_df['Display_Distance'] = weekly_plot_df['Display_Distance'].fillna(0.0)
+                weekly_plot_df['Year_Tag'] = weekly_plot_df['Year_Tag'].fillna(single_year_value_col1)
+            else:
+                active_years = pd.DataFrame({'Year_Tag': sorted(weekly_df['Year_Tag'].unique().tolist())})
+                scaffold_3d = standard_weeks.merge(active_years, how='cross')
+                weekly_plot_df = pd.merge(scaffold_3d, weekly_df, on=['Week_Period', 'Year_Tag'], how='left')
+                weekly_plot_df['Display_Distance'] = weekly_plot_df['Display_Distance'].fillna(0.0)
+
+            # 7. Filter rows strictly by slider windows
+            weekly_plot_df = weekly_plot_df[
+                (weekly_plot_df['Week_Period'] >= start_week) & 
+                (weekly_plot_df['Week_Period'] <= end_week)
+            ].copy()
+
+            weekly_plot_df = weekly_plot_df.sort_values(['Week_Period', 'Year_Tag']).reset_index(drop=True)
+
+            # 8. ROW DISPLAY CAP ENGINE: Prevents wide layouts from drifting out of layout containers
+            total_rendered_weeks = len(weekly_plot_df)
+            is_capped_weeks = False
+            if total_rendered_weeks > 14:
+                weekly_plot_df = weekly_plot_df.head(14).copy()
+                total_rendered_weeks = 14
+                is_capped_weeks = True
+
+            # 9. GLOBAL COLOR CONSUMER ENGINE (Matches Column 2 and Column 3 exactly)
+            active_years_list = sorted(weekly_plot_df['Year_Tag'].unique().tolist())
+            unique_years_count = len(active_years_list)
             
-            start_year, end_year = year_range
-            yearly_plot_df = yearly_df.iloc[start_year : end_year + 1]
-            
-            st.bar_chart(
-                data=yearly_plot_df,
-                x='Year',
-                y='Display_Distance',
-                use_container_width=True
+            if unique_years_count > 1:
+                extended_range = [global_year_color_map.get(yr, default_fallback_color) for yr in active_years_list]
+                color_encoding = alt.Color(
+                    'Year_Tag:N',
+                    scale=alt.Scale(domain=active_years_list, range=extended_range),
+                    legend=alt.Legend(title="📅 Training Year", orient="top", labelFontSize=9, titleFontSize=9)
+                )
+                
+                x_axis_config = alt.X('Year_Tag:N', title='', axis=alt.Axis(labels=False, ticks=False))
+                facet_config = alt.Column(
+                    'Week_Label:N', 
+                    title='Calendar Week Index', 
+                    sort=standard_weeks['Week_Label'].tolist(),
+                    header=alt.Header(labelOrient='bottom', titleOrient='bottom', labelFontSize=9, titleFontSize=9)
+                )
+                calculated_step = max(20, min(65, int(430 / max(1, total_rendered_weeks))))
+                chart_width_property = alt.Step(calculated_step)
+            else:
+                # Extract the first string element from the list to avoid unhashable type errors
+                selected_year = active_years_list[0] if len(active_years_list) > 0 else "2026"
+                matched_annual_color = global_year_color_map.get(selected_year, default_fallback_color)
+    
+                color_encoding = alt.value(matched_annual_color) 
+
+                x_axis_config = alt.X('Week_Label:N', title='Calendar Week Index', sort=standard_weeks['Week_Label'].tolist(), axis=alt.Axis(labelFontSize=9, titleFontSize=9))
+                facet_config = None
+                chart_width_property = 'container'
+
+            # 10. Build chart parameters with layout-locked step scaling
+            base_chart_col1 = alt.Chart(weekly_plot_df).mark_bar(
+                cornerRadiusTopLeft=3,
+                cornerRadiusTopRight=3
+            ).encode(
+                x=x_axis_config,
+                y=alt.Y('Display_Distance:Q', title=f'Weekly Distance ({unit_abbr})', axis=alt.Axis(labelFontSize=9, titleFontSize=9)),
+                color=color_encoding,
+                tooltip=[
+                    alt.Tooltip('Year_Tag:N', title='Year'),
+                    alt.Tooltip('Week_Label:N', title='Week Block'),
+                    alt.Tooltip('Display_Distance:Q', title='Distance Total', format='.1f')
+                ]
+            ).properties(
+                height=220,
+                width=chart_width_property 
             )
-            st.metric(f"All-Time History Total ({unit_abbr})", f"{df['Display_Distance'].sum():,.2f} {unit_abbr}")
+
+            if facet_config is not None:
+                final_chart_col1 = base_chart_col1.facet(column=facet_config).resolve_scale(
+                    x='independent'
+                ).configure_view(strokeWidth=0).configure_facet(spacing=4)
+            else:
+                final_chart_col1 = base_chart_col1.configure_view(strokeWidth=0)
+
+            st.altair_chart(final_chart_col1, use_container_width=True)
+            
+            #if is_capped_weeks:
+                #st.caption("⚠️ *Graph display capped at 14 weeks to match column layout size constraints.*")
+        # ==============================================================================
+        # 📊 COLUMN 1: PART 3 - WEEK-BY-WEEK LEDGER OUTPUT & STATISTICS
+        # ==============================================================================
+            st.markdown("<p style='font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;'>📊 Week-by-Week Aggregation Ledger:</p>", unsafe_allow_html=True)
+            
+            ledger_df_col1 = weekly_plot_df.sort_values(by=['Week_Period', 'Year_Tag']).reset_index(drop=True)
+            
+            n_rows_col1 = len(ledger_df_col1)
+            midpoint_col1 = (n_rows_col1 + 1) // 2
+            
+            left_df_col1 = ledger_df_col1.iloc[:midpoint_col1]
+            right_df_col1 = ledger_df_col1.iloc[midpoint_col1:]
+            
+            ledger_cols_col1 = st.columns(2)
+            
+            with ledger_cols_col1[0]:
+                for _, row in left_df_col1.iterrows():
+                    wk_lookup = standard_weeks[standard_weeks['Week_Period'] == row['Week_Period']]['Week_Label'].values
+                    wk_str = wk_lookup if len(wk_lookup) > 0 else "Wk 1"
+                    timeline_str = f"{row['Year_Tag']}- {wk_str}"
+                    st.markdown(f"<p style='font-size: 0.8rem; margin: 1px 0;'>📊 <b>{timeline_str}</b>: {row['Display_Distance']:,.1f} {unit_abbr}</p>", unsafe_allow_html=True)
+            
+            with ledger_cols_col1[1]:
+                for _, row in right_df_col1.iterrows():
+                    wk_lookup = standard_weeks[standard_weeks['Week_Period'] == row['Week_Period']]['Week_Label'].values
+                    wk_str = wk_lookup if len(wk_lookup) > 0 else "Wk 1"
+                    timeline_str = f"{row['Year_Tag']}- {wk_str}"
+                    st.markdown(f"<p style='font-size: 0.8rem; margin: 1px 0;'>📊 <b>{timeline_str}</b>: {row['Display_Distance']:,.1f} {unit_abbr}</p>", unsafe_allow_html=True)
+                
+            st.markdown("<hr style='margin: 8px 0; opacity: 0.2;'/>", unsafe_allow_html=True)
+            
+            # Dynamic metric summary card
+            visible_sum_col1 = weekly_plot_df['Display_Distance'].sum()
+            st.metric(
+                label=f"Weekly Segment Total ({unit_abbr})", 
+                value=f"{visible_sum_col1:,.1f} {unit_abbr}"
+            )
         else:
-            st.caption("No dynamic historical year structures found.")
+            # Fallback frame for blank conditions
+            standard_weeks['Display_Distance'] = 0.0
+            empty_plot_df_col1 = standard_weeks[
+                (standard_weeks['Week_Period'] >= start_week) & 
+                (standard_weeks['Week_Period'] <= end_week)
+            ]
+            
+            empty_chart_col1 = alt.Chart(empty_plot_df_col1).mark_bar(color='#3b82f6').encode(
+                x=alt.X('Week_Label:N', title='Calendar Week Index', sort=standard_weeks['Week_Label'].tolist(), axis=alt.Axis(labelFontSize=9, titleFontSize=9)),
+                y=alt.Y('Display_Distance:Q', title=f'Weekly Distance ({unit_abbr})', axis=alt.Axis(labelFontSize=9, titleFontSize=9))
+            ).properties(height=240, width='container').configure_view(strokeWidth=0)
+            
+            st.altair_chart(empty_chart_col1, use_container_width=True)
+            st.metric(label=f"Weekly Segment Total ({unit_abbr})", value=f"0.0 {unit_abbr}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#COL2
+    # ==============================================================================
+    # 📅 COLUMN 2: PART 1 - BASE HEADER AND SLIDER SETUP
+    # ==============================================================================
+    with col2:
+        st.markdown("<h3 style='margin:0 0 2px 0; padding:0; display:inline-block; min-height:32px;'>📅 Monthly Trends</h3>", unsafe_allow_html=True)
+
+        import altair as alt
+
+        # Base 12-month calendar template framework
+        standard_months = pd.DataFrame({
+            'Month_Period': list(range(1, 13)),
+            'Month_Label': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        })
+
+        # Interactive Month Filter Slider
+        month_range = st.slider(
+            label="📅 Filter Workout Month Range",
+            min_value=1,
+            max_value=12,
+            value=(1, 12),
+            step=1,
+            key="col2_month_slider_unique_final"
+        )
+        start_month, end_month = month_range
+        # ==============================================================================
+        # 📅 COLUMN 2: PART 2 - DATAFRAME HANDLING & DYNAMIC ALTAIR BAR CANVAS
+        # ==============================================================================
+        if not filtered_df.empty:
+            df_working = filtered_df.copy()
+
+            # Parse the true month from raw activity dates safely
+            date_col = None
+            for col in ['Date', 'Calendar Date', 'Date_Time', 'timestamp']:
+                if col in df_working.columns:
+                    date_col = col
+                    break
+            
+            if date_col is not None:
+                parsed_dates = pd.to_datetime(df_working[date_col], errors='coerce')
+                df_working['Month_Period'] = parsed_dates.dt.month
+            
+            df_working['Month_Period'] = pd.to_numeric(df_working['Month_Period'], errors='coerce').fillna(1).astype(int)
+            df_working['Year_Tag'] = df_working['Year'].astype(str)
+
+            # Group and sum by BOTH Year and Month to prevent data flattening
+            monthly_df = df_working.groupby(['Year_Tag', 'Month_Period'])['Display_Distance'].sum().reset_index()
+            monthly_df['Month_Period'] = monthly_df['Month_Period'].astype(int)
+
+            # Check if filtering a single distinct year
+            is_single_year = False
+            if 'Year' in df_working.columns and df_working['Year'].nunique() == 1:
+                is_single_year = True
+            elif 'year_range_slider' in st.session_state and st.session_state.year_range_slider is not None:
+                try:
+                    sy, ey = st.session_state.year_range_slider
+                    if sy == ey:
+                        is_single_year = True
+                except Exception:
+                    pass
+
+            # Route data into full calendar layout scaffold
+            if is_single_year:
+                single_year_value = df_working['Year_Tag'].iloc[0] if not df_working.empty else "2026"
+                monthly_plot_df = pd.merge(standard_months, monthly_df, on='Month_Period', how='left')
+                monthly_plot_df['Display_Distance'] = monthly_plot_df['Display_Distance'].fillna(0.0)
+                monthly_plot_df['Year_Tag'] = monthly_plot_df['Year_Tag'].fillna(single_year_value)
+            else:
+                active_years = pd.DataFrame({'Year_Tag': sorted(monthly_df['Year_Tag'].unique().tolist())})
+                scaffold_3d = standard_months.merge(active_years, how='cross')
+                monthly_plot_df = pd.merge(scaffold_3d, monthly_df, on=['Month_Period', 'Year_Tag'], how='left')
+                monthly_plot_df['Display_Distance'] = monthly_plot_df['Display_Distance'].fillna(0.0)
+
+            # Apply month slider bounds
+            monthly_plot_df = monthly_plot_df[
+                (monthly_plot_df['Month_Period'] >= start_month) & 
+                (monthly_plot_df['Month_Period'] <= end_month)
+            ].copy()
+
+            monthly_plot_df = monthly_plot_df.sort_values(['Month_Period', 'Year_Tag']).reset_index(drop=True)
+
+            # Caps chart display count at 14 segments to keep width locked inside columns
+            total_rendered_bars = len(monthly_plot_df)
+            is_capped = False
+            if total_rendered_bars > 14:
+                monthly_plot_df = monthly_plot_df.head(14).copy()
+                total_rendered_bars = 14
+                is_capped = True
+
+            # 🏆 RE-ENGINEERED PALETTE MATCHING ENGINE (Consumes your top-level global registry map)
+            active_years_list = sorted(monthly_plot_df['Year_Tag'].unique().tolist())
+            unique_years_count = len(active_years_list)
+            
+            if unique_years_count > 1:
+                extended_range = [global_year_color_map.get(yr, default_fallback_color) for yr in active_years_list]
+                color_encoding = alt.Color(
+                    'Year_Tag:N',
+                    scale=alt.Scale(domain=active_years_list, range=extended_range),
+                    legend=alt.Legend(title="📅 Training Year", orient="top", labelFontSize=9, titleFontSize=9)
+                )
+                
+                x_axis_config = alt.X('Year_Tag:N', title='', axis=alt.Axis(labels=False, ticks=False))
+                facet_config = alt.Column(
+                    'Month_Label:N', 
+                    title='Calendar Month', 
+                    sort=standard_months['Month_Label'].tolist(),
+                    header=alt.Header(labelOrient='bottom', titleOrient='bottom', labelFontSize=9, titleFontSize=9)
+                )
+                calculated_step = max(20, min(65, int(430 / max(1, total_rendered_bars))))
+                chart_width_property = alt.Step(calculated_step)
+            else:
+                # Extract the first string element from the list to avoid unhashable type errors
+                selected_year = active_years_list[0] if len(active_years_list) > 0 else "2026"
+                matched_annual_color = global_year_color_map.get(selected_year, default_fallback_color)
+                
+                color_encoding = alt.value(matched_annual_color) 
+
+                x_axis_config = alt.X('Month_Label:N', title='Calendar Month', sort=standard_months['Month_Label'].tolist(), axis=alt.Axis(labelFontSize=9, titleFontSize=9))
+                facet_config = None
+                chart_width_property = 'container'
+
+            # Build chart parameters with layout-locked step scaling
+            base_chart = alt.Chart(monthly_plot_df).mark_bar(
+                cornerRadiusTopLeft=3,
+                cornerRadiusTopRight=3
+            ).encode(
+                x=x_axis_config,
+                y=alt.Y('Display_Distance:Q', title=f'Total Distance ({unit_abbr})', axis=alt.Axis(labelFontSize=9, titleFontSize=9)),
+                color=color_encoding,
+                tooltip=[
+                    alt.Tooltip('Year_Tag:N', title='Year'),
+                    alt.Tooltip('Month_Label:N', title='Month'),
+                    alt.Tooltip('Display_Distance:Q', title='Distance', format='.1f')
+                ]
+            ).properties(
+                height=220,
+                width=chart_width_property 
+            )
+
+            if facet_config is not None:
+                final_chart = base_chart.facet(column=facet_config).resolve_scale(
+                    x='independent'
+                ).configure_view(strokeWidth=0).configure_facet(spacing=4)
+            else:
+                final_chart = base_chart.configure_view(strokeWidth=0)
+
+            st.altair_chart(final_chart, use_container_width=True)
+            
+            #if is_capped:
+                #st.caption("⚠️ *Graph display capped at 14 bars to fit your screen. Use the slider above to see other months.*")
+        # ==============================================================================
+        # 📅 COLUMN 2: PART 3 - MONTH-GROUPED LEDGER OUTPUT & TRAILING STATISTICS
+        # ==============================================================================
+            st.markdown("<p style='font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;'>📊 Sequential Month-by-Month Log:</p>", unsafe_allow_html=True)
+            
+            ledger_df = monthly_plot_df.sort_values(by=['Month_Period', 'Year_Tag']).reset_index(drop=True)
+            
+            n_rows = len(ledger_df)
+            midpoint = (n_rows + 1) // 2
+            
+            left_df = ledger_df.iloc[:midpoint]
+            right_df = ledger_df.iloc[midpoint:]
+            
+            ledger_cols = st.columns(2)
+            
+            with ledger_cols[0]:
+                for _, row in left_df.iterrows():
+                    month_lookup = standard_months[standard_months['Month_Period'] == row['Month_Period']]['Month_Label'].values
+                    month_str = month_lookup[0] if len(month_lookup) > 0 else "Jan"
+                    timeline_str = f"{row['Year_Tag']}- {month_str}"
+                    st.markdown(f"<p style='font-size: 0.8rem; margin: 1px 0;'>📅 <b>{timeline_str}</b>: {row['Display_Distance']:,.1f} {unit_abbr}</p>", unsafe_allow_html=True)
+            
+            with ledger_cols[1]:
+                for _, row in right_df.iterrows():
+                    month_lookup = standard_months[standard_months['Month_Period'] == row['Month_Period']]['Month_Label'].values
+                    month_str = month_lookup[0] if len(month_lookup) > 0 else "Jan"
+                    timeline_str = f"{row['Year_Tag']}- {month_str}"
+                    st.markdown(f"<p style='font-size: 0.8rem; margin: 1px 0;'>📅 <b>{timeline_str}</b>: {row['Display_Distance']:,.1f} {unit_abbr}</p>", unsafe_allow_html=True)
+                
+            st.markdown("<hr style='margin: 8px 0; opacity: 0.2;'/>", unsafe_allow_html=True)
+            
+            visible_sum = monthly_plot_df['Display_Distance'].sum()
+            st.metric(
+                label=f"Monthly Segment Total ({unit_abbr})", 
+                value=f"{visible_sum:,.1f} {unit_abbr}"
+            )
+        else:
+            # Fallback for empty frames
+            standard_months['Display_Distance'] = 0.0
+            empty_plot_df = standard_months[
+                (standard_months['Month_Period'] >= start_month) & 
+                (standard_months['Month_Period'] <= end_month)
+            ]
+            
+            empty_chart = alt.Chart(empty_plot_df).mark_bar(color='#22c55e').encode(
+                x=alt.X('Month_Label:N', title='Calendar Month', sort=standard_months['Month_Label'].tolist(), axis=alt.Axis(labelFontSize=9, titleFontSize=9)),
+                y=alt.Y('Display_Distance:Q', title=f'Total Distance ({unit_abbr})', axis=alt.Axis(labelFontSize=9, titleFontSize=9))
+            ).properties(height=240, width='container').configure_view(strokeWidth=0)
+            
+            st.altair_chart(empty_chart, use_container_width=True)
+            st.metric(label=f"Monthly Segment Total ({unit_abbr})", value=f"0.0 {unit_abbr}")
+
+
+
+
+
+#Col3
+    # ==============================================================================
+    # 🏆 COLUMN 3: ANNUAL PANEL (SCALE BALANCED FOR 100% VISUAL ALIGNMENT)
+    # ==============================================================================
+    with col3:
+        st.markdown("<h3 style='margin:0 0 2px 0; padding:0; display:inline-block; min-height:32px;'>🏆 Annual Totals</h3>", unsafe_allow_html=True)
+
+        import altair as alt
+
+        # 1. ALWAYS build a static backbone containing every unique year from your registry
+        available_registry_years = sorted([int(yr) for yr in global_year_color_map.keys()])
+        scaffold_all_years = pd.DataFrame({'Year_Tag': [str(yr) for yr in available_registry_years]})
+
+        # 2. INTERACTIVE YEAR RANGE SLIDER FRAMEWORK
+        if len(available_registry_years) > 1:
+            min_year_val = min(available_registry_years)
+            max_year_val = max(available_registry_years)
+            
+            selected_year_bounds = st.slider(
+                label="🏆 Filter Workout Year Range",
+                min_value=min_year_val,
+                max_value=max_year_val,
+                value=(min_year_val, max_year_val),
+                step=1,
+                key="col3_year_slider_range_final"
+            )
+            start_year_filter, end_year_filter = selected_year_bounds
+        else:
+            start_year_filter = available_registry_years if available_registry_years else 2026
+            end_year_filter = start_year_filter
+
+        # 3. Extract and sum distance fields based strictly on active global filters
+        if not filtered_df.empty:
+            df_working_col3 = filtered_df.copy()
+            df_working_col3['Year_Tag'] = df_working_col3['Year'].astype(str)
+            annual_filtered_sums = df_working_col3.groupby('Year_Tag')['Display_Distance'].sum().reset_index()
+            
+            # Left-merge to keep all years mapped out initially
+            annual_df = pd.merge(scaffold_all_years, annual_filtered_sums, on='Year_Tag', how='left')
+            annual_df['Display_Distance'] = annual_df['Display_Distance'].fillna(0.0)
+        else:
+            annual_df = scaffold_all_years.copy()
+            annual_df['Display_Distance'] = 0.0
+
+        # Create numerical year helper column for processing
+        annual_df['Year_Int'] = annual_df['Year_Tag'].astype(int)
+        
+        # Drop rows completely to force Altair to rewrite the X-axis labels automatically
+        annual_df = annual_df[
+            (annual_df['Year_Int'] >= start_year_filter) & 
+            (annual_df['Year_Int'] <= end_year_filter)
+        ].copy()
+
+        annual_df = annual_df.sort_values('Year_Tag').reset_index(drop=True)
+
+        # 4. Extract axis categories to pull synchronized keys from your master registry
+        active_years_col3 = sorted(annual_df['Year_Tag'].unique().tolist())
+        extended_range_col3 = [global_year_color_map.get(yr, default_fallback_color) for yr in active_years_col3]
+        
+        # Invisible legend block with empty title matching Col 1 and 2 bounding height
+        color_encoding_col3 = alt.Color(
+            'Year_Tag:N',
+            scale=alt.Scale(domain=active_years_col3, range=extended_range_col3),
+            legend=alt.Legend(
+                title="", 
+                orient="top", 
+                labelExpr="''", 
+                symbolType='square',
+                symbolSize=0,
+                labelFontSize=0,
+                titleFontSize=0
+            )
+        )
+
+        # 5. Build the annual summary bar chart
+        # 🔥 EXTENDED HEIGHT TO 255: This compensates for the facet height additions in Col 2
+        annual_chart = alt.Chart(annual_df).mark_bar(
+            cornerRadiusTopLeft=3,
+            cornerRadiusTopRight=3
+        ).encode(
+            x=alt.X('Year_Tag:N', title='Training Year', axis=alt.Axis(labelFontSize=9, titleFontSize=9, labelAngle=0)),
+            y=alt.Y('Display_Distance:Q', title=f'Total Distance ({unit_abbr})', axis=alt.Axis(labelFontSize=9, titleFontSize=9)),
+            color=color_encoding_col3,
+            tooltip=[
+                alt.Tooltip('Year_Tag:N', title='Year'),
+                alt.Tooltip('Display_Distance:Q', title='Total Distance', format='.1f')
+            ]
+        ).properties(
+            height=350,  # 🔥 Fixed: Scale extended to match outer facet size boundaries
+            width='container'
+        ).configure_view(
+            strokeWidth=0
+        )
+
+        st.altair_chart(annual_chart, use_container_width=True)
+
+        # 6. LEDGER BREAKDOWNS & HISTORICAL METRICS
+        st.markdown("<p style='font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;'>🏆 Year-by-Year Log Summary:</p>", unsafe_allow_html=True)
+        
+        for _, row in annual_df.iterrows():
+            st.markdown(f"<p style='font-size: 0.8rem; margin: 1px 0;'>🏆 <b>Year {row['Year_Tag']}</b>: {row['Display_Distance']:,.1f} {unit_abbr}</p>", unsafe_allow_html=True)
+            
+        st.markdown("<hr style='margin: 8px 0; opacity: 0.2;'/>", unsafe_allow_html=True)
+        
+        # Print total distance sum accumulating inside current slider scope
+        total_dashboard_distance = annual_df['Display_Distance'].sum()
+        st.metric(
+            label=f"All-Time Training Total ({unit_abbr})", 
+            value=f"{total_dashboard_distance:,.1f} {unit_abbr}"
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
