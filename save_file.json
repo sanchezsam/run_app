@@ -1,5 +1,5 @@
 {
-    "name": "Athlete",
+    "name": "Racer 1",
     "bodyweight": 180,
     "level": 1,
     "total_xp": 175,
@@ -7,7 +7,7 @@
     "vo2_max": 40.0,
     "avg_heart_rate": 150,
     "resting_heart_rate": 65,
-    "lifetime_elevation_gain": 2850.0,
+    "lifetime_elevation_gain": 1600.0,
     "cadence_history": [],
     "elevation_milestone_history": [],
     "deep_rem_streak": 0,
@@ -109,57 +109,47 @@
                     "pace": "11:28"
                 }
             ],
-            "text_payload": "[2022-01-02] Run: 7.02 miles | Duration: 01:02:02 | Pace: 8.84 min/mi | Elevation Climbed: +387.8 ft. [REWARD] Earned +52g and +175 XP."
+            "text_payload": "[2022-01-02] Run: 7.02 miles | Duration: 01:02:02 | Pace: 8.84 min/mi | Elevation Climbed: +387.8 ft. [REWARD] Earned +52g and +175 XP.",
+            "earned_patches": [
+                {
+                    "pillar": "pillar_2_elevation",
+                    "id": "marmot",
+                    "name": "Marmot Traction Unit",
+                    "icon": "🐿️"
+                },
+                {
+                    "pillar": "pillar_4_volume",
+                    "id": "stride_tracker",
+                    "name": "Stride Tracker Array",
+                    "icon": "👣"
+                }
+            ]
         },
         {
-            "Date": "2022-01-02",
-            "Name": "achievement_test_track.fit",
-            "Distance (Miles)": 7.5,
-            "Duration": "00:51:00",
-            "pace": 6.8,
-            "Elevation (ft)": "+950 ft",
+            "Date": "2026-08-14",
+            "Name": "live_test_track.fit",
+            "Distance (Miles)": 10.0,
+            "Duration": "01:10:00",
+            "pace": 7.0,
+            "Elevation (ft)": "+800.0 ft",
             "splits": [
                 {
                     "split_num": 1,
                     "distance_mi": 1.0,
-                    "time": "07:15",
-                    "pace": "07:15"
+                    "time": "07:30",
+                    "pace": "07:30"
                 },
                 {
                     "split_num": 2,
                     "distance_mi": 1.0,
-                    "time": "06:55",
-                    "pace": "06:55"
+                    "time": "07:00",
+                    "pace": "07:00"
                 },
                 {
                     "split_num": 3,
                     "distance_mi": 1.0,
-                    "time": "06:50",
-                    "pace": "06:50"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
                     "time": "06:45",
                     "pace": "06:45"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "06:40",
-                    "pace": "06:40"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 1.0,
-                    "time": "06:35",
-                    "pace": "06:35"
-                },
-                {
-                    "split_num": 7,
-                    "distance_mi": 1.0,
-                    "time": "06:10",
-                    "pace": "06:10"
                 }
             ],
             "earned_patches": [
@@ -177,15 +167,15 @@
                 },
                 {
                     "pillar": "pillar_3_strategy",
-                    "id": "split_striker",
-                    "name": "Split Striker Module",
-                    "icon": "⏲️"
+                    "id": "second_wind",
+                    "name": "Second Wind System",
+                    "icon": "⏱️"
                 },
                 {
                     "pillar": "pillar_4_volume",
-                    "id": "stride_tracker",
-                    "name": "Stride Tracker Array",
-                    "icon": "👣"
+                    "id": "horizon_mapper",
+                    "name": "Horizon Mapper Processor",
+                    "icon": "🗺️"
                 }
             ]
         }
@@ -193,24 +183,18 @@
     "unlocked_badges": [
         "deer",
         "bighorn",
-        "split_striker",
-        "stride_tracker"
+        "second_wind",
+        "horizon_mapper"
     ],
     "daily_miles": [],
     "base_xp": 250,
     "exponent": 1.8,
     "last_distance": 0.0,
     "last_pace": 0.0,
-    "endurance_level": 1,
-    "pace_level": 1,
-    "hill_climbing_level": 1,
-    "gold_balance": 500,
-    "stamina_xp": 121,
-    "agility_xp": 0,
-    "power_xp": 54,
+    "weight_kg": 75.0,
     "final_metric_data": {
-        "lifetime_odometer_miles": 22.5,
-        "lifetime_calories_burned": 2250,
+        "lifetime_odometer_miles": 20.0,
+        "lifetime_calories_burned": 2000,
         "current_streak_tracker": {
             "current_week_runs_count": 0,
             "last_tracked_week_start": "",
@@ -233,5 +217,8 @@
             "fastest_10k_seconds": 99999,
             "longest_single_run_miles": 0.0
         }
-    }
+    },
+    "stamina_xp": 121,
+    "agility_xp": 0,
+    "power_xp": 54
 }
