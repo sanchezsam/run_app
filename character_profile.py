@@ -55,6 +55,20 @@ def calculate_and_render_profile(player):
     elif valid_sessions_count >= 3:
         st.warning("⚡ ATHLETE IS HEATING UP !")
 
+
+
+
+    st.session_state["global_endurance"] = endurance_rating
+    
+    # Dynamically look for whatever names your speed and elevation variables use here
+    if 'speed_rating' in locals(): st.session_state["global_speed"] = speed_rating
+    elif 'pace_rating' in locals(): st.session_state["global_speed"] = pace_rating
+    
+    if 'elevation_rating' in locals(): st.session_state["global_elevation"] = elevation_rating
+    elif 'hill_rating' in locals(): st.session_state["global_elevation"] = hill_rating
+
+
+
     # CONDENSED ARCADE RUNNER HUD
     with st.container(border=True):
         st.markdown(f"🎰 **TRACK CHAMPIONSHIP ROSTER MATRIX** | CREDIT INSERTED | **STAGES COMPLETED: {valid_sessions_count}**")

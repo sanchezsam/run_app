@@ -207,29 +207,30 @@ if player is not None and os.path.exists(FILE_PATH):
 
 calculate_and_render_profile(player)
 
-#endurance = current_profile.get('fuel_level', current_profile.get('endurance_level', 1))
-#speed     = current_profile.get('nitro_level', current_profile.get('pace_level', 1))
-#elevation = current_profile.get('torque_level', current_profile.get('hill_climbing_level', 1))
 
-endurance = final_fuel_lvl if 'final_fuel_lvl' in locals() else 3
-speed     = final_nitro_lvl if 'final_nitro_lvl' in locals() else 6
-elevation = final_torque_lvl if 'final_torque_lvl' in locals() else 3
+# ==============================================================================
+# 🎯 FIXED: LINKED DIRECTLY TO YOUR HEADER RATING VARIABLES
+# ==============================================================================
+dashboard_end  = st.session_state.get("global_endurance", 1)
+dashboard_spd  = st.session_state.get("global_speed", 1)
+dashboard_elev = st.session_state.get("global_elevation", 1)
 
-        
+     
 # Create 5 columns total, leaving the edges as empty spacer buffers
 _, col1, col2, col3, _ = st.columns([1, 2, 2, 2, 1])
 
 with col1: 
-    #st.metric("🔋 Endurance", f"{endurance} / 9")
-    st.pyplot(generate_single_metric_nonagon(endurance, 'Endurance'))
+    st.metric("🔋 Endurance", f"{dashboard_end} / 9")
+    st.pyplot(generate_single_metric_nonagon(dashboard_end, 'Endurance'))
         
 with col2:  
-    #st.metric("⚡ Speed", f"{speed} / 9")
-    st.pyplot(generate_single_metric_nonagon(speed, 'Speed'))
+    st.metric("⚡ Speed", f"{dashboard_spd} / 9")
+    st.pyplot(generate_single_metric_nonagon(dashboard_spd, 'Speed'))
 
 with col3:
-    #st.metric("⛰️  Elevation", f"{elevation} / 9")
-    st.pyplot(generate_single_metric_nonagon(elevation, 'Elevation'))
+    st.metric("⛰️  Elevation", f"{dashboard_elev} / 9")
+    st.pyplot(generate_single_metric_nonagon(dashboard_elev, 'Elevation'))
+# ==============================================================================
 
 # Master metrics banner layout strip
 hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6 = st.columns(6)
