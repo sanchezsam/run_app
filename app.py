@@ -10,8 +10,6 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-
 from models import Character
 #from services import parse_garmin_tcx, parse_garmin_sleep_csv, parse_garmin_gpx
 from services import parse_garmin_tcx, parse_garmin_sleep_csv, parse_garmin_gpx, parse_garmin_fit
@@ -26,10 +24,6 @@ from ledger_ui import render_training_ledger
 
 FILE_PATH = 'save_file.json'
 st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎️", layout="wide")
-
-
-
-
 # ==========================================
 # 2. LOCAL DATA PERSISTENCE ENGINE
 # ==========================================
@@ -61,18 +55,6 @@ current_profile = st.session_state.profile
 # ==========================================
 # 3. INTERACTIVE RENDERING: NONAGON CHART
 # ==========================================
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-
 def generate_single_metric_nonagon(level_value, category_type):
     """
     Generates a true 9-sided nonagon chart with individual flat-edged slices,
@@ -185,29 +167,7 @@ if player is not None and os.path.exists(FILE_PATH):
     except Exception: pass
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 calculate_and_render_profile(player)
-
-
 # ==============================================================================
 # 🎯 FIXED: LINKED DIRECTLY TO YOUR HEADER RATING VARIABLES
 # ==============================================================================
