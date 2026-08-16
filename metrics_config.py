@@ -120,4 +120,100 @@ FINAL_METRIC_CONFIG = {
         }
     }
 }
+# ==============================================================================
+# 💎 TROPHY SHOWROOM CONFIGURATION MAPS & REWARDS MATRIX
+# ==============================================================================
+
+# 1. High-Fidelity RPG Style Gem Tier Registry
+GEM_TIER_REGISTRY = {
+    "emerald":  {"label": "❇️ Emerald",  "color": "#2ecc71", "bg": "rgba(46, 204, 113, 0.01)", "xp": 50},
+    "sapphire": {"label": "🔹 Sapphire", "color": "#3498db", "bg": "rgba(52, 152, 219, 0.01)", "xp": 150},
+    "amethyst": {"label": "🔮 Amethyst", "color": "#9b59b6", "bg": "rgba(155, 89, 182, 0.01)", "xp": 400},
+    "diamond":  {"label": "💎 Diamond",  "color": "#f1c40f", "bg": "rgba(241, 196, 15, 0.02)", "xp": 1000}
+}
+
+# 2. Authentic 9-Tier Athletic Division Rank Settings
+ATHLETIC_TIERS = [
+    {"max_lvl": 3,  "title": "🔰 Junior Varsity Pacer"},
+    {"max_lvl": 6,  "title": "🏃‍♂️ Varsity Captain"},
+    {"max_lvl": 9,  "title": "⚡ Collegiate Division II Contender"},
+    {"max_lvl": 12, "title": "🏟️ Collegiate Division I All-American"},
+    {"max_lvl": 15, "title": "👟 Post-Collegiate Elite / Club Racer"},
+    {"max_lvl": 18, "title": "🇺🇸 USATF Sub-National Competitor"},
+    {"max_lvl": 21, "title": "🦅 USATF National Qualifier"},
+    {"max_lvl": 24, "title": "🌍 World Athletics International Pro"},
+    {"max_lvl": 99, "title": "👑 World Athletics Olympian Tier"}
+]
+
+# Constants for loss-aversion streak tracking and leveling thresholds
+DEFENSE_WINDOW_DAYS = 7
+XP_PER_LEVEL_THRESHOLD = 3000
+
+# 3. Weekly Mileage Threshold Milestones
+WEEKLY_MILEAGE_REWARDS = [
+    {"miles": 40, "title": "Yellow Ribbon", "icon": "🎗️", "tier": "emerald", "desc": "Completed a 40-mile training week block."},
+    {"miles": 45, "title": "Red Ribbon", "icon": "🎀", "tier": "emerald", "desc": "Completed a 45-mile training week block."},
+    {"miles": 50, "title": "Blue Ribbon", "icon": "🎗️", "tier": "emerald", "desc": "Completed a 50-mile training week block."},
+    {"miles": 55, "title": "Bronze Medal", "icon": "🥉", "tier": "sapphire", "desc": "Breached a 55-mile high-volume week."},
+    {"miles": 60, "title": "Silver Medal", "icon": "🥈", "tier": "sapphire", "desc": "Breached a 60-mile high-volume week."},
+    {"miles": 65, "title": "Gold Medal", "icon": "🥇", "tier": "sapphire", "desc": "Breached a 65-mile high-volume week."},
+    {"miles": 70, "title": "Bronze Trophy", "icon": "🥉", "tier": "amethyst", "desc": "Secured a 70-mile elite tier calendar week."},
+    {"miles": 75, "title": "Silver Trophy", "icon": "🥈", "tier": "amethyst", "desc": "Secured a 75-mile elite tier calendar week."},
+    {"miles": 80, "title": "Gold Trophy", "icon": "🏆", "tier": "amethyst", "desc": "Secured an 80-mile elite tier calendar week."},
+    {"miles": 85, "title": "Platinum Trophy", "icon": "👑", "tier": "diamond", "desc": "Earned the prestigious 85-mile crown award."},
+    {"miles": 90, "title": "Sapphire & Silver Buckle", "icon": "🤠", "tier": "diamond", "desc": "Ultimate endurance milestone: 90 weekly miles."},
+    {"miles": 95, "title": "Ruby & Gold Buckle", "icon": "🔱", "tier": "diamond", "desc": "Ultimate endurance milestone: 95 weekly miles."},
+    {"miles": 100, "title": "Diamond & Platinum Buckle", "icon": "💎", "tier": "diamond", "desc": "Century Tier Legend: Completed a 100-mile week."}
+]
+
+# 4. Weekly Elevation Climb Threshold Milestones
+WEEKLY_ELEVATION_REWARDS = [
+    {"climb_ft": 1000, "title": "Hill Hopper Ribbon", "icon": "🔰", "tier": "emerald", "desc": "Accumulated 1,000 feet of vertical climb in a single week."},
+    {"climb_ft": 2000, "title": "Ridge Climber Ribbon", "icon": "🎗️", "tier": "emerald", "desc": "Accumulated 2,000 feet of vertical climb in a single week."},
+    {"climb_ft": 3000, "title": "Summit Scout Ribbon", "icon": "🎀", "tier": "emerald", "desc": "Accumulated 3,000 feet of vertical climb in a single week."},
+    {"climb_ft": 4000, "title": "Vert-Seeker Medal", "icon": "🥉", "tier": "sapphire", "desc": "Breached 4,000 vertical feet in a high-elevation training week."},
+    {"climb_ft": 5000, "title": "Alpine Finisher Medal", "icon": "🥈", "tier": "sapphire", "desc": "Breached 5,000 vertical feet in a high-elevation training week."},
+    {"climb_ft": 6000, "title": "High-Pass Master Medal", "icon": "🥇", "tier": "sapphire", "desc": "Breached 6,000 vertical feet in a high-elevation training week."},
+    {"climb_ft": 7000, "title": "Mountain Lion Trophy", "icon": "🥉", "tier": "amethyst", "desc": "Secured 7,000 feet of pure vertical gain inside a calendar week."},
+    {"climb_ft": 8000, "title": "Skyrunner Trophy", "icon": "🥈", "tier": "amethyst", "desc": "Secured 8,000 feet of pure vertical gain inside a calendar week."},
+    {"climb_ft": 9000, "title": "Cloud-Splitter Trophy", "icon": "🏆", "tier": "amethyst", "desc": "Secured 9,000 feet of pure vertical gain inside a calendar week."},
+    {"climb_ft": 10000, "title": "Peak Crown Trophy", "icon": "👑", "tier": "diamond", "desc": "Earned the elite 10,000ft single-week vertical crown award."},
+    {"climb_ft": 12000, "title": "Sapphire Peak Buckle", "icon": "🤠", "tier": "diamond", "desc": "Extreme mountaineering milestone: 12,000 weekly vertical feet."},
+    {"climb_ft": 14000, "title": "Ruby Ridge Buckle", "icon": "🔱", "tier": "diamond", "desc": "Extreme mountaineering milestone: 14,000 weekly vertical feet."},
+    {"climb_ft": 15000, "title": "Stratosphere Buckle", "icon": "💎", "tier": "diamond", "desc": "Vertical Legend: Cleared 15,000 feet of elevation gain in one week."}
+]
+
+# 5. Elite Lifelong Coveted Targets
+COVETED_TARGETS = {
+    "coveted_boston_qual": {
+        "title": "The Blue Ribbon Unicorn",
+        "icon": "🦄",
+        "tier": "diamond",
+        "distance_required": 26.22,
+        "pace_target_seconds": 435, # 7:15 /mi pace rule target
+        "desc": "Achieve a verified Boston Marathon qualifying pace profile standard."
+    },
+    "coveted_sub_four": {
+        "title": "The Sub-4 Sovereign",
+        "icon": "🌌",
+        "tier": "diamond",
+        "distance_required": 1.0,
+        "pace_target_seconds": 240, # 4:00 /mi speed trial target
+        "desc": "Break the historic 4-minute mile speed barrier on a verified course split."
+    },
+    "coveted_century_mount": {
+        "title": "The Century Mount",
+        "icon": "⛰️",
+        "tier": "diamond",
+        "distance_required": 62.14, # 100 Kilometers in miles
+        "desc": "Log a single, continuous ultra-endurance training run exceeding 100K."
+    },
+    "coveted_immortal_streak": {
+        "title": "The Immortal Streak",
+        "icon": "♾️",
+        "tier": "diamond",
+        "streak_days_required": 365,
+        "desc": "Maintain your active training log daily for a full calendar year loop."
+    }
+}
 
