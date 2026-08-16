@@ -1,0 +1,154 @@
+================================================================================
+🏛️ THE COMPLETE MASTER DESIGN CONFIGURATION: PROGRESSIVE HALL OF FAME
+================================================================================
+
+1. SCREEN REAL ESTATE & INTERACTION LAYOUT (OWN INDEPENDENT SCREEN TAB)
+--------------------------------------------------------------------------------
+Selecting '🏆 Showroom & PRs' via the app's main navigation menu unlocks a 
+perfectly segmented dual-column layout workspace with no popup modal clutter:
+
+ 🟩 SCREEN LEFT EDGE (st.sidebar)          🟦 MAIN VIEWPORT FRAME (st.columns)
+ ┌─────────────────────────────────────┐  ┌────────────────────────────────────────┐
+ │ 📘 THE SHOWROOM HANDBOOK ROADMAP    │  │ 🏆 ALL-TIME PERSONAL RECORDS BANNER    │
+ │ (Live Progress & Target Handbook)   │  │ ├─ Longest Run    ├─ Max Annual Volume │
+ │                                     │  │ └─ Fastest Mile   └─ Course 5K Split   │
+ │ 🏃‍♂️ Weekly Mileage Milestones:       │  ├────────────────────────────────────────┤
+ │ ├─ 🎗️ Yellow Ribbon (x3)            │  │ 🏛️ MOUNTED AWARDS CASE (Earned Stacks)  │
+ │ └─ 🔒 Red Ribbon (78% Complete)     │  │ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+ │    [st.progress bar UI tracking]    │  │ │ 🥇 (x4)  │ │ 🏆 (x1)  │ │ 🤠 (x2)  │ │
+ │    "You are only 4.2 miles away!"   │  │ └──────────┘ └──────────┘ └──────────┘ │
+ │                                     │  ├────────────────────────────────────────┤
+ │ 🏔️ Weekly Elevation Milestones:     │  │ 💎 THE COVETED MASTERS VAULT (Lifelong)│
+ │ ├─ 🔰 Hill Hopper (x1)              │  │ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+ │ └─ 🔒 Vert Medal (45% Complete)     │  │ │ 🦄 (80%) │ │ 🌌 (Locked)│ │ ⛰️ (Locked)│ │
+ │    "You are only 2,200 feet away!"  │  │ └──────────┘ └──────────┘ └──────────┘ │
+ └─────────────────────────────────────┘  └────────────────────────────────────────┘
+
+2. CORE DATA CONFIGURATIONS (METRICS_CONFIG.PY REVISIONS)
+--------------------------------------------------------------------------------
+This central registry lists our performance goals, asset symbols, milestone 
+targets, and gemstone color layers under a single configuration profile:
+
+* PROGRESSIVE REWARD GEM TIER REGISTRY:
+  - ❇️ Emerald (Common)  -> Color: #2ecc71 | Foundational training consistency.
+  - 🔹 Sapphire (Rare)   -> Color: #3498db | Pacing streaks and volume breaks.
+  - 🔮 Amethyst (Epic)   -> Color: #9b59b6 | Competitive courses and Coliseum battles.
+  - 💎 Diamond (Prestige) -> Color: #f1c40f | All-time personal records and elite peaks.
+
+* WEEKLY PERFORMANCE MILESTONE MATRICES:
+  ┌───────────────────────────┬────────────────────────────────────────────────┐
+  │ WEEKLY MILEAGE MILESTONES │ WEEKLY ELEVATION CLIMB MILESTONES              │
+  ├───────────────────────────┼────────────────────────────────────────────────┤
+  │ 40 Mi: 🎗️ Yellow Ribbon    │  1,000 Ft: 🔰 Hill Hopper Ribbon               │
+  │ 45 Mi: 🎀 Red Ribbon       │  2,000 Ft: 🎗️ Ridge Climber Ribbon              │
+  │ 50 Mi: 🎗️ Blue Ribbon      │  3,000 Ft: 🎀 Summit Scout Ribbon               │
+  │ 55 Mi: 🥉 Bronze Medal     │  4,000 Ft: 🥉 Vert-Seeker Medal                 │
+  │ 60 Mi: 🥈 Silver Medal     │  5,000 Ft: 🥈 Alpine Finisher Medal             │
+  │ 65 Mi: 🥇 Gold Medal       │  6,000 Ft: 🥇 High-Pass Master Medal            │
+  │ 70 Mi: 🥉 Bronze Trophy    │  7,000 Ft: 🏔️ Mountain Lion Trophy              │
+  │ 75 Mi: 🥈 Silver Trophy    │  8,000 Ft: 🥈 Skyrunner Trophy                  │
+  │ 80 Mi: 🏆 Gold Trophy      │  9,000 Ft: 🏆 Cloud-Splitter Trophy             │
+  │ 85 Mi: 👑 Platinum Trophy  │ 10,000 Ft: 👑 Peak-To-Peak Crown Trophy         │
+  │ 90 Mi: 🤠 Sapphire Buckle  │ 12,000 Ft: 🤠 Sapphire Peak Buckle              │
+  │ 95 Mi: 🔱 Ruby Buckle      │ 14,000 Ft: 🔱 Ruby Ridge Buckle                 │
+  │ 100 Mi: 💎 Diamond Buckle  │ 15,000 Ft: 💎 Stratosphere Diamond Buckle       │
+  └───────────────────────────┴────────────────────────────────────────────────┘
+
+* HIGH-PRESTIGE COVETED MASTER REWARDS:
+  - 🦄 "The Blue Ribbon Unicorn" (26.22 Mi @ 7:15/mi Boston Marathon Qualifier standard)
+  - 🌌 "The Sub-4 Sovereign" (Fastest recorded raw 1.0-mile split pace < 4:00/mi)
+  - ⛰️ "The Century Mount" (Single-run endurance logging peak exceeding 100 Kilometers)
+  - ♾️ "The Immortal Streak" (Maintaining an active running log daily for 365 days)
+
+3. MODULAR ARITHMETIC SCANNING ENGINE (SHOWROOM_UI.PY)
+--------------------------------------------------------------------------------
+The analytics loop isolates layout controls into five clean, modular parts:
+* calculate_personal_records(): Runs analytical .max() queries across fields.
+* compile_weekly_mileage_stacks(): Aggregates workout fields into weekly sums.
+* compile_weekly_elevation_stacks(): Groups ascent totals by calendar index.
+* render_sidebar_requirements_manual(): Compares active week peaks against targets.
+  Calculates math formulas for unearned milestones:
+  - remaining_miles = award_target - current_best_week_total
+  - progress_percent = current_best_week_total / award_target
+  - Renders a live st.progress() slider track plus custom "Distance-to-Target" strings.
+
+4. 100% CLEAN ARCHITECTURE HOOK PLACEMENT
+--------------------------------------------------------------------------------
+* app.py (Top Import): `from showroom_ui import render_trophy_showroom_tab`
+* app.py (Tab List): Appends '🏆 Showroom & PRs' to the horizontal selection array.
+* app.py (Router): Appends an explicit switch branch:
+  `elif st.session_state.active_tab_selection == '🏆 Showroom & PRs': render_trophy_showroom_tab()`
+
+================================================================================
+🏁 REPLAY LOG: Ready to deploy into your sandbox file whenever you return!
+================================================================================
+┌──────────────────────────────────────┐
+│  ❄️                              x3   │
+│                                      │
+│  EMERALD REWARD                      │
+│  Cold Weather Grit                   │
+│  Run < 32°F (2026)                   │
+│                                      │
+│  Earned by completing an active run  │
+│  sequence in sub-freezing conditions.│
+│  ──────────────────────────────────  │
+│  [ DRILL DOWN RUN LOGS (x3) ]        │
+└──────────────────────────────────────┘
+
+================================================================================
+🏆 ALL-TIME PERSONAL RECORDS (PR) SCOREBOARD LEADERBOARD DESIGN
+================================================================================
+
+1. SCREEN REAL ESTATE POSITIONING
+--------------------------------------------------------------------------------
+The PR Leaderboard sits horizontally at the very top of your main Showroom 
+viewport. It acts as a massive "Hall of Fame" marquee banner, ensuring your 
+all-time athletic peaks are the first things visible before scrolling down to 
+your cabinet grids.
+
+2. HORIZONTAL GRID LAYOUT (4-COLUMN ROW MAPPING)
+--------------------------------------------------------------------------------
+The scoreboard is split into a layout matrix using clean, boxy containers. Each 
+card features a high-visibility accent bar matching your top-tier Diamond Gem 
+Tier styling rules to indicate record prestige:
+
+ 🏆 ALL-TIME HIGH PERFORMANCE BENCHMARKS
+ ┌───────────────────┬───────────────────┬───────────────────┬─────────────────┐
+ │ 🏃‍♂️ LONGEST RUN    │ ⚡ FASTEST MILE   │ 📅 PEAK YEAR VOL  │ 🏁 COURSE PRs   │
+ │  18.42 Mi         │  5:42 /mi         │  1,240.5 Mi       │  5K: 19:48      │
+ │                   │                   │                   │  10K: 42:15     │
+ │  Date: 2024-11-14 │  Date: 2025-10-12 │  Achieved: 2024   │  Half: 1:34:50  │
+ └───────────────────┴───────────────────┴───────────────────┴─────────────────┘
+
+3. COMPONENT BREAKDOWN & VALUE MATRIX
+--------------------------------------------------------------------------------
+* Card 1: Endurance Peak ("Longest Run")
+  - Accent Bar: Top Golden Diamond Edge border.
+  - Core Metric: Absolute maximum career single-activity mile counter (.max()).
+  - Context Label: Date tracking stamp showing when that run was completed.
+
+* Card 2: Velocity Benchmark ("Fastest Mile")
+  - Accent Bar: Top Amethyst Purple Edge border.
+  - Core Metric: Pure record velocity split calculated out of your split files.
+  - Context Label: Date tracking stamp showing your all-time fastest mile split.
+
+* Card 3: Macro Volume Peak ("Max Annual Volume")
+  - Accent Bar: Top Sapphire Blue Edge border.
+  - Core Metric: Historical peak calendar year cumulative distance sum.
+  - Context Label: Explicit year stamp (e.g., "Achieved in 2024").
+
+* Card 4: Standard Course Split Desk ("Course PRs")
+  - Accent Bar: Top Emerald Green Edge border.
+  - Core Metric: Vertical stacked line list matching standard global distances.
+  - Context Label: Clean timeline logs indicating your personal records across 
+    the 5K, 10K, and Half Marathon tracks.
+
+4. DYNAMIC LINK INTERACTION
+--------------------------------------------------------------------------------
+* Every card is anchored back to your core dataset.
+* Clicking on any record row or historical date token will immediately target
+  the master database index and populate the exact run details inside the 
+  Verification Drawer at the bottom of the screen. This allows you to inspect 
+  the heart rate splits, cadence metrics, and conditions behind that lifetime best.
+================================================================================
+
