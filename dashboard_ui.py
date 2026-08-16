@@ -1961,7 +1961,11 @@ def render_dashboard_overview(player):
 
             # 6. Route metrics array into target timeline scaffolds
             if is_single_year:
-                single_year_value_col1 = df_working_col1['Year_Tag'].iloc if not df_working_col1.empty else "2026"
+                # 🎯 FIXED: Appended [0] to execute iloc and dynamically resolve the calendar year fallback
+                import datetime
+                fallback_current_year = str(datetime.datetime.now().year)
+                single_year_value_col1 = df_working_col1['Year_Tag'].iloc[0] if not df_working_col1.empty else fallback_current_year
+                
                 weekly_plot_df = pd.merge(standard_weeks, weekly_df, on='Week_Period', how='left')
                 weekly_plot_df['Display_Distance'] = weekly_plot_df['Display_Distance'].fillna(0.0)
                 weekly_plot_df['Year_Tag'] = weekly_plot_df['Year_Tag'].fillna(single_year_value_col1)
