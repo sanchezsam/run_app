@@ -1,193 +1,284 @@
 {
-    "name": "Elite Challenger",
-    "level": 25,
-    "total_xp": 8750,
-    "defense_state": "stable",
-    "personal_records": {
-        "longest_run": {
-            "val": "26.2 Mi",
-            "date": "2026-04-12"
-        },
-        "fastest_5k": {
-            "val": "19:45",
-            "date": "2026-05-18"
-        },
-        "fastest_10k": {
-            "val": "41:20",
-            "date": "2026-06-01"
-        },
-        "highest_climb": {
-            "val": "3,450 Ft",
-            "date": "2026-07-19"
-        },
-        "max_weekly_volume": {
-            "val": "72.4 Mi",
-            "date": "2026-03-22"
-        }
+  "history_logs": [
+    {
+      "Date": "2026-05-01",
+      "Display_Distance": 21.07,
+      "Distance (Miles)": 21.07,
+      "Miles": 21.07,
+      "Elevation (Ft)": 1374,
+      "Activity Type": "Run",
+      "Pace": "7:45",
+      "Time": "2:43:35",
+      "award_code": "medal_speed_demon",
+      "type": "medal",
+      "metric": "🥇 Elite Personal Record Cross-Over",
+      "details": "FIT activity stream verified via multi-config validation layers."
     },
-    "coveted_rewards_status": {
-        "centurion_milestone": {
-            "status": "Unlocked",
-            "progress_label": "100%"
-        },
-        "altitude_titan": {
-            "status": "Unlocked",
-            "progress_label": "100%"
-        },
-        "apex_predator": {
-            "status": "Unlocked",
-            "progress_label": "100%"
-        },
-        "immortal_streak": {
-            "status": "Unlocked",
-            "progress_label": "100%"
-        }
+    {
+      "Date": "2026-05-03",
+      "Display_Distance": 11.52,
+      "Distance (Miles)": 11.52,
+      "Miles": 11.52,
+      "Elevation (Ft)": 495,
+      "Activity Type": "Run",
+      "Pace": "8:17",
+      "Time": "1:35:32",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
     },
-    "arena_championships": {
-        "coliseum_blitz": {
-            "count": 3,
-            "status_label": "CHAMPION x3"
-        },
-        "vanguard_ascent": {
-            "count": 1,
-            "status_label": "VICTORY UNLOCKED"
-        },
-        "olympus_marathon": {
-            "count": 2,
-            "status_label": "CHAMPION x2"
-        },
-        "titan_clash": {
-            "count": 0,
-            "status_label": "LOCKED MATCH"
-        }
+    {
+      "Date": "2026-05-06",
+      "Display_Distance": 5.25,
+      "Distance (Miles)": 5.25,
+      "Miles": 5.25,
+      "Elevation (Ft)": 0,
+      "Activity Type": "Run",
+      "Pace": "7:35",
+      "Time": "0:39:50",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
     },
-    "history_logs": [
-        {
-            "Date": "2026-08-11",
-            "Display_Distance": 5.0,
-            "Distance (Miles)": 5.0,
-            "Pace": "8:30",
-            "Time": "42:30",
-            "award_code": "patch_cold_warrior",
-            "type": "patch",
-            "metric": "\u2744\ufe0f Cold Warrior Frost Boundary",
-            "details": "Sensor verified operational readiness in frozen environmental sectors."
-        },
-        {
-            "Date": "2026-08-12",
-            "Display_Distance": 4.2,
-            "Distance (Miles)": 4.2,
-            "Pace": "9:05",
-            "Time": "38:10",
-            "award_code": "patch_streak_master",
-            "type": "patch",
-            "metric": "\ud83d\udd25 30-Day Consistency Streak",
-            "details": "Maintained defensive posture alignment rules over consecutive days."
-        },
-        {
-            "Date": "2026-08-13",
-            "Display_Distance": 6.5,
-            "Distance (Miles)": 6.5,
-            "Pace": "7:50",
-            "Time": "50:57",
-            "award_code": "patch_heat_wave",
-            "type": "patch",
-            "metric": "\u2600\ufe0f Heat Wave Inferno Tracker",
-            "details": "Telemetry validated completion under extreme high-temperature thresholds."
-        },
-        {
-            "Date": "2026-08-14",
-            "Display_Distance": 8.2,
-            "Distance (Miles)": 8.2,
-            "Pace": "8:12",
-            "Time": "1:07:14",
-            "award_code": "patch_night_owl",
-            "type": "patch",
-            "metric": "\ud83c\udf19 Night Owl Midnight Patrol",
-            "details": "Activity verification captured during low-light nocturnal sensor intervals."
-        },
-        {
-            "Date": "2026-08-15",
-            "Display_Distance": 3.1,
-            "Distance (Miles)": 3.1,
-            "Pace": "9:30",
-            "Time": "29:27",
-            "award_code": "patch_rain_maker",
-            "type": "patch",
-            "metric": "\ud83c\udf27\ufe0f Rain Maker Storm Rider",
-            "details": "Sensors calibrated and checked for complete moisture saturation parameters."
-        }
-    ],
-    "final_metric_data": {
-        "lifetime_odometer_miles": 0.0,
-        "lifetime_calories_burned": 0,
-        "current_streak_tracker": {
-            "current_week_runs_count": 0,
-            "last_tracked_week_start": "",
-            "consecutive_4_run_weeks": 0,
-            "consecutive_52_run_weeks": 0
-        },
-        "trophy_cabinet": {
-            "shelf_a_mileage": [],
-            "shelf_b_elevation": [],
-            "shelf_c_calories": [],
-            "prestige_loops": {
-                "mileage_loops_count": 0,
-                "elevation_loops_count": 0,
-                "calorie_loops_count": 0
-            }
-        },
-        "all_time_personal_records": {
-            "fastest_1_mile_seconds": 99999,
-            "fastest_5k_seconds": 99999,
-            "fastest_10k_seconds": 99999,
-            "longest_single_run_miles": 0.0
-        }
+    {
+      "Date": "2026-05-06",
+      "Display_Distance": 7.08,
+      "Distance (Miles)": 7.08,
+      "Miles": 7.08,
+      "Elevation (Ft)": 400,
+      "Activity Type": "Run",
+      "Pace": "9:12",
+      "Time": "1:05:09",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
     },
-    "unlocked_badges": [],
-    "running_level": 9,
-    "vo2_max": 64.2,
-    "avg_heart_rate": 138,
-    "resting_heart_rate": 45,
-    "lifetime_elevation_gain": 85000,
-    "cadence_history": [],
-    "elevation_milestone_history": [
-        "bighorn",
-        "alpine_vert_challenge",
-        "overdrive"
-    ],
-    "deep_rem_streak": 14,
-    "stat_points": 0,
-    "gold": 9500,
-    "endurance_level": 5,
-    "pace_level": 5,
-    "hill_climbing_level": 5,
-    "gold_balance": 9500,
-    "inventory": [
-        "Interceptor Spec-R",
-        "Ghost Horizon Chassis",
-        "Carbon Overlord V8"
-    ],
-    "equipped_gear": {
-        "Interceptor Spec-R": 3,
-        "Ghost Horizon Chassis": 2
+    {
+      "Date": "2026-05-09",
+      "Display_Distance": 12.17,
+      "Distance (Miles)": 12.17,
+      "Miles": 12.17,
+      "Elevation (Ft)": 643,
+      "Activity Type": "Run",
+      "Pace": "7:18",
+      "Time": "1:28:53",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
     },
-    "registered_races": [
-        "Berlin Olympiastadion Track",
-        "Chamonix Ultra Trail"
-    ],
-    "boss_wins": 15,
-    "fatigue": 0,
-    "days_tracked": 365,
-    "synced_garmin_activities": [],
-    "daily_miles": 520.4,
-    "base_xp": 100,
-    "exponent": 1.5,
-    "last_distance": 26.2,
-    "last_pace": 6.15,
-    "stamina_xp": 3500,
-    "agility_xp": 2800,
-    "power_xp": 3200,
-    "boss_clears": 15,
-    "boss_levels": []
+    {
+      "Date": "2026-05-11",
+      "Display_Distance": 7.01,
+      "Distance (Miles)": 7.01,
+      "Miles": 7.01,
+      "Elevation (Ft)": 367,
+      "Activity Type": "Run",
+      "Pace": "9:18",
+      "Time": "1:05:18",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-12",
+      "Display_Distance": 5.12,
+      "Distance (Miles)": 5.12,
+      "Miles": 5.12,
+      "Elevation (Ft)": 229,
+      "Activity Type": "Run",
+      "Pace": "9:01",
+      "Time": "0:46:13",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-13",
+      "Display_Distance": 3.4,
+      "Distance (Miles)": 3.4,
+      "Miles": 3.4,
+      "Elevation (Ft)": 95,
+      "Activity Type": "Run",
+      "Pace": "8:22",
+      "Time": "0:28:27",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-17",
+      "Display_Distance": 0.68,
+      "Distance (Miles)": 0.68,
+      "Miles": 0.68,
+      "Elevation (Ft)": 0,
+      "Activity Type": "Run",
+      "Pace": "10:05",
+      "Time": "0:06:54",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-17",
+      "Display_Distance": 26.46,
+      "Distance (Miles)": 26.46,
+      "Miles": 26.46,
+      "Elevation (Ft)": 721,
+      "Activity Type": "Run",
+      "Pace": "6:33",
+      "Time": "2:53:21",
+      "award_code": "medal_speed_demon",
+      "type": "medal",
+      "metric": "🥇 Elite Personal Record Cross-Over",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-20",
+      "Display_Distance": 3.12,
+      "Distance (Miles)": 3.12,
+      "Miles": 3.12,
+      "Elevation (Ft)": 301,
+      "Activity Type": "Run",
+      "Pace": "9:54",
+      "Time": "0:30:56",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-21",
+      "Display_Distance": 8.13,
+      "Distance (Miles)": 8.13,
+      "Miles": 8.13,
+      "Elevation (Ft)": 944,
+      "Activity Type": "Run",
+      "Pace": "7:58",
+      "Time": "1:04:45",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-22",
+      "Display_Distance": 7.02,
+      "Distance (Miles)": 7.02,
+      "Miles": 7.02,
+      "Elevation (Ft)": 351,
+      "Activity Type": "Run",
+      "Pace": "8:14",
+      "Time": "0:57:50",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-23",
+      "Display_Distance": 11.38,
+      "Distance (Miles)": 11.38,
+      "Miles": 11.38,
+      "Elevation (Ft)": 524,
+      "Activity Type": "Run",
+      "Pace": "8:10",
+      "Time": "1:33:03",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-24",
+      "Display_Distance": 8.61,
+      "Distance (Miles)": 8.61,
+      "Miles": 8.61,
+      "Elevation (Ft)": 328,
+      "Activity Type": "Run",
+      "Pace": "7:48",
+      "Time": "1:07:10",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-25",
+      "Display_Distance": 0.89,
+      "Distance (Miles)": 0.89,
+      "Miles": 0.89,
+      "Elevation (Ft)": 45,
+      "Activity Type": "Run",
+      "Pace": "12:35",
+      "Time": "0:11:12",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-25",
+      "Display_Distance": 15.05,
+      "Distance (Miles)": 15.05,
+      "Miles": 15.05,
+      "Elevation (Ft)": 2155,
+      "Activity Type": "Run",
+      "Pace": "9:24",
+      "Time": "2:21:40",
+      "award_code": "patch_altitude_titan",
+      "type": "patch",
+      "metric": "🏔️ Summit Climb Milestone",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-27",
+      "Display_Distance": 9.28,
+      "Distance (Miles)": 9.28,
+      "Miles": 9.28,
+      "Elevation (Ft)": 1115,
+      "Activity Type": "Run",
+      "Pace": "8:33",
+      "Time": "1:19:25",
+      "award_code": "patch_altitude_titan",
+      "type": "patch",
+      "metric": "🏔️ Summit Climb Milestone",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-28",
+      "Display_Distance": 10.06,
+      "Distance (Miles)": 10.06,
+      "Miles": 10.06,
+      "Elevation (Ft)": 1279,
+      "Activity Type": "Run",
+      "Pace": "9:02",
+      "Time": "1:31:01",
+      "award_code": "patch_altitude_titan",
+      "type": "patch",
+      "metric": "🏔️ Summit Climb Milestone",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    },
+    {
+      "Date": "2026-05-29",
+      "Display_Distance": 8.07,
+      "Distance (Miles)": 8.07,
+      "Miles": 8.07,
+      "Elevation (Ft)": 370,
+      "Activity Type": "Run",
+      "Pace": "7:31",
+      "Time": "1:00:46",
+      "award_code": "patch_cold_warrior",
+      "type": "patch",
+      "metric": "❄️ Baseline Run Verified",
+      "details": "FIT activity stream verified via multi-config validation layers."
+    }
+  ]
 }

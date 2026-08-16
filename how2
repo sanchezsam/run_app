@@ -3,6 +3,11 @@ use pastebin.com for code
 
 
 run
+python3 -m streamlit run batch_scan_utility.py
+python3 verify_data.py
+python3 test_showroom_fix.py
+
+
 
 python3 -m streamlit run app.py
 
