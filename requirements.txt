@@ -1,0 +1,10 @@
+# Lower bounds are set to the first release without known advisories
+# (pip-audit); pillow is pinned because it ships with streamlit/matplotlib.
+altair>=5.5.0
+defusedxml>=0.7.1
+fitparse>=1.2.0
+matplotlib>=3.10.0
+numpy>=2.2.1
+pandas>=2.2.3
+pillow>=12.3.0
+streamlit>=1.54.0

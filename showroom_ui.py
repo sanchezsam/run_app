@@ -6,6 +6,7 @@ import personal_records_config as pr_cfg
 import pro_shop_config as shop_cfg
 import arena_tournaments_config as arena_cfg
 import showroom_engine as eng
+from security_utils import escape_html
 
 # ==============================================================================
 # 🎨 PART 1: INTERACTIVE COCKPIT SIDEBAR PANELS & PROGRESS METERS
@@ -89,8 +90,8 @@ def render_personal_records_banner(pr_data):
                 st.markdown(f"""
                 <div style='{base_css} border-top: 3px solid {record['border_color']};'>
                     <p style='font-size:0.75rem; color:gray; margin:0;'>{record['title']}</p>
-                    <h2 style='margin:4px 0; font-size:1.45rem;'>{metric_info['val']}</h2>
-                    <p style='font-size:0.7rem; color:gray; margin:0;'>{metric_info['date']}</p>
+                    <h2 style='margin:4px 0; font-size:1.45rem;'>{escape_html(metric_info['val'])}</h2>
+                    <p style='font-size:0.7rem; color:gray; margin:0;'>{escape_html(metric_info['date'])}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -137,7 +138,7 @@ def render_top_shelf_showcase(df_instances):
         with slot_col:
             if idx < len(pinned_codes):
                 code = pinned_codes[idx]
-                st.markdown(f"<div style='{card_css}'><h4 style='margin:0;'>🏆</h4><p style='font-size:0.8rem; margin:2px 0; font-weight:bold;'>{code.replace('_',' ').title()}</p><span style='font-size:0.65rem; color:gray;'>Pinned Showcase Slot</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='{card_css}'><h4 style='margin:0;'>🏆</h4><p style='font-size:0.8rem; margin:2px 0; font-weight:bold;'>{escape_html(code.replace('_',' ').title())}</p><span style='font-size:0.65rem; color:gray;'>Pinned Showcase Slot</span></div>", unsafe_allow_html=True)
             else:
                 st.markdown(f"<div style='border: 2px dashed rgba(128,128,128,0.2); border-radius: 6px; padding: 10px; text-align: center; color:gray; font-size:0.8rem;'>Empty Showcase Slot</div>", unsafe_allow_html=True)
 

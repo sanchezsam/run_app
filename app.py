@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from models import Character
+from security_utils import apply_serialized_attributes, enforce_access_gate, sanitize_display_text
 from services import parse_garmin_tcx, parse_garmin_sleep_csv, parse_garmin_gpx, parse_garmin_fit
 
 from coliseum_ui import render_coliseum
@@ -24,6 +25,11 @@ from showroom_ui import generate_dashboard_motivation_alerts
 
 FILE_PATH = 'save_file.json'
 st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎️", layout="wide")
+
+# Optional single-password gate. Inert unless RUN_APP_PASSWORD (or the
+# `app_password` Streamlit secret) is set; required before exposing the app
+# beyond localhost, since the profile holds biometric and GPS-derived data.
+enforce_access_gate()
 
 
 
@@ -211,11 +217,9 @@ def load_player():
                     # System Attempt B: Direct Attribute Injector (Guaranteed Success)
                     player_instance = Character(name=raw_data.get("name", "Racer 1"))
                     
-                    for key, val in raw_data.items():
-                        try:
-                            setattr(player_instance, key, val)
-                        except Exception:
-                            pass
+                    # Only assign non-callable, non-private keys so a tampered save
+                    # file cannot shadow model methods.
+                    apply_serialized_attributes(player_instance, raw_data)
                     
                     # Force back mandatory model properties
                     player_instance.history_logs = raw_data.get("history_logs", [])
@@ -251,7 +255,7 @@ if player is None:
         c_name = st.text_input('Driver Profile Name', value='Racer 1')
         c_weight = st.number_input('Body Weight (kg)', min_value=30.0, value=75.0)
         if st.form_submit_button('Forge Active Profile'):
-            player_obj = Character(name=c_name.strip())
+            player_obj = Character(name=sanitize_display_text(c_name.strip(), max_length=60))
             player_obj.weight_kg = c_weight
             with open(FILE_PATH, 'w', encoding='utf-8') as f:
                 json.dump(player_obj.to_dict(), f, default=str, indent=4)
