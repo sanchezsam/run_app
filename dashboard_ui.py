@@ -8,6 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 from metrics_config import FINAL_METRIC_CONFIG
+from error_utils import get_logger, report_error
+
+logger = get_logger(__name__)
 
 
 
@@ -70,7 +73,12 @@ def ensure_metrics_schema_is_initialized():
     with open(TARGET_DB, "r", encoding="utf-8") as f:
         try:
             profile_data = json.load(f)
-        except Exception:
+        except json.JSONDecodeError as exc:
+            report_error(
+                logger,
+                f'{TARGET_DB} is not valid JSON, so dashboard metrics cannot be initialized',
+                exc,
+            )
             return
 
     # 2. Check for the final_metric_data dictionary layer
@@ -313,8 +321,8 @@ def load_data_from_save_json():
                                 return root_key["history_logs"]
                     elif isinstance(data, list):
                         return data
-            except Exception as e:
-                pass
+            except (OSError, json.JSONDecodeError) as exc:
+                report_error(logger, f'Could not read activity history from {path}', exc)
     return []
 
 # ==========================================
@@ -762,7 +770,8 @@ def render_dashboard_overview(player):
     if isinstance(raw_activities, str):
         try:
             raw_activities = json.loads(raw_activities)
-        except Exception:
+        except json.JSONDecodeError as exc:
+            report_error(logger, 'Stored activity history is not valid JSON, so no activities can be shown', exc)
             raw_activities = []
 
     if isinstance(raw_activities, list):
@@ -899,8 +908,11 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
     else:
         raw_activities = load_data_from_save_json()
         if isinstance(raw_activities, str):
-            try: raw_activities = json.loads(raw_activities)
-            except Exception: raw_activities = []
+            try:
+                raw_activities = json.loads(raw_activities)
+            except json.JSONDecodeError as exc:
+                report_error(logger, 'Stored activity history is not valid JSON, so the activity grid is empty', exc)
+                raw_activities = []
         raw_activities = [row for row in raw_activities if isinstance(row, dict)] if raw_activities else []
         if not raw_activities: return
         df = pd.DataFrame(raw_activities)
@@ -930,7 +942,11 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
             if parsed_dt.year in years_available:
                 active_year_default = parsed_dt.year
                 active_month_default_idx = parsed_dt.month - 1
-        except Exception: pass
+        except (TypeError, ValueError) as exc:
+            logger.warning(
+                'Could not parse the selected activity date %r, defaulting the grid selection: %s',
+                st.session_state.selected_activity_date, exc,
+            )
 
     if "grid_year_dropdown" not in st.session_state:
         st.session_state.grid_year_dropdown = active_year_default
@@ -1717,8 +1733,8 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                         render_zone_octagon_display(matched_run)
                         # --------------------------------------------------------------
                         
-                except Exception:
-                    pass
+                except Exception as exc:
+                    report_error(logger, 'Could not render the lap breakdown and intensity octagon for this activity', exc)
 
 
                 if 'pace' in matched_run:
@@ -1875,7 +1891,8 @@ def render_dashboard_overview(player):
     if isinstance(raw_activities, str):
         try:
             raw_activities = json.loads(raw_activities)
-        except Exception:
+        except json.JSONDecodeError as exc:
+            report_error(logger, 'Stored activity history is not valid JSON, so no activities can be shown', exc)
             raw_activities = []
 
     if isinstance(raw_activities, list):
@@ -2661,8 +2678,8 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
                     "Raw Pace Mins": lap_pace_secs / 60.0
                 })
                 sim_lap_idx += 1
-        except Exception:
-            pass
+        except (KeyError, TypeError, ValueError, ZeroDivisionError) as exc:
+            logger.warning('Stopped building simulated lap splits early: %s', exc, exc_info=True)
 
     if not lap_records:
         st.info("No numerical split vectors available to process.")
@@ -2705,6 +2722,7 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
         
     except Exception:
         # Secure fallback block displaying plain configurations if column configurations glitch
+        logger.warning('Rich split table rendering failed, falling back to a plain table', exc_info=True)
         st.dataframe(df_splits[display_columns], use_container_width=True, hide_index=True)
 
     st.markdown("##### 📈 Cumulative Runtime Build-up (Minutes)")
@@ -2756,8 +2774,8 @@ def render_zone_octagon_display(matched_run_dict):
                 parts = p_str.split(':')
                 if len(parts) == 2: 
                     paces.append(int(parts[0])*60 + int(parts[1]))
-            except Exception: 
-                pass
+            except (TypeError, ValueError) as exc:
+                logger.warning('Skipped split with unparseable pace %r: %s', p_str, exc)
         
         if len(paces) > 1:
             slowest = max(paces)
@@ -2872,7 +2890,8 @@ def render_rpg_xp_rewards(matched_run_dict, player_profile_obj=None):
         distance = float(matched_run_dict.get('Display_Distance', 0.0))
         if distance <= 0:
             distance = float(matched_run_dict.get('Distance (Miles)', 0.0))
-    except Exception:
+    except (TypeError, ValueError) as exc:
+        logger.warning('Could not read the distance for the selected activity, treating it as 0: %s', exc)
         distance = 0.0
 
     base_xp = int(distance * 10)  # 10 Base XP per Mile

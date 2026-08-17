@@ -3,6 +3,11 @@
 import streamlit as st
 import json
 
+from error_utils import get_logger, report_error
+
+logger = get_logger(__name__)
+
+
 def render_shop_interface(player, FILE_PATH):
     st.markdown('## 🛒 Pro Shop & Performance Equipment Forge')
     st.markdown(f"Current Gold Balance: **{int(getattr(player, 'gold', 50))}g** | Available Stat Tokens: **{getattr(player, 'stat_points', 0)}**")
@@ -202,7 +207,8 @@ def render_shop_interface(player, FILE_PATH):
                                         setattr(player, active_slot_variable, owned_item)
                                         with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
                                         st.success(f'⚡ Equipped {owned_item}!'); st.rerun()
-                                    except Exception: pass
+                                    except Exception as exc:
+                                        report_error(logger, f'Could not equip {owned_item}', exc)
                         with v2:
                             # --- COSMETIC SPRAY-PAINT DROPDOWN MATRIX ---
                             available_shades = ["Basic Factory", "White", "Blue", "Red", "Green", "Yellow", "Silver", "Gold"]
@@ -220,7 +226,8 @@ def render_shop_interface(player, FILE_PATH):
                                         player.gear_colors[owned_item] = chosen_shade
                                         with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
                                         st.success(f"⚡ Successfully applied {chosen_shade}!"); st.rerun()
-                                    except Exception: pass
+                                    except Exception as exc:
+                                        report_error(logger, f'Could not apply the {chosen_shade} colorway to {owned_item}', exc)
                                     
                                 if gold_balance < 15:
                                     st.error("❌ Insufficient gold balance to repurchase coating variants.")

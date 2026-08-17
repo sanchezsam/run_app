@@ -3,8 +3,12 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import math
 import json
+import pandas as pd
 from fitparse import FitFile
 
+from error_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def parse_garmin_fit(file_bytes):
@@ -137,8 +141,8 @@ def parse_garmin_gpx(player, file_bytes):
                     mins = (elapsed_seconds % 3600) // 60
                     secs = elapsed_seconds % 60
                     duration_str = f'{hrs:02d}:{mins:02d}:{secs:02d}'
-            except Exception:
-                pass
+            except (ValueError, TypeError) as exc:
+                logger.warning('Unreadable GPX trackpoint timestamps, falling back to a default duration: %s', exc)
         
         # If trackpoints are missing time, fall back safely to an empirical 8-minute pace simulation
         if not duration_str:
@@ -200,7 +204,8 @@ def parse_garmin_gpx(player, file_bytes):
             h, m, s = map(int, duration_str.split(':'))
             total_minutes = h * 60 + m + (s / 60)
             pace_val = round(total_minutes / total_distance, 2) if total_distance > 0 else 0.0
-        except Exception:
+        except (ValueError, TypeError, ZeroDivisionError) as exc:
+            logger.warning('Could not derive pace from duration %r, using the 8.50 min/mi default: %s', duration_str, exc)
             pace_val = 8.50
         
         # Compile log message string wrapping authentic tracking variables
@@ -211,17 +216,17 @@ def parse_garmin_gpx(player, file_bytes):
             save_payload = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
             with open('save_file.json', 'w', encoding='utf-8') as db_file:
                 json.dump(save_payload, db_file, default=str, indent=4)
-        except Exception: pass
+        except (OSError, TypeError, ValueError) as exc:
+            logger.error('Failed to persist the imported GPX workout to save_file.json', exc_info=True)
+            return False, f'Workout applied in memory but writing save_file.json failed: {exc}'
         
         return True, log_msg
     except Exception as e:
+        logger.error('Unhandled failure while importing a GPX workout', exc_info=True)
         return False, str(e)
 
 def parse_garmin_tcx(player, file_bytes): return True, 'TCX module active'
 def parse_garmin_sleep_csv(player, file_bytes): return True, 'Sleep CSV module active'
-# Append this logic directly to the bottom of your services.py file
-import math
-
 def calculate_character_stats(history_logs):
     """
     Parses full history logs to compute current levels and remainder XP 
@@ -308,7 +313,7 @@ def calculate_stat_decay(history_logs):
             return {"days_inactive": 0, "decay_penalty": 0, "applied": False}
             
         latest_run_date = max(dates)
-        today = pd.to_datetime(datetime.date.today())
+        today = pd.to_datetime(datetime.now().date())
         
         # Calculate raw delta difference
         days_inactive = (today - latest_run_date).days
@@ -324,7 +329,8 @@ def calculate_stat_decay(history_logs):
             }
             
         return {"days_inactive": max(0, days_inactive), "decay_penalty": 0, "applied": False}
-    except:
+    except Exception:
+        logger.error('Could not compute stat decay from the history logs', exc_info=True)
         return {"days_inactive": 0, "decay_penalty": 0, "applied": False}
 
 def calculate_monthly_fitness_load(history_logs):
@@ -356,10 +362,6 @@ def calculate_monthly_fitness_load(history_logs):
     monthly['Month_Label'] = monthly['Date'].dt.strftime('%b %Y')
     
     return monthly
-
-# Append this directly to the bottom of your services.py file
-import pandas as pd
-import numpy as np
 
 def get_live_combat_stats(history_logs):
     """
@@ -432,6 +434,7 @@ def get_live_combat_stats(history_logs):
             "attack_power_modifier": final_atk_mod,
             "endurance_modifier": round(e_ratio, 2)
         }
-    except:
+    except Exception:
+        logger.error('Could not derive live combat stats from the history logs, using defaults', exc_info=True)
         return default_stats
 

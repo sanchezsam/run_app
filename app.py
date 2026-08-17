@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 
+from error_utils import get_logger, report_error
 from models import Character
 from services import parse_garmin_tcx, parse_garmin_sleep_csv, parse_garmin_gpx, parse_garmin_fit
 
@@ -23,6 +24,7 @@ from showroom_ui import render_trophy_showroom_tab
 from showroom_ui import generate_dashboard_motivation_alerts
 
 FILE_PATH = 'save_file.json'
+logger = get_logger(__name__)
 st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎️", layout="wide")
 
 
@@ -62,24 +64,40 @@ def load_profile_state():
     try:
         with open(FILE_PATH, 'r', encoding='utf-8') as f:
             loaded_data = json.load(f)
-            
-        if isinstance(loaded_data, dict):
-            # 🛡️ THE AUTO-HEAL MATRIX: Patches missing keys without wiping history logs
-            has_mutated = False
-            for key, fallback_value in default_state.items():
-                if key not in loaded_data:
-                    loaded_data[key] = fallback_value
-                    has_mutated = True
-            
-            # If we fixed missing keys, write the fixed layout back to the drive immediately
-            if has_mutated:
-                with open(FILE_PATH, 'w', encoding='utf-8') as f:
-                    json.dump(loaded_data, f, indent=4)
-                    
-            return loaded_data
+    except (OSError, json.JSONDecodeError) as exc:
+        report_error(
+            logger,
+            f'Could not read {FILE_PATH}, so a default profile is being shown. '
+            'Fix or restore the file before logging new activity, otherwise saves will overwrite it',
+            exc,
+        )
         return default_state
-    except (json.JSONDecodeError, Exception):
+
+    if not isinstance(loaded_data, dict):
+        message = (
+            f'{FILE_PATH} does not contain a profile object (found {type(loaded_data).__name__}), '
+            'so a default profile is being shown'
+        )
+        logger.error(message)
+        st.error(f'⚠️ {message}')
         return default_state
+
+    # 🛡️ THE AUTO-HEAL MATRIX: Patches missing keys without wiping history logs
+    has_mutated = False
+    for key, fallback_value in default_state.items():
+        if key not in loaded_data:
+            loaded_data[key] = fallback_value
+            has_mutated = True
+
+    # If we fixed missing keys, write the fixed layout back to the drive immediately
+    if has_mutated:
+        try:
+            with open(FILE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(loaded_data, f, indent=4)
+        except (OSError, TypeError, ValueError) as exc:
+            report_error(logger, f'Could not write the healed profile schema back to {FILE_PATH}', exc)
+
+    return loaded_data
 
 # ==============================================================================
 # ⚡ THE SOURCE OF TRUTH OVERRIDE (MAXIMUM BYPASS BLANKET)
@@ -207,15 +225,19 @@ def load_player():
                     player_instance.history_logs = history_backup
                     st.session_state.profile = raw_data
                     return player_instance
-                except Exception:
+                except Exception as exc:
+                    logger.warning(
+                        'Character.from_dict rejected the save payload, falling back to direct attribute injection: %s',
+                        exc, exc_info=True,
+                    )
                     # System Attempt B: Direct Attribute Injector (Guaranteed Success)
                     player_instance = Character(name=raw_data.get("name", "Racer 1"))
                     
                     for key, val in raw_data.items():
                         try:
                             setattr(player_instance, key, val)
-                        except Exception:
-                            pass
+                        except (AttributeError, TypeError, ValueError) as attr_exc:
+                            logger.warning('Dropped save key %r that the Character model rejected: %s', key, attr_exc)
                     
                     # Force back mandatory model properties
                     player_instance.history_logs = raw_data.get("history_logs", [])
@@ -225,8 +247,12 @@ def load_player():
                     
                     st.session_state.profile = raw_data
                     return player_instance
-        except Exception:
-            pass
+        except Exception as exc:
+            report_error(
+                logger,
+                f'Could not build the player profile from {FILE_PATH}, starting from an empty profile instead',
+                exc,
+            )
             
     # Absolute Emergency Fallback: Never return None
     try:
@@ -235,7 +261,8 @@ def load_player():
         emergency_instance.inventory = []
         emergency_instance.equipped_gear = {}
         return emergency_instance
-    except Exception:
+    except Exception as exc:
+        report_error(logger, 'Could not instantiate a fallback Character profile', exc)
         return None
 
 # Execute the loading hook
@@ -273,7 +300,8 @@ if player is not None and os.path.exists(FILE_PATH):
             calculated_levels_gained = player.total_xp // xp_per_level
             player.level += calculated_levels_gained
             player.total_xp %= xp_per_level
-    except Exception: pass
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        report_error(logger, f'Could not re-sync level, gold and fatigue values from {FILE_PATH}', exc)
 
 # Master metrics banner layout strip (Always stays visible across top header space)
 hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6 = st.columns(6)
@@ -296,8 +324,9 @@ if "filtered_df" not in st.session_state or st.session_state.filtered_df.empty:
                 # Feed records into the filtered layout matrix normalization block
                 df_sanitized_matrix = showroom_eng.sanitize_json_history_logs(history_list)
                 st.session_state.filtered_df = df_sanitized_matrix
-    except Exception:
-        # Fails safely to blank tabular grids if file locks or system restarts occur
+    except Exception as exc:
+        # Fails to blank tabular grids if file locks or system restarts occur, but says so
+        report_error(logger, 'Could not rebuild the activity table from the save file', exc)
         st.session_state.filtered_df = pd.DataFrame()
 
 # ------------------------------------------

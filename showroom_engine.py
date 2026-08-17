@@ -5,6 +5,9 @@ import re
 import metrics_config as cfg
 import personal_records_config as pr_cfg
 import arena_tournaments_config as arena_cfg
+from error_utils import get_logger
+
+logger = get_logger(__name__)
 
 # ==============================================================================
 # ⚙️ TROPHY ENGINE: CORE MATHEMATICAL ENGINE PIPELINE (BLOCK 1)
@@ -119,7 +122,7 @@ def calculate_personal_records(df_logs):
                     calculated_prs[rec_id]["val"] = f"{float(ann_sums.max()):.1f} {record['metric_suffix']}"
                     calculated_prs[rec_id]["date"] = f"Year: {int(ann_sums.idxmax())}"
         except Exception:
-            pass
+            logger.warning('Could not compute personal record %r from the activity table', rec_id, exc_info=True)
             
     return calculated_prs
 
@@ -225,7 +228,7 @@ def check_streak_defense_status(df_logs):
         if days_elapsed > cfg.DEFENSE_WINDOW_DAYS:
             return "decaying", days_elapsed
     except Exception:
-        pass
+        logger.warning('Could not evaluate streak defense status, reporting it as stable', exc_info=True)
     return "stable", 0
 
 
@@ -241,6 +244,7 @@ def calculate_current_week_metrics(df_logs):
         cw_rows = df[(df['Date_Parsed'].dt.isocalendar().year == curr_year) & (df['Date_Parsed'].dt.isocalendar().week == curr_week)]
         return float(cw_rows['Display_Distance'].sum()), float(cw_rows['Total_Ascent'].sum())
     except Exception:
+        logger.warning('Could not compute current-week distance and ascent totals, reporting zeroes', exc_info=True)
         return 0.0, 0.0
 
 

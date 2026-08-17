@@ -11,6 +11,9 @@ import streamlit as st
 from datetime import timedelta
 from pathlib import Path
 import upload_ui
+from error_utils import get_logger
+
+logger = get_logger(__name__)
 
 # ─── 💥 LINK INTO NATIVE METRIC PROFILE CONFIG ───
 try:
@@ -24,12 +27,21 @@ def execute_gui_pipeline_import(target_dir="data/2026", database_file="save_file
     else:
         print(msg)
     
+    def _abort(reason):
+        logger.error(reason)
+        if log_container:
+            log_container.error(f"⚠️ {reason}")
+        else:
+            print(reason)
+
     path = Path(target_dir)
     if not path.exists():
+        _abort(f"Import aborted: the source directory {target_dir} does not exist")
         return
 
     fit_files = sorted([f for f in os.listdir(target_dir) if f.lower().endswith('.fit')])
     if not fit_files:
+        _abort(f"Import aborted: no .fit files were found in {target_dir}")
         return
 
     master_dict = {}
@@ -37,8 +49,12 @@ def execute_gui_pipeline_import(target_dir="data/2026", database_file="save_file
         try:
             with open(database_file, "r", encoding="utf-8") as f:
                 master_dict = json.load(f)
-        except Exception:
-            master_dict = {}
+        except (OSError, json.JSONDecodeError) as exc:
+            _abort(
+                f"Import aborted: {database_file} could not be read ({exc}). "
+                "Fix or restore it first, otherwise this import would overwrite the existing history"
+            )
+            return
 
     existing_history = master_dict.get("history_logs", [])
     summary_messages = []
@@ -180,8 +196,9 @@ def execute_gui_pipeline_import(target_dir="data/2026", database_file="save_file
                 else:
                     summary_messages.append(f"⚠️ **Skipped**: `{filename}` (Invalid inner tracking shape)")
                     
-        except Exception as e:
-            summary_messages.append(f"❌ **Error processing {filename}**: {str(e)}")
+        except Exception as exc:
+            logger.error('Failed to process FIT file %s', full_path, exc_info=True)
+            summary_messages.append(f"❌ **Error processing {filename}**: {exc}")
     # Backfill root level all-time unlocked badges list array
     all_unlocked_badges = set()
     for run in existing_history:
@@ -192,8 +209,13 @@ def execute_gui_pipeline_import(target_dir="data/2026", database_file="save_file
     master_dict["history_logs"] = existing_history
     master_dict["unlocked_badges"] = list(all_unlocked_badges)
     
-    with open(database_file, "w", encoding="utf-8") as f:
-        json.dump(master_dict, f, indent=2, ensure_ascii=False)
+    try:
+        with open(database_file, "w", encoding="utf-8") as f:
+            json.dump(master_dict, f, indent=2, ensure_ascii=False)
+    except (OSError, TypeError, ValueError) as exc:
+        logger.error('Failed to write the imported activities to %s', database_file, exc_info=True)
+        _abort(f"Imported {len(fit_files)} file(s) but writing {database_file} failed: {exc}")
+        return
 
     if log_container:
         with log_container.status(f"🎉 Dynamic Synchronization Complete!", expanded=True) as status:
@@ -213,28 +235,3 @@ if st.button("🚀 Synchronize Database Pipeline", use_container_width=True):
     rendering_box = st.container()
     execute_gui_pipeline_import(log_container=rendering_box)
     st.toast("Sync complete! Profile achievements dynamically updated.", icon="🎖️")
-                                # ─── 🛠️ REPOSITION PATCHES AFTER DURATION CELL LAYER ───
-                                # 1. Extract icons natively out of your pre-populated run_patches_list variable
-                                extracted_emojis = []
-                                if isinstance(run_patches_list, list):
-                                    for patch in run_patches_list:
-                                        if isinstance(patch, dict):
-                                            icon_char = patch.get("icon", patch.get("emoji", ""))
-                                            if icon_char:
-                                                extracted_emojis.append(icon_char)
-                                        elif isinstance(patch, str):
-                                            automated_lookup = {
-                                                "medal_speed_demon": "⚡", 
-                                                "patch_altitude_titan": "🏔️", 
-                                                "patch_cold_warrior": "❄️"
-                                            }
-                                            icon_char = automated_lookup.get(patch.lower(), "")
-                                            if icon_char:
-                                                extracted_emojis.append(icon_char)
-                                
-                                patch_emojis = "".join(extracted_emojis)
-                                
-                                # 2. Append to your HTML table buffer string (Inserts emojis next to duration cleanly)
-                                week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time} <span style='margin-left: 6px;'>{patch_emojis}</span></td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
-                                # ────────────────────────────────────────────────────────
-

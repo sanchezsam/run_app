@@ -11,6 +11,9 @@ from services import parse_garmin_fit
 import pandas as pd
 from typing import List
 from metrics_config import FINAL_METRIC_CONFIG
+from error_utils import get_logger, report_error
+
+logger = get_logger(__name__)
 
 
 
@@ -178,7 +181,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                                 t1 = datetime.strptime(pt1_t.group(1)[:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                                 t2 = datetime.strptime(pt2_t.group(1)[:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                                 seg_sec = max(0.0, float((t2 - t1).total_seconds()))
-                        except Exception: pass
+                        except (AttributeError, IndexError, TypeError, ValueError) as exc:
+                            logger.warning('Could not time GPX segment %d, assuming the default segment length: %s', i, exc)
                         
                         seg_mph = (seg_dist / seg_sec) * 3600.0 if seg_sec > 0 else 0.0
                         if seg_dist > 0 and seg_mph > 0.5:
@@ -190,7 +194,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                             t_start = datetime.strptime(t_strings[0][:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                             t_end = datetime.strptime(t_strings[-1][:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                             total_moving_seconds_temp = max(60, int((t_end - t_start).total_seconds()))
-                        except Exception: pass
+                        except (IndexError, TypeError, ValueError) as exc:
+                            logger.warning('Could not derive duration from the GPX timestamps: %s', exc)
                         
                     chk_dist = round(calculated_distance_miles_temp, 2)
                     chk_dur = str(timedelta(seconds=int(total_moving_seconds_temp)))
@@ -282,7 +287,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                             t1 = datetime.strptime(pt1_time_match.group(1)[:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                             t2 = datetime.strptime(pt2_time_match.group(1)[:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                             segment_seconds = max(0.0, float((t2 - t1).total_seconds()))
-                    except Exception: pass
+                    except (AttributeError, IndexError, TypeError, ValueError) as exc:
+                        logger.warning('Could not time GPX segment %d, assuming the default segment length: %s', i, exc)
                     
                     segment_mph = (segment_distance / segment_seconds) * 3600.0 if segment_seconds > 0 else 0.0
                     if segment_distance > 0 and segment_mph > 0.5:
@@ -302,7 +308,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                         t_start = datetime.strptime(time_strings[0][:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                         t_end = datetime.strptime(time_strings[-1][:19].replace('T', ' '), '%Y-%m-%d %H:%M:%S')
                         total_moving_seconds = max(60, int((t_end - t_start).total_seconds()))
-                    except Exception: pass
+                    except (IndexError, TypeError, ValueError) as exc:
+                        logger.warning('Could not derive duration from the GPX timestamps: %s', exc)
                 
                 parsed_distance = round(calculated_distance_miles, 2)
                 parsed_elevation = int(max_single_elevation_gain)
@@ -315,8 +322,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                     'pace': parsed_pace, 'date': parsed_date_str, 'duration': duration_string_hud,
                     'splits': None, 'type': 'GPX Activity'
                 })
-            except Exception as e:
-                st.error(f"Parsing failure on item {file_obj.name}: {str(e)}")
+            except Exception as exc:
+                report_error(logger, f'Parsing failure on item {file_obj.name}', exc)
         if staged_sessions:
             bm1, bm2, bm3 = st.columns(3)
             with bm1: st.metric("Accumulated Batch Distance", f"{total_batch_distance:.2f} Miles")
@@ -443,8 +450,12 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                  st.balloons()
                  st.rerun()
                  
-             except Exception as e:
-                 st.error(f"Save batch error: {str(e)}")
+             except Exception as exc:
+                 report_error(
+                     logger,
+                     'Save batch error: some staged activities may have been applied in memory without being written to disk',
+                     exc,
+                 )
 
 
 
