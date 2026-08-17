@@ -9,8 +9,16 @@ import time
 from datetime import datetime, timedelta
 from services import parse_garmin_fit
 import pandas as pd
-from typing import List
 from metrics_config import FINAL_METRIC_CONFIG
+from run_utils import (
+    METERS_TO_FEET,
+    SAVE_FILE,
+    calculate_final_kick,
+    calculate_split_variance,
+    clean_elevation_string,
+    decimal_pace_to_seconds,
+    save_player_profile,
+)
 
 
 
@@ -291,7 +299,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                     
                     ele_match = re.search(r'<ele>([-0-9.]+)</ele>', track_points[i][2], re.IGNORECASE)
                     if ele_match:
-                        elevations_list.append(float(ele_match.group(1)) * 3.28084)
+                        elevations_list.append(float(ele_match.group(1)) * METERS_TO_FEET)
                         
                 for i in range(len(elevations_list) - 1):
                     diff = elevations_list[i+1] - elevations_list[i]
@@ -411,9 +419,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                                  player.unlocked_badges.append(patch["id"])
                  
                  # Commit fully stamped memory structures to disk
-                 save_data = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
-                 with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
-                     json.dump(save_data, db_file, default=str, indent=4)
+                 save_player_profile(player, FILE_PATH)
                  
                  # Run legacy background engines to refresh lifelong odometers and trophy shelves
                  if player.history_logs:
@@ -559,149 +565,6 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
     else:
         st.info('No recorded activity logs found inside save database memory.')
 
-def pace_to_seconds(pace_str: str) -> int:
-    """Converts a pace string 'MM:SS' into total raw seconds."""
-    try:
-        parts = pace_str.strip().split(":")
-        if len(parts) == 2:
-            return int(parts[0]) * 60 + int(parts[1])
-        return 0
-    except (ValueError, AttributeError):
-        return 0
-
-def calculate_split_variance(splits_list: List[str], total_distance: float) -> float:
-    """
-    Drops the first split (warm-up mile) and calculates the delta 
-    between the slowest and fastest remaining miles.
-    Returns variance in seconds, or -1.0 if ineligible.
-    """
-    # Rule validation: Must be at least 3 miles and have matching splits data
-    if total_distance < 3.0 or len(splits_list) < 3:
-        return -1.0
-        
-    # Surgical removal of the first warm-up mile split
-    remaining_splits = splits_list[1:]
-    
-    # Convert all remaining splits to seconds for precise arithmetic
-    splits_in_seconds = [pace_to_seconds(s) for s in remaining_splits if pace_to_seconds(s) > 0]
-    
-    if not splits_in_seconds:
-        return -1.0
-        
-    # Calculate absolute delta between the slowest (max seconds) and fastest (min seconds)
-    variance_seconds = max(splits_in_seconds) - min(splits_in_seconds)
-    return float(variance_seconds)
-def calculate_final_kick(avg_pace_str: str, final_mile_str: str) -> float:
-    """
-    Calculates what percentage faster the final mile was compared to the average pace.
-    Formula: (Avg Pace Seconds - Final Mile Seconds) / Avg Pace Seconds * 100
-    """
-    avg_seconds = pace_to_seconds(avg_pace_str)
-    final_seconds = pace_to_seconds(final_mile_str)
-    
-    if avg_seconds <= 0 or final_seconds <= 0:
-        return 0.0
-        
-    # If final mile is slower than average, percentage is <= 0 (no patch earned)
-    delta = avg_seconds - final_seconds
-    kick_percent = (delta / avg_seconds) * 100.0
-    return round(kick_percent, 2)
-
-
-
-
-def check_single_run_patches(new_run_log: dict) -> list:
-    """
-    Evaluates a single run's data payload against all 8 single_run_patches 
-    defined in metrics_config.py. Returns a list of earned patch dictionaries.
-    """          
-    earned_patches = []
-    import math
-                 
-    # 1. Check all potential key variations for distance and elevation safely
-    run_distance = float(new_run_log.get("Distance (Miles)", new_run_log.get("dist", 0.0)))
-    raw_ele_val = new_run_log.get("Elevation (ft)", new_run_log.get("ele", new_run_log.get("Elevation", "0")))
-    run_elevation = clean_elevation_string(str(raw_ele_val))
-
-    # 2. Safe conversion handling for plain decimal floats (e.g., 8.45 -> 8 min 45 sec)
-    raw_pace_val = new_run_log.get("pace", 0.0)
-    if raw_pace_val is None or (isinstance(raw_pace_val, float) and (math.isnan(raw_pace_val) or raw_pace_val <= 0)):
-        run_pace_seconds = None
-        avg_pace_str = "00:00"
-    else:            
-        pace_float = float(raw_pace_val)
-        avg_min = int(pace_float)
-        avg_sec = int(round((pace_float - avg_min) * 100))
-        if avg_sec >= 60:
-            avg_sec = min(59, avg_sec)
-            
-        run_pace_seconds = (avg_min * 60) + avg_sec
-        avg_pace_str = f"{avg_min:02d}:{avg_sec:02d}"
-
-    # 3. Parse splits arrays and structure variables
-    raw_splits_array = new_run_log.get("splits", [])
-    if isinstance(raw_splits_array, list):
-        pace_splits_list = [item.get("pace", "") for item in raw_splits_array if isinstance(item, dict) and "pace" in item]
-    else:
-        pace_splits_list = []
-        
-    final_mile_str = pace_splits_list[-1] if pace_splits_list else ""
-    
-    if run_pace_seconds and final_mile_str:
-        final_kick_percent = calculate_final_kick(avg_pace_str, final_mile_str)
-    else:
-        final_kick_percent = 0.0
-        
-    split_variance = calculate_split_variance(pace_splits_list, run_distance) if pace_splits_list else 0.0
-            
-    # 4. Map calculated numbers to match config keys exactly
-    compiled_run_metrics = {
-        "average_pace_seconds": run_pace_seconds,
-        "total_elevation_gain_ft": run_elevation,
-        "final_mile_kick_percent": final_kick_percent,
-        "total_distance_miles": run_distance,
-        "split_variance_seconds": split_variance,
-        "aerobic_decoupling_percent": float(new_run_log.get("aerobic_decoupling_percent", 0.0)),
-        "ambient_temp_f": float(new_run_log.get("ambient_temp_f", 72.0)),
-        "zone_1_2_duration_percent": float(new_run_log.get("zone_1_2_duration_percent", 50.0))
-    }
-
-    # 5. Dynamic loop through configuration file rules
-    for pillar_id, config in FINAL_METRIC_CONFIG["single_run_patches"].items():
-        m_key = config["metric_key"]
-        val = compiled_run_metrics.get(m_key)
-        
-        # Skip if missing valid telemetry numbers
-        if val is None or val == -1.0:
-            continue
-            
-        # Enforce minimum distance rules
-        if "requires_min_distance" in config and run_distance < config["requires_min_distance"]:
-            continue
-            
-        # Evaluate tier bounds based on inversion properties
-        for tier in config["tiers"]:
-            # FIXED: Added fallback protection to prevent KeyError crashes on special non-bounded tiers
-            if "min_val" not in tier or "max_val" not in tier:
-                continue
-
-            min_bound = float(tier["min_val"])
-            max_bound = float(tier["max_val"])
-            
-            if config.get("is_inverted"):
-                if min_bound <= val <= max_bound:
-                    earned_patches.append({
-                        "pillar": pillar_id, "id": tier["id"], "name": tier["name"], "icon": tier["icon"]
-                    })
-                    break  
-            else:
-                if min_bound <= val <= max_bound:
-                    earned_patches.append({
-                        "pillar": pillar_id, "id": tier["id"], "name": tier["name"], "icon": tier["icon"]
-                    })
-                    break
-                    
-    return earned_patches
 def check_single_run_patches(new_run_log: dict) -> list:
     """
     Evaluates a single run's data payload against all 8 single_run_patches 
@@ -803,8 +666,6 @@ def process_and_award_metrics(new_run_log: dict):
     Main evaluation pipeline. Processes incoming run payloads, updates 
     profile statistics counters, awards single-run patches, and appends earned trophies.
     """
-    SAVE_FILE = "save_file.json"
-    
     if not os.path.exists(SAVE_FILE):
         print(f"Error: {SAVE_FILE} not found during metric integration.")
         return
@@ -901,21 +762,4 @@ def process_and_award_metrics(new_run_log: dict):
     with open(SAVE_FILE, "w", encoding="utf-8") as f:
         json.dump(profile, f, indent=4, ensure_ascii=False)
     print("Ledger Complete: Lifelong odometers, patches, and award cases refreshed successfully.")
-
-def decimal_pace_to_seconds(decimal_pace: float) -> int:
-    """Converts a decimal pace float (like 8.82) into raw total seconds."""
-    try:
-        minutes = int(decimal_pace)
-        seconds = int(round((decimal_pace - minutes) * 60))
-        return (minutes * 60) + seconds
-    except (ValueError, TypeError):
-        return 0
-
-def clean_elevation_string(elev_str: str) -> int:
-    """Strips formatting symbols '+', 'ft', and whitespace to return a clean integer."""
-    try:
-        cleaned = elev_str.replace("+", "").replace("ft", "").strip()
-        return int(float(cleaned))
-    except (ValueError, AttributeError):
-        return 0
 

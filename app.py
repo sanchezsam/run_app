@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from models import Character
 from services import parse_garmin_tcx, parse_garmin_sleep_csv, parse_garmin_gpx, parse_garmin_fit
+from run_utils import SAVE_FILE, load_save_data, save_player_profile
 
 from coliseum_ui import render_coliseum
 from upload_ui import render_upload_interface
@@ -22,7 +23,7 @@ from ledger_ui import render_training_ledger
 from showroom_ui import render_trophy_showroom_tab
 from showroom_ui import generate_dashboard_motivation_alerts
 
-FILE_PATH = 'save_file.json'
+FILE_PATH = SAVE_FILE
 st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎️", layout="wide")
 
 
@@ -253,8 +254,7 @@ if player is None:
         if st.form_submit_button('Forge Active Profile'):
             player_obj = Character(name=c_name.strip())
             player_obj.weight_kg = c_weight
-            with open(FILE_PATH, 'w', encoding='utf-8') as f:
-                json.dump(player_obj.to_dict(), f, default=str, indent=4)
+            save_player_profile(player_obj, FILE_PATH)
             st.success('✨ Profile Forged! Launching dashboard engine...')
             st.rerun()
     st.stop()
@@ -288,8 +288,7 @@ if "filtered_df" not in st.session_state or st.session_state.filtered_df.empty:
     import showroom_engine as showroom_eng
     try:
         if os.path.exists(FILE_PATH):
-            with open(FILE_PATH, 'r', encoding='utf-8') as database_file:
-                raw_database_payload = json.load(database_file)
+            raw_database_payload = load_save_data(FILE_PATH, default={})
             
             if isinstance(raw_database_payload, dict) and "history_logs" in raw_database_payload:
                 history_list = raw_database_payload["history_logs"]

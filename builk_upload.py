@@ -5,9 +5,9 @@ Populates save_file.json directly from a target directory of Garmin .fit trackin
 """
 import os
 import sys
-import json
 import re
 from datetime import datetime
+from run_utils import SAVE_FILE, load_save_data, save_player_profile
 
 # Safely import your existing Garmin FIT parser binary service module
 try:
@@ -17,7 +17,7 @@ except ImportError:
     print("Ensure this script is placed inside your root application directory.")
     sys.exit(1)
 
-FILE_PATH = "save_file.json"
+FILE_PATH = SAVE_FILE
 
 def calculate_pace_float(total_secs, miles):
     if miles > 0 and total_secs > 0:
@@ -28,12 +28,10 @@ def load_save_file():
     if not os.path.exists(FILE_PATH):
         print(f"ℹ️ Base database file '{FILE_PATH}' not detected. Constructing a fresh profile...")
         return {"history_logs": [], "gold": 50, "total_xp": 0}
-    with open(FILE_PATH, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    return load_save_data(FILE_PATH, default={"history_logs": [], "gold": 50, "total_xp": 0})
 
 def save_database(data):
-    with open(FILE_PATH, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4, default=str)
+    save_player_profile(data, FILE_PATH)
 
 def main():
     # Enforce standard command line arguments setup execution

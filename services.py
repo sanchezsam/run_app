@@ -2,8 +2,8 @@
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import math
-import json
 from fitparse import FitFile
+from run_utils import METERS_TO_FEET, METERS_TO_MILES, save_player_profile
 
 
 
@@ -52,7 +52,7 @@ def parse_garmin_fit(file_bytes):
         lap_secs = lap_data.get('total_timer_time') or lap_data.get('total_elapsed_time') or 0.0
         
         if lap_dist_meters > 0 and lap_secs > 0:
-            lap_miles = lap_dist_meters * 0.000621371
+            lap_miles = lap_dist_meters * METERS_TO_MILES
             
             # Format lap duration string (MM:SS)
             lap_min_int = int(lap_secs // 60)
@@ -77,7 +77,7 @@ def parse_garmin_fit(file_bytes):
     total_seconds = (timestamps[-1] - timestamps[0]).total_seconds() if len(timestamps) >= 2 else 0
 
     avg_hr = sum(heart_rates) / len(heart_rates) if heart_rates else 0
-    total_elevation_gain_ft = total_ascent_meters * 3.28084
+    total_elevation_gain_ft = total_ascent_meters * METERS_TO_FEET
     
     # Extract from the first timestamp item index inside the collected tracking array
     if timestamps and isinstance(timestamps[0], datetime):
@@ -162,7 +162,7 @@ def parse_garmin_gpx(player, file_bytes):
                 distance_miles = (6371 * c) * 0.621371
                 total_distance += distance_miles
                 if ele > prev_ele:
-                    total_elevation_gain += (ele - prev_ele) * 3.28084
+                    total_elevation_gain += (ele - prev_ele) * METERS_TO_FEET
             
             prev_lat, prev_lon, prev_ele = lat, lon, ele
         
@@ -208,9 +208,7 @@ def parse_garmin_gpx(player, file_bytes):
         player.history_logs.append(log_msg)
         
         try:
-            save_payload = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
-            with open('save_file.json', 'w', encoding='utf-8') as db_file:
-                json.dump(save_payload, db_file, default=str, indent=4)
+            save_player_profile(player)
         except Exception: pass
         
         return True, log_msg

@@ -2,25 +2,13 @@
 import json
 import os
 from metrics_config import FINAL_METRIC_CONFIG
-
-SAVE_FILE = "save_file.json"
-
-def clean_elevation_string(elev_str: str) -> int:
-    """Strips formatting symbols '+', 'ft', and whitespace to return a clean integer."""
-    try:
-        cleaned = elev_str.replace("+", "").replace("ft", "").strip()
-        return int(float(cleaned))
-    except (ValueError, AttributeError):
-        return 0
-
-def decimal_pace_to_seconds(decimal_pace: float) -> int:
-    """Converts a decimal pace float (like 8.82) into raw total seconds."""
-    try:
-        minutes = int(decimal_pace)
-        seconds = int(round((decimal_pace - minutes) * 60))
-        return (minutes * 60) + seconds
-    except (ValueError, TypeError):
-        return 0
+from run_utils import (
+    SAVE_FILE,
+    calculate_final_kick,
+    calculate_split_variance,
+    clean_elevation_string,
+    decimal_pace_to_seconds,
+)
 
 def process_and_award_metrics(new_run_log: dict):
     """
