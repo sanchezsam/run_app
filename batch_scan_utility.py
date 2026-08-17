@@ -5,6 +5,7 @@ import json
 import os
 import datetime
 from fitparse import FitFile
+from run_utils import METERS_TO_FEET, METERS_TO_MILES
 
 # 🎯 DYNAMIC SYSTEM PIPELINE HOOKS: Pull actual logic blocks straight from configurations
 import metrics_config as cfg
@@ -38,8 +39,8 @@ def parse_single_fit_file(file_path):
                     duration_seconds = float(data.value or 0.0)
 
         # Reconcile raw metadata to imperial units matching user profiles
-        distance_miles = total_distance_meters * 0.000621371
-        elevation_feet = total_ascent_meters * 3.28084
+        distance_miles = total_distance_meters * METERS_TO_MILES
+        elevation_feet = total_ascent_meters * METERS_TO_FEET
         
         if start_time_utc:
             date_str = start_time_utc.strftime("%Y-%m-%d")

@@ -11,6 +11,7 @@ import streamlit as st
 from datetime import timedelta
 from pathlib import Path
 import upload_ui
+from run_utils import KM_TO_MILES
 
 # ─── 💥 LINK INTO NATIVE METRIC PROFILE CONFIG ───
 try:
@@ -63,7 +64,7 @@ def execute_gui_pipeline_import(target_dir="data/2026", database_file="save_file
                 if isinstance(raw_payload, dict):
                     # ─── EXTRACT RAW NATIVE TELEMETRY ───
                     distance_km = float(raw_payload.get("distance_km", 0.0))
-                    distance_mi = round(distance_km * 0.62137119, 2)
+                    distance_mi = round(distance_km * KM_TO_MILES, 2)
                     elevation_ft = round(float(raw_payload.get("elevation_gain_ft", 0.0)), 1)
                     duration_secs = float(raw_payload.get("duration_seconds", 0.0))
                     clean_date = str(raw_payload.get("date", "Unknown")).strip()

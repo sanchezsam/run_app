@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # PART 1 OF 4: COLISEUM ENGINE INITIALIZATION, DEPENDENCIES, AND 3-WEEK MILEAGE SCRAPERS
 import streamlit as st
-import json
 import re
 import pandas as pd
 import time
 import random
 from datetime import datetime, timedelta
+from run_utils import save_player_profile
 
 def render_coliseum(player, FILE_PATH):
     st.markdown('### 🏟️ THE BIOMETRIC COLISEUM: HIGH-STAKES CIRCUIT')
@@ -239,7 +239,7 @@ def render_coliseum(player, FILE_PATH):
             log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g."
             if not hasattr(player, 'history_logs'): player.history_logs = []
             player.history_logs.append(log_m)
-            with open(FILE_PATH, 'w', encoding='utf-8') as db_file: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
+            save_player_profile(player, FILE_PATH)
             st.session_state.last_race_summary = {
                 "is_win": True, "p_time": p_time_str, "r_time": r_time_str, "score": calc_racing_score, 
                 "gold": calculated_gold_stake, "course": parsed_course_key, "dist": course_specs['dist']
@@ -252,7 +252,7 @@ def render_coliseum(player, FILE_PATH):
             log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
             if not hasattr(player, 'history_logs'): player.history_logs = []
             player.history_logs.append(log_m)
-            with open(FILE_PATH, 'w', encoding='utf-8') as db_file: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
+            save_player_profile(player, FILE_PATH)
             st.session_state.last_race_summary = {
                 "is_win": False, "p_time": p_time_str, "r_time": r_time_str, "score": calc_racing_score, 
                 "gold": gold_lost, "course": parsed_course_key, "dist": course_specs['dist']

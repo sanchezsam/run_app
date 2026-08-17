@@ -8,6 +8,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 from metrics_config import FINAL_METRIC_CONFIG
+from run_utils import (
+    duration_str_to_minutes,
+    load_history_logs,
+    minutes_to_pace_str,
+    pace_str_to_minutes,
+)
 
 
 
@@ -294,56 +300,6 @@ def render_final_metric_dashboard(player_data: dict, target_col1, target_col2):
 
 
 
-def load_data_from_save_json():
-    """
-    Reads save_file.json and caches the resulting raw activity list in memory.
-    Prevents repetitive disk reads on widget change cycles.
-    """
-    possible_paths = ['save_file.json', '../save_file.json', 'data/save_file.json']
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r') as f:
-                    data = json.load(f)
-                    if isinstance(data, dict):
-                        if "history_logs" in data:
-                            return data["history_logs"]
-                        for root_key in data.values():
-                            if isinstance(root_key, dict) and "history_logs" in root_key:
-                                return root_key["history_logs"]
-                    elif isinstance(data, list):
-                        return data
-            except Exception as e:
-                pass
-    return []
-
-# ==========================================
-# DATA PARSING & UTILITY FORMULAS
-# ==========================================
-def pace_str_to_minutes(pace_str):
-    """Converts a pace string like '10:36' or a float number into total decimal minutes."""
-    if pd.isna(pace_str) or pace_str == "":
-        return 0.0
-    if isinstance(pace_str, (int, float)):
-        return float(pace_str)
-    try:
-        parts = str(pace_str).strip().split(':')
-        if len(parts) == 2:
-            return int(parts[0]) + (int(parts[1]) / 60.0)
-        return float(pace_str)
-    except (ValueError, IndexError):
-        return 0.0
-
-def minutes_to_pace_str(decimal_minutes):
-    """Converts decimal minutes back to a readable string format like '08:45'."""
-    if pd.isna(decimal_minutes) or decimal_minutes <= 0:
-        return "—"
-    minutes = int(decimal_minutes)
-    seconds = int(round((decimal_minutes - minutes) * 60))
-    if seconds == 60:
-        minutes += 1
-        seconds = 0
-    return f"{minutes:02d}:{seconds:02d}"
 
 # ==========================================
 # UPGRADE 2: ADVANCED ANALYTICS CALCULATIONS
@@ -743,149 +699,6 @@ def render_progression_nonagon(endurance_lvl, pace_lvl, hill_lvl):
 # ==========================================
 # MAIN INTERACTIVE UI DASHBOARD ELEMENT
 # ==========================================
-def render_dashboard_overview(player):
-    # Establish persistent application tab memory mapping
-    if "current_dashboard_tab" not in st.session_state:
-        st.session_state.current_dashboard_tab = "📅 Training Data Perspectives"
-        
-    if "selected_activity_date" not in st.session_state:
-        st.session_state.selected_activity_date = None
-
-    st.header("🏃‍♂️ Activity Dashboard Overview")
-    
-    raw_activities = []
-    if hasattr(player, 'history_logs') and player.history_logs:
-        raw_activities = player.history_logs
-    if not raw_activities:
-        raw_activities = load_data_from_save_json()
-
-    if isinstance(raw_activities, str):
-        try:
-            raw_activities = json.loads(raw_activities)
-        except Exception:
-            raw_activities = []
-
-    if isinstance(raw_activities, list):
-        raw_activities = [row for row in raw_activities if isinstance(row, dict)]
-    else:
-        raw_activities = []
-
-    if not raw_activities:
-        st.info("👋 Welcome! No fitness tracking history found in your save file.")
-        st.markdown("Please head over to the **Upload UI** page to import your Garmin data files.")
-        return
-
-    df = pd.DataFrame(raw_activities)
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-    df['Distance (Miles)'] = pd.to_numeric(df['Distance (Miles)'], errors='coerce').fillna(0)
-    df = df.dropna(subset=['Date']).sort_values('Date')
-    
-    df['Year'] = df['Date'].dt.year.astype(str)
-    df['Month_Period'] = df['Date'].dt.to_period('M')  
-    df['Month_Label'] = df['Date'].dt.strftime('%b %Y')  
-    df['Formatted_Date'] = df['Date'].dt.strftime('%Y-%m-%d')
-
-    st.subheader("🎛️ Unit & Filter Configuration")
-    config_col1, config_col2 = st.columns(2)
-    
-    #with config_col2:
-    #    unit_system = st.selectbox(
-    #        label="🔄 Select System Unit:",
-    #        options=["Miles (mi)", "Kilometers (km)"],
-    #        index=0
-    #    )
-    #
-    is_km = False
-    unit_abbr = "Mi"
-    df['Display_Distance'] = df['Distance (Miles)'] * 1.0
-
-    with config_col1:
-        unique_years = sorted(df['Year'].unique(), reverse=True)
-        selected_year = st.radio(
-            label="Select Tracking Year to Filter Below Trends:",
-            options=["All Years"] + unique_years,
-            index=0,
-            horizontal=True
-        )
-
-    if selected_year != "All Years":
-        filtered_df = df[df['Year'] == selected_year].reset_index(drop=True)
-    else:
-        filtered_df = df.reset_index(drop=True)
-
-    st.write("---")
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.subheader("🏃 Daily Activity")
-        total_daily_records = len(filtered_df)
-        if total_daily_records > 0:
-            daily_range = st.slider(
-                label="Select Day Index Window Range:",
-                min_value=0,
-                max_value=total_daily_records - 1,
-                value=(max(0, total_daily_records - 15), total_daily_records - 1),
-                step=1,
-                key="daily_range_slider"
-            )
-            start_daily, end_daily = daily_range
-            daily_plot_df = filtered_df.iloc[start_daily : end_daily + 1]
-            st.bar_chart(data=daily_plot_df, x='Formatted_Date', y='Display_Distance', use_container_width=True)
-            st.metric(f"Daily Segment Total ({unit_abbr})", f"{daily_plot_df['Display_Distance'].sum():,.2f} {unit_abbr}")
-        else:
-            st.caption("No data for current filters.")
-
-    with col2:
-        st.subheader("📅 Monthly Trends")
-        if not filtered_df.empty:
-            monthly_df = filtered_df.groupby(['Month_Period', 'Month_Label'])['Display_Distance'].sum().reset_index()
-            monthly_df = monthly_df.sort_values('Month_Period').reset_index(drop=True)
-            total_months = len(monthly_df)
-            
-            month_range = st.slider(
-                label="Select Month Window Range:",
-                min_value=0,
-                max_value=total_months - 1,
-                value=(0, total_months - 1),
-                step=1,
-                key="month_range_slider"
-            )
-            start_month, end_month = month_range
-            monthly_plot_df = monthly_df.iloc[start_month : end_month + 1]
-            st.bar_chart(data=monthly_plot_df, x='Month_Label', y='Display_Distance', use_container_width=True)
-            st.metric(f"Monthly Segment Total ({unit_abbr})", f"{monthly_plot_df['Display_Distance'].sum():,.2f} {unit_abbr}")
-        else:
-            st.caption("No data for current filters.")
-
-    with col3:
-        st.subheader("📈 Annual Totals")
-        yearly_df = df.groupby('Year')['Display_Distance'].sum().reset_index().sort_values('Year').reset_index(drop=True)
-        total_years = len(yearly_df)
-        if total_years > 0:
-            year_range = st.slider(
-                label="Select Year Window Range:",
-                min_value=0,
-                max_value=total_years - 1,
-                value=(0, total_years - 1),
-                step=1,
-                key="year_range_slider"
-            )
-            start_year, end_year = year_range
-            yearly_plot_df = yearly_df.iloc[start_year : end_year + 1]
-            st.bar_chart(data=yearly_plot_df, x='Year', y='Display_Distance', use_container_width=True)
-            st.metric(f"All-Time History Total ({unit_abbr})", f"{yearly_plot_df['Display_Distance'].sum():,.2f} {unit_abbr}")
-        else:
-            st.caption("No dynamic historical year structures found.")
-
-    # Force component retention through click execution loops
-    if "current_dashboard_tab" not in st.session_state:
-        st.session_state.current_dashboard_tab = "📅 Training Data Perspectives"
-    # Force component view retention through click execution loops
-    if st.session_state.get('current_dashboard_tab') == "📅 Training Data Perspectives":
-        show_cal(player=None, external_df=df, unit_abbr=unit_abbr)
-    else:
-        show_cal(player=None, external_df=df, unit_abbr=unit_abbr)
-
 def show_cal(player=None, external_df=None, unit_abbr="Mi"):
     # Intercept session dictionary allocations to prevent page-snapping loops
     for state_key in ["sidebar_nav", "main_menu", "app_tabs", "navigation_options", "page_selection"]:
@@ -897,7 +710,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
     if external_df is not None:
         df = external_df
     else:
-        raw_activities = load_data_from_save_json()
+        raw_activities = load_history_logs(on_error=lambda e: st.error(f"Error reading save_file.json: {e}"))
         if isinstance(raw_activities, str):
             try: raw_activities = json.loads(raw_activities)
             except Exception: raw_activities = []
@@ -1262,18 +1075,6 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                 run_time = run_row.get('Duration', '--:--')
                                 raw_p = run_row.get('pace', '—')
 
-                                # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
-                                def duration_str_to_minutes(d_str):
-                                    try:
-                                        parts = [int(p) for p in str(d_str).strip().split(':')]
-                                        if len(parts) == 3:   # HH:MM:SS
-                                            return parts[0]*60 + parts[1] + parts[2]/60.0
-                                        elif len(parts) == 2: # MM:SS
-                                            return parts[0] + parts[1]/60.0
-                                        return 0.0
-                                    except Exception:
-                                        return 0.0
-
                                 # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES
                                 is_invalid_pace = pd.isna(raw_p) or str(raw_p).lower() == "nan" or raw_p == "—"
                                 if not is_invalid_pace:
@@ -1439,18 +1240,6 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                 run_dist = float(run_row['Display_Distance'])
                                 run_time = str(run_row.get('Duration', '--:--'))
                                 raw_p = run_row.get('pace', '—')
-
-                                # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
-                                def duration_str_to_minutes(d_str):
-                                    try:
-                                        parts = [int(p) for p in str(d_str).strip().split(':')]
-                                        if len(parts) == 3:   # HH:MM:SS
-                                            return parts[0]*60 + parts[1] + parts[2]/60.0
-                                        elif len(parts) == 2: # MM:SS
-                                            return parts[0] + parts[1]/60.0
-                                        return 0.0
-                                    except Exception:
-                                        return 0.0
 
                                 # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES SAFELY
                                 raw_p_str = str(raw_p).strip().lower()
@@ -1811,42 +1600,6 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
 
 
 
-def load_data_from_save_json():
-    """
-    Directly reads save_file.json and extracts records from the 'history_logs' root key.
-    """
-    possible_paths = ['save_file.json', '../save_file.json', 'data/save_file.json']
-    
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r') as f:
-                    data = json.load(f)
-                    if isinstance(data, dict):
-                        if "history_logs" in data:
-                            return data["history_logs"]
-                        for root_key in data.values():
-                            if isinstance(root_key, dict) and "history_logs" in root_key:
-                                return root_key["history_logs"]
-                    elif isinstance(data, list):
-                        return data
-            except Exception as e:
-                st.error(f"Error reading save_file.json: {e}")
-    return []
-
-def pace_str_to_minutes(pace_str):
-    """Converts a pace string like '10:36' or a float number into total decimal minutes."""
-    if pd.isna(pace_str) or pace_str == "":
-        return 0.0
-    if isinstance(pace_str, (int, float)):
-        return float(pace_str)
-    try:
-        parts = str(pace_str).strip().split(':')
-        if len(parts) == 2:
-            return int(parts[0]) + (int(parts[1]) / 60.0)
-        return float(pace_str)
-    except (ValueError, IndexError):
-        return 0.0
 def render_dashboard_overview(player):
     """
     Renders an interactive running dashboard featuring:
@@ -1870,7 +1623,7 @@ def render_dashboard_overview(player):
     if hasattr(player, 'history_logs') and player.history_logs:
         raw_activities = player.history_logs
     if not raw_activities:
-        raw_activities = load_data_from_save_json()
+        raw_activities = load_history_logs(on_error=lambda e: st.error(f"Error reading save_file.json: {e}"))
 
     if isinstance(raw_activities, str):
         try:

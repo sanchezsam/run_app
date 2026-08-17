@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # PART 1 OF 3: PRO SHOP SETUP, ATTRIBUTE NODE FORGE & 6-CATEGORY INTEGRATION
 import streamlit as st
-import json
+from run_utils import save_player_profile
 
 def render_shop_interface(player, FILE_PATH):
     st.markdown('## 🛒 Pro Shop & Performance Equipment Forge')
@@ -117,7 +117,7 @@ def render_shop_interface(player, FILE_PATH):
                 player.stat_points = getattr(player, 'stat_points', 0) - 1
                 player.running_level = getattr(player, 'running_level', 1) + 1
                 player.vo2_max = getattr(player, 'vo2_max', 40.0) + 0.5
-                with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+                save_player_profile(player, FILE_PATH)
                 st.success('✨ Attribute Node forged successfully!'); st.rerun()
             except Exception as e: st.error(f'Forge fault: {str(e)}')
     with sac2: st.caption(f"Current Forged Skill: Level **{getattr(player, 'running_level', 1)}** | VO2 Max Base: **{getattr(player, 'vo2_max', 40.0):.1f}**")
@@ -152,7 +152,7 @@ def render_shop_interface(player, FILE_PATH):
                             elif specs['cat'] == 'Shorts' and not getattr(player, 'equipped_shorts_name', None): player.equipped_shorts_name = item
                             elif specs['cat'] == 'Watches' and not getattr(player, 'equipped_watch_name', None): player.equipped_watch_name = item
                             
-                            with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+                            save_player_profile(player, FILE_PATH)
                             st.success(f'🎁 Collected {item}!'); st.rerun()
                         except Exception as e: st.error(f'Store fault: {str(e)}')
 # PART 3 OF 3: VAULT SWAPPING HOOKS AND LOCKER ROOM APPAREL PAINT STATIONS
@@ -200,7 +200,7 @@ def render_shop_interface(player, FILE_PATH):
                                 if st.button('🟢 Equip Gear', key=f'equip_slot_action_{idx}'):
                                     try:
                                         setattr(player, active_slot_variable, owned_item)
-                                        with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+                                        save_player_profile(player, FILE_PATH)
                                         st.success(f'⚡ Equipped {owned_item}!'); st.rerun()
                                     except Exception: pass
                         with v2:
@@ -218,7 +218,7 @@ def render_shop_interface(player, FILE_PATH):
                                     try:
                                         player.gold = gold_balance - 15
                                         player.gear_colors[owned_item] = chosen_shade
-                                        with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+                                        save_player_profile(player, FILE_PATH)
                                         st.success(f"⚡ Successfully applied {chosen_shade}!"); st.rerun()
                                     except Exception: pass
                                     
@@ -231,7 +231,7 @@ def render_shop_interface(player, FILE_PATH):
                                     try:
                                         player.gold = gold_balance - next_level_cost
                                         player.equipped_gear[owned_item] = curr_level + 1
-                                        with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+                                        save_player_profile(player, FILE_PATH)
                                         st.success(f'⚡ Tuned asset to Rank +{curr_level + 1}!'); st.rerun()
                                     except Exception as e: st.error(f'Tuning fault: {str(e)}')
 
