@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # PART 1 OF 2: LEDGER INITIALIZATION, LOG CONVERTERS & SIDE-BY-SIDE WEEKLY PACING GRAPHS
 import time
-import random
 import streamlit as st
 import pandas as pd
 import altair as alt
