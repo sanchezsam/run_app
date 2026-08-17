@@ -1,0 +1,86 @@
+# ─── 🍏 COMPREHENSIVE CALORIE TRACKING MAP (MAX SPECTRUM) ───
+CUISINE_MAP_BY_CATEGORY = {
+    "chinese": {
+        "dumpling": 60,
+        "takeout_box": 650,
+        "ramen_bowl": 850,
+        "rice_bowl": 215,
+        "fortune_cookie": 35,
+        "boba_tea": 450,
+        "chopsticks": 0
+    },
+    "mexican": {
+        "taco": 220,
+        "burrito": 700,
+        "tamale": 310,
+        "tortilla": 210,
+        "avocado": 320,
+        "hot_pepper": 5,
+        "mexican_coke": 150,
+        "horchata": 440
+    },
+    "italian_mediterranean": {
+        "pizza_slice": 320,
+        "spaghetti": 300,
+        "green_salad": 250,
+        "olive": 15,
+        "cheese_block": 170,
+        "chianti_wine": 130,
+        "limonata_soda": 150
+    },
+    "japanese": {
+        "sushi_piece": 65,
+        "bento_box": 950,
+        "shrimp_tempura": 80,
+        "rice_cracker": 50,
+        "oden_skewer": 90,
+        "dango_skewer": 140,
+        "hot_sake": 160,
+        "matcha_latte": 240
+    },
+    "american": {
+        "hamburger": 550,
+        "french_fries": 400,
+        "hot_dog": 350,
+        "steak_6oz": 480,
+        "chicken_leg": 180,
+        "bacon_strip": 50,
+        "coke_classic": 390,
+        "diner_milkshake": 650
+    },
+    "french_european_bakery": {
+        "baguette_portion": 170,
+        "croissant": 270,
+        "soft_pretzel": 380,
+        "pancake_stack": 600,
+        "belgian_waffle": 450,
+        "fondue_pot": 490,
+        "champagne_bottle": 620,
+        "cafe_au_lait": 120
+    },
+    "middle_eastern_south_asian": {
+        "falafel_wrap": 600,
+        "curry_rice": 750,
+        "mango_lassi": 360,
+        "masala_chai": 110
+    },
+    "desserts": {
+        "ice_cream_cone": 450,
+        "slice_of_cake": 520,
+        "glazed_donut": 380,
+        "chocolate_cookie": 290,
+        "bakery_cupcake": 340,
+        "chocolate_bar": 250
+    },
+    "drinks_hydration": {
+        "hot_coffee": 5,
+        "green_tea": 2,
+        "glass_of_milk": 150,
+        "sugar_soda_cup": 400,
+        "beer_mug": 250,
+        "wine_glass": 130,
+        "premium_cocktail": 450,
+        "sports_hydration_32oz": 240
+    }
+}
+
