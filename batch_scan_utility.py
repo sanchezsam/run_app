@@ -8,6 +8,10 @@ from fitparse import FitFile
 
 # 🎯 DYNAMIC SYSTEM PIPELINE HOOKS: Pull actual logic blocks straight from configurations
 import metrics_config as cfg
+from error_utils import get_logger, report_error
+
+logger = get_logger(__name__)
+
 try:
     import personal_records_config as pr_cfg
 except ImportError:
@@ -67,8 +71,8 @@ def parse_single_fit_file(file_path):
             "Pace": pace_str,
             "Time": duration_str
         }
-    except Exception as e:
-        st.error(f"⚠️ Error reading binary layout file `{os.path.basename(file_path)}`: {str(e)}")
+    except Exception as exc:
+        report_error(logger, f'Error reading binary layout file `{os.path.basename(file_path)}`', exc)
         return None
 def process_2026_fit_directory_with_all_configs():
     """
@@ -225,8 +229,13 @@ def render_dual_config_scanner_view():
             try:
                 with open(save_path, "r", encoding="utf-8") as f:
                     master_dict = json.load(f)
-            except Exception:
-                master_dict = {}
+            except (OSError, json.JSONDecodeError) as exc:
+                report_error(
+                    logger,
+                    f'{save_path} could not be read, so the sync was aborted to avoid overwriting existing history',
+                    exc,
+                )
+                return
 
         existing_history = master_dict.get("history_logs", [])
         new_additions_count = 0
@@ -244,8 +253,12 @@ def render_dual_config_scanner_view():
                 new_additions_count += 1
         master_dict["history_logs"] = existing_history
 
-        with open(save_path, "w", encoding="utf-8") as f:
-            json.dump(master_dict, f, indent=2, ensure_ascii=False)
+        try:
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(master_dict, f, indent=2, ensure_ascii=False)
+        except (OSError, TypeError, ValueError) as exc:
+            report_error(logger, f'Could not write the synchronized runs to {save_path}', exc)
+            return
 
         st.success(f"🎉 Successfully imported and synchronized `{new_additions_count}` unified config runs into storage structures!")
         st.session_state["filtered_df"] = pd.DataFrame(existing_history)

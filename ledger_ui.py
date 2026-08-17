@@ -8,6 +8,10 @@ import altair as alt
 import re
 from datetime import datetime, timedelta
 
+from error_utils import get_logger
+
+logger = get_logger(__name__)
+
 def render_training_ledger(player):
     st.markdown('## 📅 Training Activity Ledger')
     st.caption("Review, edit, and audit your deep workout log entries sorted chronologically inside historical timeline summaries:")
@@ -59,7 +63,8 @@ def render_training_ledger(player):
                 fingerprint = (str(date_str)[:10], round(raw_dist, 1))
                 processed_fingerprints.add(fingerprint)
                 
-            except Exception: pass
+            except (KeyError, TypeError, ValueError) as exc:
+                logger.warning('Skipped structured history entry the ledger could not parse (%s): %r', exc, log)
             
     # SECOND PASS: Load legacy plain text lines, skipping them if a structured version already exists
     for log in historical_logs:
@@ -97,7 +102,8 @@ def render_training_ledger(player):
                             'DateObj': dt_val,
                             'splits': None
                         })
-                except Exception: pass
+                except (AttributeError, TypeError, ValueError) as exc:
+                    logger.warning('Skipped legacy history line the ledger could not parse (%s): %r', exc, log_str)
  
 
 
@@ -267,6 +273,7 @@ def render_training_ledger(player):
                         calculated_pace_val = 0.0
                         if act_dist > 0.1 and ":" in act_dur:
                             try:
+                                total_minutes = 0.0
                                 dur_parts = act_dur.split(":")
                                 if len(dur_parts) == 3:
                                     total_minutes = (int(dur_parts[0]) * 60.0) + int(dur_parts[1]) + (int(dur_parts[2]) / 60.0)
@@ -274,7 +281,8 @@ def render_training_ledger(player):
                                     total_minutes = int(dur_parts[0]) + (int(dur_parts[1]) / 60.0)
                                 
                                 calculated_pace_val = total_minutes / act_dist
-                            except Exception:
+                            except (TypeError, ValueError, ZeroDivisionError) as exc:
+                                logger.warning('Could not derive pace from duration %r: %s', act_dur, exc)
                                 calculated_pace_val = 0.0
                                 
                         # Fallback wrapper check to capture pre-formatted keys if math is skipped

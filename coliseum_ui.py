@@ -8,6 +8,22 @@ import time
 import random
 from datetime import datetime, timedelta
 
+from error_utils import get_logger, report_error
+
+logger = get_logger(__name__)
+
+
+def _persist_player(player, FILE_PATH):
+    """Writes the player back to disk, surfacing the failure instead of losing it."""
+    try:
+        with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
+            json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
+        return True
+    except (OSError, TypeError, ValueError) as exc:
+        report_error(logger, f'Race result applied in memory but writing {FILE_PATH} failed', exc)
+        return False
+
+
 def render_coliseum(player, FILE_PATH):
     st.markdown('### 🏟️ THE BIOMETRIC COLISEUM: HIGH-STAKES CIRCUIT')
     st.markdown('Select your Pacer Rival, choose your Running Course Track, and launch physics-based athletic duels driven by your loadout!')
@@ -36,7 +52,8 @@ def render_coliseum(player, FILE_PATH):
                     total_3wk_miles += float(d_match.group(1))
                     if e_match: max_single_run_elevation = max(max_single_run_elevation, float(e_match.group(1)))
                     if p_match and 2.0 < float(p_match.group(1)) < fastest_pace_in_window: fastest_pace_in_window = float(p_match.group(1))
-            except Exception: pass
+            except (AttributeError, TypeError, ValueError) as exc:
+                logger.warning('Skipped history line while scoring driver ratings (%s): %r', exc, log_str)
             
     p_fuel = max(1, min(9, int((total_3wk_miles / 300.0) * 9)))
     p_nitro = max(1, min(9, int(9 - ((fastest_pace_in_window - 5.50) * 1.5)))) if 0 < fastest_pace_in_window < 900.0 else 1
@@ -239,7 +256,7 @@ def render_coliseum(player, FILE_PATH):
             log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g."
             if not hasattr(player, 'history_logs'): player.history_logs = []
             player.history_logs.append(log_m)
-            with open(FILE_PATH, 'w', encoding='utf-8') as db_file: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
+            _persist_player(player, FILE_PATH)
             st.session_state.last_race_summary = {
                 "is_win": True, "p_time": p_time_str, "r_time": r_time_str, "score": calc_racing_score, 
                 "gold": calculated_gold_stake, "course": parsed_course_key, "dist": course_specs['dist']
@@ -252,7 +269,7 @@ def render_coliseum(player, FILE_PATH):
             log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
             if not hasattr(player, 'history_logs'): player.history_logs = []
             player.history_logs.append(log_m)
-            with open(FILE_PATH, 'w', encoding='utf-8') as db_file: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
+            _persist_player(player, FILE_PATH)
             st.session_state.last_race_summary = {
                 "is_win": False, "p_time": p_time_str, "r_time": r_time_str, "score": calc_racing_score, 
                 "gold": gold_lost, "course": parsed_course_key, "dist": course_specs['dist']
@@ -316,7 +333,8 @@ def render_coliseum(player, FILE_PATH):
                     "Your Time": p_time_match.group(1) if p_time_match else "N/A", "Rival Time": r_time_match.group(1) if r_time_match else "N/A",
                     "Gold Impact": gold_impact_match.group(1) if gold_impact_match else "0g"
                 })
-            except Exception: pass
+            except (AttributeError, TypeError, ValueError) as exc:
+                logger.warning('Skipped race history line the standings table could not parse (%s): %r', exc, log_str)
     if historic_races: st.dataframe(pd.DataFrame(historic_races).sort_values(by="Race Date", ascending=False), use_container_width=True, hide_index=True)
     else: st.info("🏁 No historic race records discovered yet. Clear a circuit milestone duel to log your first standings data!")
 

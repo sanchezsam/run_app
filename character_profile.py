@@ -5,6 +5,11 @@ import json
 import re
 from datetime import datetime, timedelta
 
+from error_utils import get_logger
+
+logger = get_logger(__name__)
+
+
 def calculate_and_render_profile(player):
     now_date = datetime.now()
     
@@ -77,8 +82,8 @@ def calculate_and_render_profile(player):
                         current_pace = float(pace_match.group(1))
                         if 2.0 < current_pace < fastest_pace_in_window: 
                             fastest_pace_in_window = current_pace
-            except Exception: 
-                pass
+            except (AttributeError, TypeError, ValueError) as exc:
+                logger.warning('Skipped history line while building the athlete profile (%s): %r', exc, log_str)
 
     # ==============================================================================
     # 🧮 PHYSIOLOGICAL METRICS MATRIX MATRICES
