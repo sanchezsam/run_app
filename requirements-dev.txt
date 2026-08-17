@@ -1,0 +1,7 @@
+# Dependencies needed to run the unit test suite: python -m pytest
+pytest>=8.0
+pytest-cov>=5.0
+pandas>=2.0
+numpy>=1.24
+streamlit>=1.30
+fitparse>=1.2
