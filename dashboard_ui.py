@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 from metrics_config import FINAL_METRIC_CONFIG
+from security_utils import escape_html
 
 
 
@@ -1364,7 +1365,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                         pass
 
                                 # 📋 9. COMPILE RUN LOG AS AN HTML COMPONENT ROW
-                                week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time}</td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
+                                week_rows_buffer += f"<tr class='day-row'><td><b>{escape_html(target_date_str)}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{escape_html(run_time)}</td><td>{escape_html(run_pace)}</td><td>{day_elevation:,.0f} ft</td></tr>"
                             
                             # --- 🧘 SAFE REST DAY HANDLER ---
                             else:
@@ -1571,7 +1572,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                 patch_emojis = "".join(extracted_emojis)
                                 
                                 # 2. Append to your rich HTML string template cell structure (inserts next to duration clocks)
-                                week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time} <span style='margin-left: 6px;'>{patch_emojis}</span></td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
+                                week_rows_buffer += f"<tr class='day-row'><td><b>{escape_html(target_date_str)}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{escape_html(run_time)} <span style='margin-left: 6px;'>{escape_html(patch_emojis)}</span></td><td>{escape_html(run_pace)}</td><td>{day_elevation:,.0f} ft</td></tr>"
                                 # ────────────────────────────────────────────────────────
  
                             # --- 🧘 REST DAY CONTAINER BLOCK ---

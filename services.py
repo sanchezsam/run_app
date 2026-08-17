@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
-import xml.etree.ElementTree as ET
 from datetime import datetime
 import math
 import json
 from fitparse import FitFile
+
+from security_utils import (
+    MAX_TRACK_POINTS,
+    UnsafeInputError,
+    clamp_elevation_m,
+    parse_xml_safely,
+    validate_coordinate,
+)
 
 
 
@@ -99,12 +106,14 @@ def parse_garmin_fit(file_bytes):
 
 def parse_garmin_gpx(player, file_bytes):
     try:
-        root = ET.fromstring(file_bytes)
+        root = parse_xml_safely(file_bytes)
         
         # 1. Isolate tracking point arrays
         points = root.findall('.//{*}trkpt')
         if not points:
             return False, 'No tracking coordinate nodes discovered inside GPX script.'
+        if len(points) > MAX_TRACK_POINTS:
+            return False, f'GPX track exceeds the {MAX_TRACK_POINTS:,} trackpoint limit.'
         
         # 2. Extract primary calendar date string dynamically
         gpx_date_str = None
@@ -149,12 +158,16 @@ def parse_garmin_gpx(player, file_bytes):
         prev_lat, prev_lon, prev_ele = None, None, None
         
         for pt in points:
-            lat = float(pt.attrib['lat'])
-            lon = float(pt.attrib['lon'])
+            if 'lat' not in pt.attrib or 'lon' not in pt.attrib:
+                continue
+            try:
+                lat, lon = validate_coordinate(pt.attrib['lat'], pt.attrib['lon'])
+            except (UnsafeInputError, TypeError, ValueError):
+                continue
             ele_node = pt.find('.//{*}ele')
-            ele = float(ele_node.text) if ele_node is not None else 0.0
+            ele = clamp_elevation_m(ele_node.text) if ele_node is not None else 0.0
             
-            if prev_lat is not None:
+            if prev_lat is not None and prev_ele is not None:
                 dlat = math.radians(lat - prev_lat)
                 dlon = math.radians(lon - prev_lon)
                 a = math.sin(dlat/2)**2 + math.cos(math.radians(prev_lat)) * math.cos(math.radians(lat)) * math.sin(dlon/2)**2

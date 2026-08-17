@@ -11,6 +11,14 @@ from services import parse_garmin_fit
 import pandas as pd
 from typing import List
 from metrics_config import FINAL_METRIC_CONFIG
+from security_utils import (
+    MAX_TRACK_POINTS,
+    UnsafeInputError,
+    clamp_elevation_m,
+    sanitize_display_text,
+    validate_coordinate,
+    validate_upload,
+)
 
 
 
@@ -131,8 +139,14 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
         
         for idx, file_obj in enumerate(uploaded_files):
             try:
-                file_extension = file_obj.name.split('.')[-1].lower()
                 file_bytes = file_obj.read()
+                try:
+                    safe_file_name, file_extension = validate_upload(file_obj.name, file_bytes)
+                except UnsafeInputError as validation_error:
+                    st.warning(
+                        f"⚠️ **Rejected `{sanitize_display_text(file_obj.name, 120)}`:** {validation_error}"
+                    )
+                    continue
                 
                 # --- PRE-STAGE DE-DUPLICATION CHECKER ---
                 chk_date = datetime.now().strftime('%Y-%m-%d')
@@ -219,7 +233,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                                     break
 
                 if is_file_duplicate:
-                    st.warning(f"⚠️ **Pre-Staging Warning:** `{file_obj.name}` has been filtered out of the batch queue. An identical workout record (Distance: `{chk_dist:.2f} Mi` | Duration: `{chk_dur}`) already exists for date `{chk_date}`.")
+                    st.warning(f"⚠️ **Pre-Staging Warning:** `{safe_file_name}` has been filtered out of the batch queue. An identical workout record (Distance: `{chk_dist:.2f} Mi` | Duration: `{chk_dur}`) already exists for date `{chk_date}`.")
                     continue
                     
                 file_obj.seek(0)
@@ -239,7 +253,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                         calculated_pace = 0.0
                     
                     staged_sessions.append({
-                        "name": file_obj.name, "date": fit_metrics_temp["date"],  
+                        "name": safe_file_name, "date": fit_metrics_temp["date"],  
                         "dist": round(calculated_distance_miles, 2), "duration": chk_dur,  
                         "pace": calculated_pace, "ele": fit_metrics_temp["elevation_gain_ft"], 
                         "calories": fit_metrics_temp["calories"], "splits": fit_metrics_temp["splits"],
@@ -251,7 +265,11 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                 track_points = re.findall(r'<trkpt\s+lat="([-0-9.]+)"\s+lon="([-0-9.]+)".*?>(.*?)</trkpt>', file_text, re.DOTALL)
                 
                 if not track_points:
-                    st.warning(f"⚠️ **File Error:** Could not resolve geographic coordinates inside `{file_obj.name}`. Skipping track.")
+                    st.warning(f"⚠️ **File Error:** Could not resolve geographic coordinates inside `{safe_file_name}`. Skipping track.")
+                    continue
+                
+                if len(track_points) > MAX_TRACK_POINTS:
+                    st.warning(f"⚠️ **Rejected `{safe_file_name}`:** track exceeds the {MAX_TRACK_POINTS:,} trackpoint limit.")
                     continue
                 
                 calculated_distance_miles = 0.0
@@ -263,10 +281,13 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                 parsed_date_str = time_strings[0][:10] if time_strings else datetime.now().strftime('%Y-%m-%d')
                 
                 for i in range(len(track_points) - 1):
-                    lat1 = math.radians(float(track_points[i][0]))
-                    lon1 = math.radians(float(track_points[i][1]))
-                    lat2 = math.radians(float(track_points[i+1][0]))
-                    lon2 = math.radians(float(track_points[i+1][1]))
+                    try:
+                        lat_a, lon_a = validate_coordinate(track_points[i][0], track_points[i][1])
+                        lat_b, lon_b = validate_coordinate(track_points[i+1][0], track_points[i+1][1])
+                    except (UnsafeInputError, TypeError, ValueError):
+                        continue
+                    lat1, lon1 = math.radians(lat_a), math.radians(lon_a)
+                    lat2, lon2 = math.radians(lat_b), math.radians(lon_b)
                     
                     dlat = lat2 - lat1
                     dlon = lon2 - lon1
@@ -291,7 +312,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                     
                     ele_match = re.search(r'<ele>([-0-9.]+)</ele>', track_points[i][2], re.IGNORECASE)
                     if ele_match:
-                        elevations_list.append(float(ele_match.group(1)) * 3.28084)
+                        elevations_list.append(clamp_elevation_m(ele_match.group(1)) * 3.28084)
                         
                 for i in range(len(elevations_list) - 1):
                     diff = elevations_list[i+1] - elevations_list[i]
@@ -311,12 +332,15 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                 
                 total_batch_distance += parsed_distance
                 staged_sessions.append({
-                    'name': file_obj.name, 'dist': parsed_distance, 'ele': parsed_elevation, 
+                    'name': safe_file_name, 'dist': parsed_distance, 'ele': parsed_elevation, 
                     'pace': parsed_pace, 'date': parsed_date_str, 'duration': duration_string_hud,
                     'splits': None, 'type': 'GPX Activity'
                 })
             except Exception as e:
-                st.error(f"Parsing failure on item {file_obj.name}: {str(e)}")
+                st.error(
+                    f"Parsing failure on item {sanitize_display_text(file_obj.name, 120)}: "
+                    f"{sanitize_display_text(e)}"
+                )
         if staged_sessions:
             bm1, bm2, bm3 = st.columns(3)
             with bm1: st.metric("Accumulated Batch Distance", f"{total_batch_distance:.2f} Miles")

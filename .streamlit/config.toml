@@ -1,0 +1,14 @@
+[server]
+# Keep cross-origin protections on: the app persists biometric data locally and
+# is not meant to be embedded or driven by third-party origins.
+enableCORS = true
+enableXsrfProtection = true
+# Cap the request body so a single upload cannot exhaust memory/disk.
+maxUploadSize = 25
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# Never surface Python tracebacks (file paths, save-file contents) in the UI.
+showErrorDetails = false

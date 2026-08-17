@@ -4,6 +4,8 @@ import streamlit as st
 import os
 import shutil
 
+from security_utils import apply_serialized_attributes
+
 class Character:
     def __init__(self, name="Athlete", bodyweight_lbs=180):
         self.name = name
@@ -326,6 +328,5 @@ class Character:
     @classmethod
     def from_dict(cls, data):
         char = cls()
-        for key, value in data.items(): setattr(char, key, value)
-        return char
+        return apply_serialized_attributes(char, data)
 
