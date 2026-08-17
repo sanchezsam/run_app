@@ -323,7 +323,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
             with bm2: st.metric("Staged Gold Yield (+10g/mi)", f"+{int(total_batch_distance * 10)}g")
             with bm3: st.metric("Staged Experience Yield", f"+{int(total_batch_distance * 50)} XP")
             
-            with st.expander("🔍 View Staged Track Telemetry Breakdown Details", expanded=True):
+            with st.container(border=True):
+                st.markdown("#### 🔍 Staged Track Telemetry Breakdown Details")
                 for s in staged_sessions:
                     st.markdown(f"📄 **{s['name']}** — `[{s['date']}]` — `{s['dist']:.2f} Mi` | Running Time: `{s['duration']}` | `{s['pace']:.2f} min/mi` Pace | `+{s['ele']} ft` Climbing")
                     
