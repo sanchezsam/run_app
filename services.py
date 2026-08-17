@@ -308,7 +308,7 @@ def calculate_stat_decay(history_logs):
             return {"days_inactive": 0, "decay_penalty": 0, "applied": False}
             
         latest_run_date = max(dates)
-        today = pd.to_datetime(datetime.date.today())
+        today = pd.to_datetime(datetime.now().date())
         
         # Calculate raw delta difference
         days_inactive = (today - latest_run_date).days

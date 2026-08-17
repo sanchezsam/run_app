@@ -1,0 +1,9 @@
+[run]
+source = .
+omit =
+    tests/*
+    test_scripts/*
+    run_gui_import_pipeline.py
+
+[report]
+show_missing = True
