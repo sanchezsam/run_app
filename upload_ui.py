@@ -395,47 +395,47 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      player.history_logs, f_rating, n_rating, t_rating
                  )
                  
-                 # Assign the updated trends directly back onto your live player object
-                 player.fuel_rating = new_f
-                 player.nitro_rating = new_n
-                 player.torque_rating = new_t
+                 # Assign updated ratings and levels to the player object
+                 player.fuel_rating, player.nitro_rating, player.torque_rating = new_f, new_n, new_t
+                 player.fuel_level, player.nitro_level, player.torque_level = post_f, post_n, post_t
                  
-                 # Assign calculated integer ranks back to display level states
-                 player.fuel_level = post_f
-                 player.nitro_level = post_n
-                 player.torque_level = post_t
-
-                 # FIXED: Removed the extra, unparameterized compute_current_ratings call that was causing the overwrite bug
+                 # Run calculations in memory before disk writes to bypass duplication lockout filters
+                 if player.history_logs:
+                     # ─── 🏆 DYNAMIC BATCH PROFILER BLOCK ───
+                     for entry in player.history_logs[-len(staged_sessions):]:
+                         discovered_patches = check_single_run_patches(entry.copy())
+                         entry["earned_patches"] = list(discovered_patches) if isinstance(discovered_patches, list) else discovered_patches
+                         
+                         for patch in discovered_patches:
+                             if patch["id"] not in player.unlocked_badges:
+                                 player.unlocked_badges.append(patch["id"])
                  
-                 # Save base runtime updates to disk FIRST so the award pipeline reads accurate data
+                 # Commit fully stamped memory structures to disk
                  save_data = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
                  with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
                      json.dump(save_data, db_file, default=str, indent=4)
-
-                 # 3. RUN AWARD CALCULATOR SECOND
+                 
+                 # Run legacy background engines to refresh lifelong odometers and trophy shelves
                  if player.history_logs:
                      process_and_award_metrics(player.history_logs[-1])
-
-                 # 4. DISK FILE STRUCT RE-ALIGNMENT RESYNC
+                 
+                 # Re-sync memory tracking objects from disk
                  with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
                      fresh_disk_data = json.load(db_file)
                      
-                 # Inject calculated lists updates back to live RAM variables
+                 player.history_logs = fresh_disk_data.get("history_logs", [])
                  player.unlocked_badges = fresh_disk_data.get("unlocked_badges", [])
                  if hasattr(player, 'final_metric_data'):
                      player.final_metric_data = fresh_disk_data.get("final_metric_data", {})
-
-                 # Calculate the true mathematical badge delta updates
+                 
+                 # Calculate accurate badge deltas to display in the Streamlit interface panel
                  post_upload_badges = fresh_disk_data.get("unlocked_badges", [])
-                 true_batch_earned = max(0, len(post_upload_badges) - pre_upload_badge_count)
-
-                 # Lock the core snapshot and batch counts into session state memory
                  st.session_state.last_sync_deltas = {
-                     "gold": total_gold_rewarded, 
-                     "xp": total_xp_gained, 
+                     "gold": total_gold_rewarded,
+                     "xp": total_xp_gained,  
                      "count": len(staged_sessions),
                      "miles_added": sum(float(s['dist']) for s in staged_sessions),
-                     "batch_patches_earned": true_batch_earned  
+                     "batch_patches_earned": max(0, len(post_upload_badges) - pre_upload_badge_count)  
                  }
 
                  st.cache_data.clear()
@@ -826,10 +826,10 @@ def process_and_award_metrics(new_run_log: dict):
     run_elevation = clean_elevation_string(new_run_log.get("Elevation (ft)", "0"))
     
     # --- B. EXECUTE THE SINGLE-RUN PATCH ROUTINE (INTEGRATED HERE) ---
-    run_patches = check_single_run_patches(new_run_log)
+    run_patches = check_single_run_patches(new_run_log.copy())
     
     # Attach the badges permanently inside the individual workout log dictionary object
-    new_run_log["earned_patches"] = run_patches
+    new_run_log["earned_patches"] = list(run_patches) if isinstance(run_patches, list) else run_patches
     
     # Also push any unique patches to your permanent top-level unlocked list
     for patch in run_patches:

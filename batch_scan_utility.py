@@ -152,15 +152,41 @@ def process_2026_fit_directory_with_all_configs():
                         primary_award_code, primary_type, primary_metric_desc = "patch_altitude_titan", "patch", "🏔️ Summit Climb Milestone"
 
             # Final fallbacks if zero arrays match
+            # Final fallbacks if zero arrays match
             if not awards_met_list:
                 awards_met_list.append("Standard Run Logged [patch_cold_warrior]")
-
-            # Stamp calculations onto payload elements to preserve showroom filters mapping
+            
+            # ─── 🛠️ FIXED: DYNAMIC SCHEMA CONFIGURATION HOOK ───
             payload["award_code"] = primary_award_code.lower()
             payload["type"] = primary_type.lower()
             payload["metric"] = primary_metric_desc
             payload["details"] = f"FIT activity stream verified via multi-config validation layers."
+            
+            # Extract individual codes out of the compiled milestones list to construct the 'patches' array
+            extracted_patch_ids = []
+            for am in awards_met_list:
+                if '[' in am and ']' in am:
+                    # FIX: Access the item from the list split BEFORE stripping whitespace strings
+                    clean_tag = am.split('[')[-1].split(']')[0].strip()
+                    extracted_patch_ids.append(clean_tag)
+                else:
+                    extracted_patch_ids.append(primary_award_code.lower())
+    
+            # Pull any extra award codes dynamically from your weekly mileage configurations
+            weekly_rewards = getattr(cfg, "WEEKLY_MILEAGE_REWARDS", [])
+            if weekly_rewards:
+                for rw in weekly_rewards:
+                    rw_code = rw.get("code")
+                    rw_miles = rw.get("miles", 99999.0)
+                    if dist >= rw_miles and rw_code and rw_code.lower() not in extracted_patch_ids:
+                        extracted_patch_ids.append(rw_code.lower())
+    
+            # Inject the clean array payload key your verify_patches.py script scans for!
+            payload["patches"] = extracted_patch_ids
+            # ────────────────────────────────────────────────────────────────────────────
 
+            # ────────────────────────────────────────────────────────────────────────────
+    
             processed_records.append({
                 "Filename": filename,
                 "Activity Date": payload["Date"],
@@ -207,10 +233,15 @@ def render_dual_config_scanner_view():
         
         for idx, row in df_ledger.iterrows():
             payload = row["raw_payload"]
-            if not any(e.get('Date') == payload['Date'] and e.get('Time') == payload['Time'] for e in existing_history):
+            # FIXED: Check date AND distance volume to ensure multiple runs on the same day don't block each other
+            is_duplicate = any(
+                e.get('Date') == payload['Date'] and 
+                abs(e.get('Miles', 0.0) - payload['Miles']) < 0.05 
+                for e in existing_history
+            )
+            if not is_duplicate:
                 existing_history.append(payload)
                 new_additions_count += 1
-
         master_dict["history_logs"] = existing_history
 
         with open(save_path, "w", encoding="utf-8") as f:
@@ -223,4 +254,3 @@ def render_dual_config_scanner_view():
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
     render_dual_config_scanner_view()
-

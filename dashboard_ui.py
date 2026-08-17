@@ -215,6 +215,49 @@ def render_final_metric_dashboard(player_data: dict, target_col1, target_col2):
             shelf_b_grid = st.columns(4)
             for idx, trophy in enumerate(elev_cfg["trophies"]):
                 with shelf_b_grid[idx]:
+
+
+
+                    # Backfill root level all-time unlocked badges list array
+                    all_unlocked_badges = set()
+                    for run in existing_history:
+                        for patch in run.get("earned_patches", []):
+                            if isinstance(patch, dict):
+                                all_unlocked_badges.add(patch.get("id"))
+                
+                    master_dict["history_logs"] = existing_history
+                    master_dict["unlocked_badges"] = list(all_unlocked_badges)
+                    
+                    with open(database_file, "w", encoding="utf-8") as f:
+                        json.dump(master_dict, f, indent=2, ensure_ascii=False)
+                
+                    if log_container:
+                        with log_container.status(f"🎉 Dynamic Synchronization Complete!", expanded=True) as status:
+                            for msg in summary_messages:
+                                st.markdown(msg)
+                            status.update(label=f"✅ Data rows populated entirely out of metrics_config parameters!", state="complete")
+                    else:
+                        print(f"\n🎉 Sync Complete!")
+                        for msg in summary_messages:
+                            print(msg.replace("**", ""))
+                
+                # ─── STREAMLIT UI DESIGN LAYER ────────────────────────────────────────
+                st.set_page_config(page_title="FIT Automation Ingestion", page_icon="🏃", layout="centered")
+                st.title("🏃 FIT Automation Pipeline")
+                
+                if st.button("🚀 Synchronize Database Pipeline", use_container_width=True):
+                    rendering_box = st.container()
+                    execute_gui_pipeline_import(log_container=rendering_box)
+                    st.toast("Sync complete! Profile achievements dynamically updated.", icon="🎖️")
+                
+
+
+
+
+
+
+
+
                     if trophy["id"] in earned_elev:
                         st.markdown(f"<div style='text-align: center;'><h1>{trophy['icon']}</h1><b style='font-size:11px;'>{trophy['name']}</b><br><small style='color:#7F8C8D;'>{trophy['threshold']:,} ft</small></div>", unsafe_allow_html=True)
                     else:
@@ -1454,8 +1497,8 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                     except Exception:
                                         run_patches_list = []
                                         
-                                if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
-                                    badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
+                                #if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
+                                #    badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
                                     if badge_emojis.strip():
                                         run_pace = f"{run_pace}   {badge_emojis}"
                                 # =====================================================================
@@ -1486,9 +1529,51 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                     except ValueError:
                                         pass
 
-                                # Append to your rich HTML string panel buffer
-                                week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time}</td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
-                            
+                                                           # ─── 🛠️ REPOSITION PATCHES AFTER DURATION CELL LAYER ───
+                                # 1. Extract raw active patch list safely out of run_row checking your keys
+                                raw_patches_array = run_row.get("earned_patches", run_row.get("patches", []))
+                                
+                                # ─── 🛠️ REPOSITION PATCHES AFTER DURATION CELL LAYER ───
+                                # 1. Extract icons natively out of your pre-populated run_patches_list variable
+                                extracted_emojis = []
+                                if isinstance(run_patches_list, list):
+                                    for patch in run_patches_list:
+                                        if isinstance(patch, dict):
+                                            # Route A: Extract properties straight out of active dynamic objects
+                                            icon_char = patch.get("icon", patch.get("emoji", ""))
+                                            if icon_char:
+                                                extracted_emojis.append(icon_char)
+                                        elif isinstance(patch, str):
+                                            # Route B: Dynamically pull properties from the metrics_config framework
+                                            award_id = patch.lower().strip()
+                                            config_icon = "🏅"  # Standard default achievement medal fallback
+                                            
+                                            if cfg and hasattr(cfg, "FINAL_METRIC_CONFIG"):
+                                                # Look up criteria limits directly inside your configuration dictionary
+                                                award_rules = cfg.FINAL_METRIC_CONFIG.get(award_id, {})
+                                                config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
+                                            elif cfg and hasattr(cfg, "METRIC_CONFIG"):
+                                                award_rules = cfg.METRIC_CONFIG.get(award_id, {})
+                                                config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
+                                            
+                                            # Static fallback overrides if rules config structure uses raw text ids
+                                            if config_icon == "🏅":
+                                                fallback_map = {
+                                                    "deer": "🦌", "bighorn": "🐏", "overdrive": "💥",
+                                                    "endurance_laurel": "📜", "cardio_cyborg": "🫀",
+                                                    "medal_speed_demon": "⚡", "patch_altitude_titan": "🏔️",
+                                                    "patch_cold_warrior": "❄️"
+                                                }
+                                                config_icon = fallback_map.get(award_id, "🏅")
+                                                
+                                            extracted_emojis.append(config_icon)
+                                
+                                patch_emojis = "".join(extracted_emojis)
+                                
+                                # 2. Append to your rich HTML string template cell structure (inserts next to duration clocks)
+                                week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time} <span style='margin-left: 6px;'>{patch_emojis}</span></td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
+                                # ────────────────────────────────────────────────────────
+ 
                             # --- 🧘 REST DAY CONTAINER BLOCK ---
                             else:
                                 week_rows_buffer += f"<tr class='day-row'><td>{target_date_str}</td><td style='color: #ffcc00; font-weight: bold;'>🧘 REST DAY</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td></tr>"
