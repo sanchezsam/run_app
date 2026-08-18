@@ -343,17 +343,42 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      player.history_logs = []
                  if not hasattr(player, 'unlocked_badges'):
                      player.unlocked_badges = []
+                 if not hasattr(player, 'calorie_bank_balance'):
+                     player.calorie_bank_balance = 5000
+                 if not hasattr(player, 'calorie_bank_total_earned'):
+                     player.calorie_bank_total_earned = 5000
+                 if not hasattr(player, 'pantry_purchase_counts'):
+                     player.pantry_purchase_counts = {}
+                 if not hasattr(player, 'pantry_single_trophies'):
+                     player.pantry_single_trophies = []
+                 if not hasattr(player, 'pantry_cuisine_trophies'):
+                     player.pantry_cuisine_trophies = []
     
                  # 1. Take a baseline snapshot of your career badges before running calculations
                  pre_upload_badge_count = len(player.unlocked_badges)
                  
                  total_gold_rewarded, total_xp_gained = 0, 0
+                 total_calories_ingested = 0
+                 
                  for s in staged_sessions:
                      z1, z2, z3, z4, z5 = 15, 45, 20, 15, 5 
                      gold = max(2, int(float(s['dist']) * 10))
                      xp = max(5, int(float(s['dist']) * 50))
                      total_gold_rewarded += gold
                      total_xp_gained += xp
+                     
+                     # Extract raw calories with a fallback calculation for GPX files (100 kcal/mi)
+                     try:
+                         raw_val = s.get('calories', 0)
+                         session_kcal = int(float(raw_val)) if raw_val is not None else 0
+                     except (ValueError, TypeError):
+                         session_kcal = 0
+                         
+                     if session_kcal <= 0 and float(s.get('dist', 0)) > 0:
+                         session_kcal = int(float(s['dist']) * 100)
+                         s['calories'] = session_kcal
+                         
+                     total_calories_ingested += session_kcal
          
                      raw_s_pace = s.get('pace', 0.0)
                      if raw_s_pace is None or (isinstance(raw_s_pace, float) and (math.isnan(raw_s_pace) or raw_s_pace <= 0)):
@@ -364,7 +389,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                          pace_text = f"{clean_pace_val:.2f}"
 
                      # FIXED: Added explicit labels so the regex text parser can read elevation metrics safely
-                     text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Pace: {pace_text} min/mi | Elevation Climbed: +{s.get('ele', 0)} ft | [REWARD] +{gold}g, +{xp} XP."
+                     text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Pace: {pace_text} min/mi | Elevation Climbed: +{s.get('ele', 0)} ft | [REWARD] +{gold}g, +{xp} XP. | [CALORIE VAULT] +{int(s.get('calories', 0))} kcal"
                      
                      structured_log = {
                          "Date": s['date'], 
@@ -381,9 +406,11 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      }
                      player.history_logs.append(structured_log)
          
-                 # Update core profile character values
+                 # Update core profile character values and calorie balances
                  player.gold = getattr(player, 'gold', 50) + total_gold_rewarded
                  player.total_xp = getattr(player, 'total_xp', 0) + total_xp_gained
+                 player.calorie_bank_balance += total_calories_ingested
+                 player.calorie_bank_total_earned += total_calories_ingested
                  
                  # 2. EXTRACT OR SAFE-INITIALIZE TREND SKILL RATINGS
                  f_rating = getattr(player, 'fuel_rating', 100)
@@ -406,12 +433,22 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                          discovered_patches = check_single_run_patches(entry.copy())
                          entry["earned_patches"] = list(discovered_patches) if isinstance(discovered_patches, list) else discovered_patches
                          
+                         emoji_strip = "".join([p.get("icon", "") for p in discovered_patches if p.get("icon")])
+                         if emoji_strip and "🎖️ Patches:" not in entry.get("text_payload", ""):
+                             entry["text_payload"] = entry.get("text_payload", "").strip() + f" | 🎖️ Patches: {emoji_strip}"
+
                          for patch in discovered_patches:
                              if patch["id"] not in player.unlocked_badges:
                                  player.unlocked_badges.append(patch["id"])
                  
-                 # Commit fully stamped memory structures to disk
-                 save_data = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
+                 # Commit fully stamped memory structures to disk while explicitly anchoring calorie balances
+                 save_data = player.to_dict() if hasattr(player, 'to_dict') else dict(player.__dict__)
+                 save_data['calorie_bank_balance'] = player.calorie_bank_balance
+                 save_data['calorie_bank_total_earned'] = player.calorie_bank_total_earned
+                 save_data['pantry_purchase_counts'] = player.pantry_purchase_counts
+                 save_data['pantry_single_trophies'] = player.pantry_single_trophies
+                 save_data['pantry_cuisine_trophies'] = player.pantry_cuisine_trophies
+                 
                  with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
                      json.dump(save_data, db_file, default=str, indent=4)
                  
@@ -437,6 +474,9 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      "miles_added": sum(float(s['dist']) for s in staged_sessions),
                      "batch_patches_earned": max(0, len(post_upload_badges) - pre_upload_badge_count)  
                  }
+                 
+                 if total_calories_ingested > 0:
+                     st.toast(f"🔥 PANTRY VAULT DEPOSIT SUCCESSFUL: +{total_calories_ingested} kcal credited!", icon="🏦")
 
                  st.cache_data.clear()
                  st.session_state.uploader_reset_token += 1
@@ -445,20 +485,6 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                  
              except Exception as e:
                  st.error(f"Save batch error: {str(e)}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -497,10 +523,24 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                 st.markdown("---")
                 st.markdown("#### 🎖️ NEW UNLOCKED PERFORMANCE PATCHES")
                 
-                # 1. Slice the last N items added to the career list during this specific upload
-                recent_badge_ids = unlocked_badges[-batch_patches_count:]
+                # 1. Gather all patches earned across the current staged track upload session
+                recent_badge_ids = []
+                if hasattr(player, 'history_logs') and player.history_logs:
+                    # Look back through the entries matching our current batch session length
+                    staged_count = st.session_state.last_sync_deltas.get("count", 1) if hasattr(st.session_state, 'last_sync_deltas') else 1
+                    for entry in player.history_logs[-staged_count:]:
+                        earned_list = entry.get("earned_patches", [])
+                        for patch in earned_list:
+                            if isinstance(patch, dict) and "id" in patch:
+                                recent_badge_ids.append(patch["id"])
+                            elif isinstance(patch, str):
+                                recent_badge_ids.append(patch)
                 
-                # 2. Count occurrences of each badge ID in the current upload batch
+                # If fallback is needed, revert to standard delta slice
+                if not recent_badge_ids:
+                    recent_badge_ids = unlocked_badges[-batch_patches_count:] if batch_patches_count > 0 else []
+                
+                # 2. Count occurrences of each patch ID in the batch layout cleanly
                 from collections import Counter
                 badge_counts = Counter(recent_badge_ids)
                 

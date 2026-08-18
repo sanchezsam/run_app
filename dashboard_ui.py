@@ -500,14 +500,14 @@ def generate_pdf_report(target_df, title_text, unit_abbr, total_miles, total_tim
                         day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str] if cal_df is not None else pd.DataFrame()
                         parity_suffix = "even" if day % 2 == 0 else "odd"
                         if not day_runs.empty:                        
-                            run_row = day_runs.iloc[0]
-                            run_dist = run_row['Display_Distance']
-                            run_time = run_row.get('Duration', '--:--')
-                            cell_text = f"<b>{day}</b><br/><br/><b>{run_dist:.1f}{unit_abbr}</b><br/>{run_time}"
-                            row_cells.append(Paragraph(cell_text, cell_p_style_run))
-                            
-                            bg_color = THEME_CONFIG["RUN_EVEN_BG"] if parity_suffix == "even" else THEME_CONFIG["RUN_ODD_BG"]
-                            m_table_styles.append(('BACKGROUND', (c_idx, r_idx + 1), (c_idx, r_idx + 1), colors.HexColor(bg_color)))
+                            for _, run_row in day_runs.iterrows():
+                                run_dist = run_row['Display_Distance']
+                                run_time = run_row.get('Duration', '--:--')
+                                cell_text = f"<b>{day}</b><br/><br/><b>{run_dist:.1f}{unit_abbr}</b><br/>{run_time}"
+                                row_cells.append(Paragraph(cell_text, cell_p_style_run))
+                                
+                                bg_color = THEME_CONFIG["RUN_EVEN_BG"] if parity_suffix == "even" else THEME_CONFIG["RUN_ODD_BG"]
+                                m_table_styles.append(('BACKGROUND', (c_idx, r_idx + 1), (c_idx, r_idx + 1), colors.HexColor(bg_color)))
                         else:
                             cell_text = f"<b>{day}</b><br/><br/>—<br/>—"
                             p_style = cell_p_style_rest_even if parity_suffix == "even" else cell_p_style_rest_odd
@@ -571,44 +571,47 @@ def generate_pdf_report(target_df, title_text, unit_abbr, total_miles, total_tim
                         continue
                     week_has_days = True
                     target_date_str = f"{cal_year}-{m_idx:02d}-{day:02d}"
+                    #day_runs = target_df[target_df['Formatted_Date'] == target_date_str]
                     day_runs = target_df[target_df['Formatted_Date'] == target_date_str]
                     
+                    # 🪵 TEMPORARY DIAGNOSTIC PRINT
+                    
                     if not day_runs.empty:
-                        run_row = day_runs.iloc[0]
-                        run_dist = float(run_row['Display_Distance'])
-                        run_time = str(run_row.get('Duration', '--:--'))
-                        run_pace = f"{run_row.get('pace', '—')} min/{unit_abbr.lower()}"
-                        
-                        day_elevation = 0.0
-                        if elev_cols:
-                            raw_elev_val = run_row.get(elev_cols[0], "0")
-                            cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
-                            if cleaned_run_elev:
-                                day_elevation = float(cleaned_run_elev)
-                                
-                        week_dist += run_dist
-                        m_dist += run_dist
-                        week_elev += day_elevation
-                        m_elev += day_elevation
-                        
-                        if ':' in run_time:
-                            parts = run_time.split(':')
-                            try:
-                                if len(parts) == 3:
-                                    secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                                    week_seconds += secs
-                                    m_seconds += secs
-                                elif len(parts) == 2:
-                                    secs = int(parts[0]) * 60 + int(parts[1])
-                                    week_seconds += secs
-                                    m_seconds += secs
-                            except ValueError:
-                                pass
-                                
-                        day_cells = [target_date_str, "RUN", f"{run_dist:.2f} {unit_abbr}", run_time, run_pace]
-                        if elev_cols:
-                            day_cells.append(f"{day_elevation:,.0f} ft")
-                        week_rows.append(day_cells)
+                        for _, run_row in day_runs.iterrows():
+                            run_dist = float(run_row['Display_Distance'])
+                            run_time = str(run_row.get('Duration', '--:--'))
+                            run_pace = f"{run_row.get('pace', '—')} min/{unit_abbr.lower()}"
+                            
+                            day_elevation = 0.0
+                            if elev_cols:
+                                raw_elev_val = run_row.get(elev_cols[0], "0")
+                                cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+                                if cleaned_run_elev:
+                                    day_elevation = float(cleaned_run_elev)
+                                    
+                            week_dist += run_dist
+                            m_dist += run_dist
+                            week_elev += day_elevation
+                            m_elev += day_elevation
+                            
+                            if ':' in run_time:
+                                parts = run_time.split(':')
+                                try:
+                                    if len(parts) == 3:
+                                        secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                                        week_seconds += secs
+                                        m_seconds += secs
+                                    elif len(parts) == 2:
+                                        secs = int(parts[0]) * 60 + int(parts[1])
+                                        week_seconds += secs
+                                        m_seconds += secs
+                                except ValueError:
+                                    pass
+                                    
+                            day_cells = [target_date_str, "RUN", f"{run_dist:.2f} {unit_abbr}", run_time, run_pace]
+                            if elev_cols:
+                                day_cells.append(f"{day_elevation:,.0f} ft")
+                            week_rows.append(day_cells)
                     else:
                         day_cells = [target_date_str, "REST DAY", "—", "—", "—"]
                         if elev_cols:
@@ -1043,6 +1046,8 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                 color: #000000 !important;
                 font-weight: bold !important;
             }}
+
+
             div[data-testid="stVerticalBlock"]:has(.rest-even-marker, .rest-odd-marker, .run-even-marker, .run-odd-marker) div[data-testid="stButton"] button {{
                 min-width: 75px !important;
                 width: 100% !important;
@@ -1073,6 +1078,16 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                 border: 1px solid {THEME_CONFIG["REST_DAY_BORDER"]} !important;
                 font-weight: bold !important;
             }}
+
+            /* ✅ THE NEW LAYOUT INTERNALS OVERRIDE SITS PERFECTLY HERE: */
+            div[data-testid="stVerticalBlock"]:has(.run-even-marker, .run-odd-marker) {{
+                height: auto !important;
+                overflow: visible !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 6px !important;
+            }}
+
             div[data-testid="stVerticalBlock"]:has(.run-even-marker) div[data-testid="stButton"] button {{
                 background-color: {THEME_CONFIG["RUN_EVEN_BG"]} !important;
                 color: {THEME_CONFIG["RUN_DAY_TEXT"]} !important;
@@ -1091,6 +1106,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
             .spreadsheet-table th {{
                 background-color: #2c313c !important; color: #00ffcc !important; text-align: left; padding: 10px; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #3e4452;
             }}
+
             .spreadsheet-table td {{ padding: 8px 10px; border-bottom: 1px solid #232731; vertical-align: middle; }}
             .spreadsheet-table tr.day-row:nth-child(even) {{ background-color: #1e222b !important; }}
             .spreadsheet-table tr.day-row:nth-child(odd) {{ background-color: #242935 !important; }}
@@ -1254,121 +1270,263 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                             week_has_days = True
                             target_date_str = f"{cal_year}-{m_idx:02d}-{day:02d}"
                             day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str]
+                            day_runs = target_df[target_df['Formatted_Date'] == target_date_str]
                             
-                            # --- 🏃 ACTIVE WORKOUT TRACKER ---
+                            # 🪵 TEMPORARY DIAGNOSTIC PRINT
+                            # --- 🏃 WORKOUT DAY RUN CONTAINER BLOCK ---
                             if not day_runs.empty:
-                                run_row = day_runs.iloc[0]
-                                run_dist = float(run_row['Display_Distance'])
-                                run_time = run_row.get('Duration', '--:--')
-                                raw_p = run_row.get('pace', '—')
+                                # 🪵 LOG 1: Year View Spreadsheet Console Diagnostic Tracker
+                                # Active multi-run row iterator loop to build distinct <tr> elements
+                                for loop_idx, (_, run_row) in enumerate(day_runs.iterrows()):
+                                    
+                                    run_dist = float(run_row['Display_Distance'])
+                                    run_time = str(run_row.get('Duration', '--:--'))
+                                    raw_p = run_row.get('pace', '—')
 
-                                # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
-                                def duration_str_to_minutes(d_str):
-                                    try:
-                                        parts = [int(p) for p in str(d_str).strip().split(':')]
-                                        if len(parts) == 3:   # HH:MM:SS
-                                            return parts[0]*60 + parts[1] + parts[2]/60.0
-                                        elif len(parts) == 2: # MM:SS
-                                            return parts[0] + parts[1]/60.0
-                                        return 0.0
-                                    except Exception:
-                                        return 0.0
+                                    # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
+                                    def duration_str_to_minutes(d_str):
+                                        try:
+                                            parts = [int(p) for p in str(d_str).strip().split(':')]
+                                            if len(parts) == 3:   # HH:MM:SS
+                                                return parts[0]*60 + parts[1] + parts[2]/60.0
+                                            elif len(parts) == 2: # MM:SS
+                                                return parts[0] + parts[1]/60.0
+                                            return 0.0
+                                        except Exception:
+                                            return 0.0
 
-                                # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES
-                                is_invalid_pace = pd.isna(raw_p) or str(raw_p).lower() == "nan" or raw_p == "—"
-                                if not is_invalid_pace:
-                                    try:
-                                        float_p = float(raw_p)
-                                        run_pace_decimal = float_p if float_p > 0 else 0.0
-                                    except (ValueError, TypeError):
-                                        run_pace_decimal = 0.0
-                                else:
+                                    # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES SAFELY
+                                    raw_p_str = str(raw_p).strip().lower()
+                                    is_invalid_pace = pd.isna(raw_p) or raw_p_str in ["nan", "—", "-", ""]
+
                                     run_pace_decimal = 0.0
+                                    if not is_invalid_pace:
+                                        try:
+                                            float_p = float(raw_p)
+                                            if float_p > 0:
+                                                run_pace_decimal = float_p
+                                        except (ValueError, TypeError):
+                                            pass
 
-                                # 🧮 3. BACKUP TIME-DISTANCE RECALCULATOR IF VALUES ARE EMPTY
-                                if run_pace_decimal == 0.0 and run_dist > 0:
-                                    total_minutes = duration_str_to_minutes(run_time)
-                                    if total_minutes > 0:
-                                        run_pace_decimal = total_minutes / run_dist
+                                    # 🧮 3. BACKUP TIME-DISTANCE RECALCULATOR IF VALUES ARE EMPTY
+                                    if run_pace_decimal == 0.0 and run_dist > 0:
+                                        total_minutes = duration_str_to_minutes(run_time)
+                                        if total_minutes > 0:
+                                            run_pace_decimal = total_minutes / run_dist
 
-                                # 🧮 4. BUILD THE STANDARDIZED PACE TEXT FIELD STRING
-                                if run_pace_decimal > 0:
-                                    m_part = int(run_pace_decimal)
-                                    s_part = int(round((run_pace_decimal - m_part) * 60))
-                                    if s_part == 60:
-                                        m_part += 1
-                                        s_part = 0
-                                    run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
-                                else:
-                                    run_pace = f"— min/{unit_abbr.lower()}"
+                                    # 🧮 4. BUILD THE STANDARDIZED PACE TEXT FIELD STRING
+                                    if run_pace_decimal > 0:
+                                        m_part = int(run_pace_decimal)
+                                        s_part = int(round((run_pace_decimal - m_part) * 60))
+                                        if s_part == 60:
+                                            m_part += 1
+                                            s_part = 0
+                                        run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
+                                    else:
+                                        run_pace = f"— min/{unit_abbr.lower()}"
+                                    # =====================================================================
+                                    # 🎽 AMBIGUITY-SAFE: SPREADSHEET VIEW PATCH INJECTOR
+                                    # =====================================================================
+                                    raw_p_cell = run_row.get("earned_patches", [])
+                                    run_patches_list = []
+                                    if isinstance(raw_p_cell, list):
+                                        run_patches_list = raw_p_cell
+                                    elif isinstance(raw_p_cell, str):
+                                        try:
+                                            import json
+                                            run_patches_list = json.loads(raw_p_cell.replace("'", '"'))
+                                        except Exception:
+                                            run_patches_list = []
 
-                                # =====================================================================
-                                # 🎽 5. AMBIGUITY-SAFE PATCH ASSET INJECTOR (FIXED!)
-                                # =====================================================================
-                                raw_patches_cell = run_row.get('earned_patches', [])
-                                run_patches_list = []
-                                
-                                # Use explicit type checks to safeguard against multi-element array ambiguity
-                                if isinstance(raw_patches_cell, list):
-                                    run_patches_list = raw_patches_cell
-                                elif isinstance(raw_patches_cell, str):
-                                    try:
-                                        import json
-                                        cleaned_str = raw_patches_cell.replace("'", '"')
-                                        run_patches_list = json.loads(cleaned_str)
-                                    except Exception:
-                                        run_patches_list = []
-                                            
-                                if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
-                                    patch_emoji_string = " ".join([
-                                        p.get('icon', '') if isinstance(p, dict) else '' 
-                                        for p in run_patches_list
-                                    ])
-                                else:
-                                    patch_emoji_string = ""
+                                    if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
+                                        badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
+                                        if badge_emojis.strip():
+                                            run_pace = f"{run_pace}   {badge_emojis}"
+                                    # =====================================================================
 
-                                if patch_emoji_string.strip():
-                                    run_pace = f"{run_pace}   {patch_emoji_string}"
-                                # =====================================================================
-                                # 🧗 6. EXTRACT CLIMBED ELEVATION VALUES
-                                day_elevation = 0.0
-                                if elev_cols:
-                                    raw_elev_val = run_row.get(elev_cols[0], "0")
-                                    cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
-                                    if cleaned_run_elev:
-                                        day_elevation = float(cleaned_run_elev)
+                                    day_elevation = 0.0
+                                    if elev_cols:
+                                        raw_elev_val = run_row.get(elev_cols[0], "0")
+                                        cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+                                        if cleaned_run_elev:
+                                            day_elevation = float(cleaned_run_elev)
 
-                                # 📈 7. INCREMENT RUN METRICS ACCUMULATORS
-                                week_dist += run_dist
-                                m_dist += run_dist
-                                total_miles_aggregated += run_dist
-                                
-                                week_elev += day_elevation
-                                m_elev += day_elevation
-                                total_elevation_aggregated += day_elevation
+                                    # Update your run metrics accumulators
+                                    week_dist += run_dist
+                                    m_dist += run_dist
+                                    week_elev += day_elevation
+                                    m_elev += day_elevation
 
-                                # ⏱️ 8. PARSE TIME STRINGS INTO LEADERBOARD SECONDS COUNTERS
-                                if isinstance(run_time, str) and ':' in run_time:
-                                    parts = run_time.split(':')
-                                    try:
-                                        if len(parts) == 3:
-                                            run_secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                                        elif len(parts) == 2:
-                                            run_secs = int(parts[0]) * 60 + int(parts[1])
-                                        else:
-                                            run_secs = 0
-                                        week_seconds += run_secs
-                                        m_seconds += run_secs
-                                        total_seconds += run_secs
-                                    except ValueError:
-                                        pass
+                                    # Parse your runtime strings into seconds counters
+                                    if isinstance(run_time, str) and ':' in run_time:
+                                        parts = run_time.split(':')
+                                        try:
+                                            if len(parts) == 3:
+                                                week_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                                                m_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                                            elif len(parts) == 2:
+                                                week_seconds += int(parts[0]) * 60 + int(parts[1])
+                                                m_seconds += int(parts[0]) * 60 + int(parts[1])
+                                        except ValueError:
+                                            pass
 
-                                # 📋 9. COMPILE RUN LOG AS AN HTML COMPONENT ROW
-                                week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time}</td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
-                            
-                            # --- 🧘 SAFE REST DAY HANDLER ---
+                                    # ─── 🛠️   REPOSITION PATCHES AFTER DURATION CELL LAYER ───
+                                    raw_patches_array = run_row.get("earned_patches", run_row.get("patches", []))
+                                    extracted_emojis = []
+                                    if isinstance(run_patches_list, list):
+                                        for patch in run_patches_list:
+                                            if isinstance(patch, dict):
+                                                icon_char = patch.get("icon", patch.get("emoji", ""))
+                                                if icon_char:
+                                                    extracted_emojis.append(icon_char)
+                                            elif isinstance(patch, str):
+                                                award_id = patch.lower().strip()
+                                                config_icon = "🏅"
+
+                                                if cfg and hasattr(cfg, "FINAL_METRIC_CONFIG"):
+                                                    award_rules = cfg.FINAL_METRIC_CONFIG.get(award_id, {})
+                                                    config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
+                                                elif cfg and hasattr(cfg, "METRIC_CONFIG"):
+                                                    award_rules = cfg.METRIC_CONFIG.get(award_id, {})
+                                                    config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
+
+                                                if config_icon == "🏅":
+                                                    fallback_map = {
+                                                        "deer": "🦌", "bighorn": "🐏", "overdrive": "💥",
+                                                        "endurance_laurel": "📜", "cardio_cyborg": "🫀",
+                                                        "medal_speed_demon": "⚡", "patch_altitude_titan": "🏔️  ",
+                                                        "patch_cold_warrior": "❄️"
+                                                    }
+                                                    config_icon = fallback_map.get(award_id, "🏅")
+
+                                                extracted_emojis.append(config_icon)
+
+                                    patch_emojis = "".join(extracted_emojis)
+
+                                    # 📋 2. Append to your rich HTML string template cell structure (Inserts inside the row loop)
+                                    table_body_html += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time} <span style='margin-left: 6px;'>{patch_emojis}</span></td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
+
+                            # --- 🧘 REST DAY CONTAINER BLOCK ---
                             else:
-                                week_rows_buffer += f"<tr class='day-row'><td>{target_date_str}</td><td style='color: #ffcc00; font-weight: bold;'>🧘 REST DAY</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td></tr>"
+                                table_body_html += f"<tr class='day-row'><td>{target_date_str}</td><td style='color: #ffcc00; font-weight: bold;'>🧘 REST DAY</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td></tr>"
+
+
+
+  
+                            #### --- 🏃 ACTIVE WORKOUT TRACKER ---
+                            ###if not day_runs.empty:
+                            ###    run_row = day_runs.iloc[0]
+                            ###    run_dist = float(run_row['Display_Distance'])
+                            ###    run_time = run_row.get('Duration', '--:--')
+                            ###    raw_p = run_row.get('pace', '—')
+
+                            ###    # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
+                            ###    def duration_str_to_minutes(d_str):
+                            ###        try:
+                            ###            parts = [int(p) for p in str(d_str).strip().split(':')]
+                            ###            if len(parts) == 3:   # HH:MM:SS
+                            ###                return parts[0]*60 + parts[1] + parts[2]/60.0
+                            ###            elif len(parts) == 2: # MM:SS
+                            ###                return parts[0] + parts[1]/60.0
+                            ###            return 0.0
+                            ###        except Exception:
+                            ###            return 0.0
+
+                            ###    # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES
+                            ###    is_invalid_pace = pd.isna(raw_p) or str(raw_p).lower() == "nan" or raw_p == "—"
+                            ###    if not is_invalid_pace:
+                            ###        try:
+                            ###            float_p = float(raw_p)
+                            ###            run_pace_decimal = float_p if float_p > 0 else 0.0
+                            ###        except (ValueError, TypeError):
+                            ###            run_pace_decimal = 0.0
+                            ###    else:
+                            ###        run_pace_decimal = 0.0
+
+                            ###    # 🧮 3. BACKUP TIME-DISTANCE RECALCULATOR IF VALUES ARE EMPTY
+                            ###    if run_pace_decimal == 0.0 and run_dist > 0:
+                            ###        total_minutes = duration_str_to_minutes(run_time)
+                            ###        if total_minutes > 0:
+                            ###            run_pace_decimal = total_minutes / run_dist
+
+                            ###    # 🧮 4. BUILD THE STANDARDIZED PACE TEXT FIELD STRING
+                            ###    if run_pace_decimal > 0:
+                            ###        m_part = int(run_pace_decimal)
+                            ###        s_part = int(round((run_pace_decimal - m_part) * 60))
+                            ###        if s_part == 60:
+                            ###            m_part += 1
+                            ###            s_part = 0
+                            ###        run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
+                            ###    else:
+                            ###        run_pace = f"— min/{unit_abbr.lower()}"
+
+                            ###    # =====================================================================
+                            ###    # 🎽 5. AMBIGUITY-SAFE PATCH ASSET INJECTOR (FIXED!)
+                            ###    # =====================================================================
+                            ###    raw_patches_cell = run_row.get('earned_patches', [])
+                            ###    run_patches_list = []
+                            ###    
+                            ###    # Use explicit type checks to safeguard against multi-element array ambiguity
+                            ###    if isinstance(raw_patches_cell, list):
+                            ###        run_patches_list = raw_patches_cell
+                            ###    elif isinstance(raw_patches_cell, str):
+                            ###        try:
+                            ###            import json
+                            ###            cleaned_str = raw_patches_cell.replace("'", '"')
+                            ###            run_patches_list = json.loads(cleaned_str)
+                            ###        except Exception:
+                            ###            run_patches_list = []
+                            ###                
+                            ###    if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
+                            ###        patch_emoji_string = " ".join([
+                            ###            p.get('icon', '') if isinstance(p, dict) else '' 
+                            ###            for p in run_patches_list
+                            ###        ])
+                            ###    else:
+                            ###        patch_emoji_string = ""
+
+                            ###    if patch_emoji_string.strip():
+                            ###        run_pace = f"{run_pace}   {patch_emoji_string}"
+                            ###    # =====================================================================
+                            ###    # 🧗 6. EXTRACT CLIMBED ELEVATION VALUES
+                            ###    day_elevation = 0.0
+                            ###    if elev_cols:
+                            ###        raw_elev_val = run_row.get(elev_cols[0], "0")
+                            ###        cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+                            ###        if cleaned_run_elev:
+                            ###            day_elevation = float(cleaned_run_elev)
+
+                            ###    # 📈 7. INCREMENT RUN METRICS ACCUMULATORS
+                            ###    week_dist += run_dist
+                            ###    m_dist += run_dist
+                            ###    total_miles_aggregated += run_dist
+                            ###    
+                            ###    week_elev += day_elevation
+                            ###    m_elev += day_elevation
+                            ###    total_elevation_aggregated += day_elevation
+
+                            ###    # ⏱️ 8. PARSE TIME STRINGS INTO LEADERBOARD SECONDS COUNTERS
+                            ###    if isinstance(run_time, str) and ':' in run_time:
+                            ###        parts = run_time.split(':')
+                            ###        try:
+                            ###            if len(parts) == 3:
+                            ###                run_secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                            ###            elif len(parts) == 2:
+                            ###                run_secs = int(parts[0]) * 60 + int(parts[1])
+                            ###            else:
+                            ###                run_secs = 0
+                            ###            week_seconds += run_secs
+                            ###            m_seconds += run_secs
+                            ###            total_seconds += run_secs
+                            ###        except ValueError:
+                            ###            pass
+
+                            ###    # 📋 9. COMPILE RUN LOG AS AN HTML COMPONENT ROW
+                            ###    week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time}</td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
+                            ###
+                            #### --- 🧘 SAFE REST DAY HANDLER ---
+                            ###else:
+                            ###    week_rows_buffer += f"<tr class='day-row'><td>{target_date_str}</td><td style='color: #ffcc00; font-weight: bold;'>🧘 REST DAY</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td></tr>"
                         
                         # 📝 10. FLUSH WEEK ROWS TO MASTER OUTPUT AND COMPLEMENT WEEKLY TOTAL SUMMARIES
                         if week_has_days:
@@ -1421,171 +1579,170 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                         table_body_html += f"<tr><td colspan='6' style='background-color: #1a1c23; color: #00ffcc; font-weight: bold; padding: 10px; text-transform: uppercase;'>📅 {month_names[loop_m - 1].upper()} LOGS</td></tr>"
                     cal_matrix = calendar.monthcalendar(cal_year, loop_m)
                     m_dist, m_seconds, m_elev = 0.0, 0, 0.0
-                    
-                    for w_idx, week in enumerate(cal_matrix):
+
+                    for w_idx, week in enumerate(cal_matrix): 
                         week_has_days = False
                         week_dist, week_seconds, week_elev = 0.0, 0, 0.0
                         week_rows_buffer = ""
                         
-                        for day in week:
+                        for day in week: 
                             if day == 0: continue
                             week_has_days = True
                             target_date_str = f"{cal_year}-{loop_m:02d}-{day:02d}"
-                            day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str]
-
+                            
+                            # ✅ FIXED: Safely query the calendar master dataframe and remove the target_df overwrite bottleneck
+                            day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str] if cal_df is not None else pd.DataFrame()
+                            
                             # --- 🏃 WORKOUT DAY RUN CONTAINER BLOCK ---
                             if not day_runs.empty:
-                                run_row = day_runs.iloc[0]
-                                run_dist = float(run_row['Display_Distance'])
-                                run_time = str(run_row.get('Duration', '--:--'))
-                                raw_p = run_row.get('pace', '—')
+                                # 🪵 LOG 1: Year View Spreadsheet Console Diagnostic Tracker
+                                # Active multi-run row iterator loop
+                                for loop_idx, (_, run_row) in enumerate(day_runs.iterrows()):
+                                    run_dist = float(run_row['Display_Distance'])
+                                    run_time = str(run_row.get('Duration', '--:--'))
+                                    raw_p = run_row.get('pace', '—')
 
-                                # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
-                                def duration_str_to_minutes(d_str):
-                                    try:
-                                        parts = [int(p) for p in str(d_str).strip().split(':')]
-                                        if len(parts) == 3:   # HH:MM:SS
-                                            return parts[0]*60 + parts[1] + parts[2]/60.0
-                                        elif len(parts) == 2: # MM:SS
-                                            return parts[0] + parts[1]/60.0
-                                        return 0.0
-                                    except Exception:
-                                        return 0.0
+                                    # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
+                                    def duration_str_to_minutes(d_str):
+                                        try:
+                                            parts = [int(p) for p in str(d_str).strip().split(':')]
+                                            if len(parts) == 3:   # HH:MM:SS
+                                                return parts[0]*60 + parts[1] + parts[2]/60.0
+                                            elif len(parts) == 2: # MM:SS
+                                                return parts[0] + parts[1]/60.0
+                                            return 0.0
+                                        except Exception:
+                                            return 0.0
 
-                                # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES SAFELY
-                                raw_p_str = str(raw_p).strip().lower()
-                                is_invalid_pace = pd.isna(raw_p) or raw_p_str in ["nan", "—", "-", ""]
-                                
-                                run_pace_decimal = 0.0
-                                if not is_invalid_pace:
-                                    try:
-                                        float_p = float(raw_p)
-                                        if float_p > 0:
-                                            run_pace_decimal = float_p
-                                    except (ValueError, TypeError):
-                                        pass
+                                    # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES SAFELY
+                                    raw_p_str = str(raw_p).strip().lower()
+                                    is_invalid_pace = pd.isna(raw_p) or raw_p_str in ["nan", "—", "-", ""]
 
-                                # 🧮 3. BACKUP TIME-DISTANCE RECALCULATOR IF VALUES ARE EMPTY
-                                if run_pace_decimal == 0.0 and run_dist > 0:
-                                    total_minutes = duration_str_to_minutes(run_time)
-                                    if total_minutes > 0:
-                                        run_pace_decimal = total_minutes / run_dist
+                                    run_pace_decimal = 0.0
+                                    if not is_invalid_pace:
+                                        try:
+                                            float_p = float(raw_p)
+                                            if float_p > 0:
+                                                run_pace_decimal = float_p
+                                        except (ValueError, TypeError):
+                                            pass
 
-                                # 🧮 4. BUILD THE STANDARDIZED PACE TEXT FIELD STRING
-                                if run_pace_decimal > 0:
-                                    m_part = int(run_pace_decimal)
-                                    s_part = int(round((run_pace_decimal - m_part) * 60))
-                                    if s_part == 60:
-                                        m_part += 1
-                                        s_part = 0
-                                    run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
-                                else:
-                                    run_pace = f"— min/{unit_abbr.lower()}"
+                                    # 🧮 3. BACKUP TIME-DISTANCE RECALCULATOR IF VALUES ARE EMPTY
+                                    if run_pace_decimal == 0.0 and run_dist > 0:
+                                        total_minutes = duration_str_to_minutes(run_time)
+                                        if total_minutes > 0:
+                                            run_pace_decimal = total_minutes / run_dist
 
-                                # =====================================================================
-                                # 🎽 AMBIGUITY-SAFE: SPREADSHEET VIEW PATCH INJECTOR
-                                # =====================================================================
-                                raw_p_cell = run_row.get("earned_patches", [])
-                                run_patches_list = []
-                                
-                                if isinstance(raw_p_cell, list):
-                                    run_patches_list = raw_p_cell
-                                elif isinstance(raw_p_cell, str):
-                                    try:
-                                        import json
-                                        run_patches_list = json.loads(raw_p_cell.replace("'", '"'))
-                                    except Exception:
-                                        run_patches_list = []
-                                        
-                                #if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
-                                #    badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
-                                    if badge_emojis.strip():
-                                        run_pace = f"{run_pace}   {badge_emojis}"
-                                # =====================================================================
- 
-                                day_elevation = 0.0
-                                if elev_cols:
-                                    raw_elev_val = run_row.get(elev_cols[0], "0")
-                                    cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
-                                    if cleaned_run_elev:
-                                        day_elevation = float(cleaned_run_elev)
+                                    # 🧮 4. BUILD THE STANDARDIZED PACE TEXT FIELD STRING
+                                    if run_pace_decimal > 0:
+                                        m_part = int(run_pace_decimal)
+                                        s_part = int(round((run_pace_decimal - m_part) * 60))
+                                        if s_part == 60:
+                                            m_part += 1
+                                            s_part = 0
+                                        run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
+                                    else:
+                                        run_pace = f"— min/{unit_abbr.lower()}"
+                                    # =====================================================================
+                                    # 🎽 AMBIGUITY-SAFE: SPREADSHEET VIEW PATCH INJECTOR
+                                    # =====================================================================
+                                    raw_p_cell = run_row.get("earned_patches", [])
+                                    run_patches_list = []
+                                    if isinstance(raw_p_cell, list):
+                                        run_patches_list = raw_p_cell
+                                    elif isinstance(raw_p_cell, str):
+                                        try:
+                                            import json
+                                            run_patches_list = json.loads(raw_p_cell.replace("'", '"'))
+                                        except Exception:
+                                            run_patches_list = []
 
-                                # Update your run metrics accumulators
-                                week_dist += run_dist
-                                m_dist += run_dist
-                                week_elev += day_elevation
-                                m_elev += day_elevation
+                                    if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
+                                        badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
+                                        if badge_emojis.strip():
+                                            run_pace = f"{run_pace}   {badge_emojis}"
+                                    # =====================================================================
 
-                                # Parse your runtime strings into seconds counters
-                                if isinstance(run_time, str) and ':' in run_time:
-                                    parts = run_time.split(':')
-                                    try:
-                                        if len(parts) == 3:
-                                            week_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                                            m_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                                        elif len(parts) == 2:
-                                            week_seconds += int(parts[0]) * 60 + int(parts[1])
-                                            m_seconds += int(parts[0]) * 60 + int(parts[1])
-                                    except ValueError:
-                                        pass
+                                    day_elevation = 0.0
+                                    if elev_cols:
+                                        raw_elev_val = run_row.get(elev_cols[0], "0")
+                                        cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+                                        if cleaned_run_elev:
+                                            day_elevation = float(cleaned_run_elev)
 
-                                                           # ─── 🛠️ REPOSITION PATCHES AFTER DURATION CELL LAYER ───
-                                # 1. Extract raw active patch list safely out of run_row checking your keys
-                                raw_patches_array = run_row.get("earned_patches", run_row.get("patches", []))
-                                
-                                # ─── 🛠️ REPOSITION PATCHES AFTER DURATION CELL LAYER ───
-                                # 1. Extract icons natively out of your pre-populated run_patches_list variable
-                                extracted_emojis = []
-                                if isinstance(run_patches_list, list):
-                                    for patch in run_patches_list:
-                                        if isinstance(patch, dict):
-                                            # Route A: Extract properties straight out of active dynamic objects
-                                            icon_char = patch.get("icon", patch.get("emoji", ""))
-                                            if icon_char:
-                                                extracted_emojis.append(icon_char)
-                                        elif isinstance(patch, str):
-                                            # Route B: Dynamically pull properties from the metrics_config framework
-                                            award_id = patch.lower().strip()
-                                            config_icon = "🏅"  # Standard default achievement medal fallback
-                                            
-                                            if cfg and hasattr(cfg, "FINAL_METRIC_CONFIG"):
-                                                # Look up criteria limits directly inside your configuration dictionary
-                                                award_rules = cfg.FINAL_METRIC_CONFIG.get(award_id, {})
-                                                config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
-                                            elif cfg and hasattr(cfg, "METRIC_CONFIG"):
-                                                award_rules = cfg.METRIC_CONFIG.get(award_id, {})
-                                                config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
-                                            
-                                            # Static fallback overrides if rules config structure uses raw text ids
-                                            if config_icon == "🏅":
-                                                fallback_map = {
-                                                    "deer": "🦌", "bighorn": "🐏", "overdrive": "💥",
-                                                    "endurance_laurel": "📜", "cardio_cyborg": "🫀",
-                                                    "medal_speed_demon": "⚡", "patch_altitude_titan": "🏔️",
-                                                    "patch_cold_warrior": "❄️"
-                                                }
-                                                config_icon = fallback_map.get(award_id, "🏅")
-                                                
-                                            extracted_emojis.append(config_icon)
-                                
-                                patch_emojis = "".join(extracted_emojis)
-                                
-                                # 2. Append to your rich HTML string template cell structure (inserts next to duration clocks)
-                                week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time} <span style='margin-left: 6px;'>{patch_emojis}</span></td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
-                                # ────────────────────────────────────────────────────────
- 
+                                    # Update your run metrics accumulators
+                                    week_dist += run_dist
+                                    m_dist += run_dist
+                                    week_elev += day_elevation
+                                    m_elev += day_elevation
+
+                                    # Parse your runtime strings into seconds counters
+                                    if isinstance(run_time, str) and ':' in run_time:
+                                        parts = run_time.split(':')
+                                        try:
+                                            if len(parts) == 3:
+                                                week_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                                                m_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                                            elif len(parts) == 2:
+                                                week_seconds += int(parts[0]) * 60 + int(parts[1])
+                                                m_seconds += int(parts[0]) * 60 + int(parts[1])
+                                        except ValueError:
+                                            pass
+
+                                    # ─── 🛠️   REPOSITION PATCHES AFTER DURATION CELL LAYER ───
+                                    raw_patches_array = run_row.get("earned_patches", run_row.get("patches", []))
+                                    extracted_emojis = []
+                                    if isinstance(run_patches_list, list):
+                                        for patch in run_patches_list:
+                                            if isinstance(patch, dict):
+                                                icon_char = patch.get("icon", patch.get("emoji", ""))
+                                                if icon_char:
+                                                    extracted_emojis.append(icon_char)
+                                            elif isinstance(patch, str):
+                                                award_id = patch.lower().strip()
+                                                config_icon = "🏅"
+
+                                                if cfg and hasattr(cfg, "FINAL_METRIC_CONFIG"):
+                                                    award_rules = cfg.FINAL_METRIC_CONFIG.get(award_id, {})
+                                                    config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
+                                                elif cfg and hasattr(cfg, "METRIC_CONFIG"):
+                                                    award_rules = cfg.METRIC_CONFIG.get(award_id, {})
+                                                    config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
+
+                                                if config_icon == "🏅":
+                                                    fallback_map = {
+                                                        "deer": "🦌", "bighorn": "🐏", "overdrive": "💥",
+                                                        "endurance_laurel": "📜", "cardio_cyborg": "🫀",
+                                                        "medal_speed_demon": "⚡", "patch_altitude_titan": "🏔️  ",
+                                                        "patch_cold_warrior": "❄️"
+                                                    }
+                                                    config_icon = fallback_map.get(award_id, "🏅")
+
+                                                extracted_emojis.append(config_icon)
+
+                                    patch_emojis = "".join(extracted_emojis)
+
+                                    # 📋 2. Append to your rich HTML string template cell structure (Inserts inside the row loop)
+                                    week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time} <span style='margin-left: 6px;'>{patch_emojis}</span></td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
+
                             # --- 🧘 REST DAY CONTAINER BLOCK ---
                             else:
                                 week_rows_buffer += f"<tr class='day-row'><td>{target_date_str}</td><td style='color: #ffcc00; font-weight: bold;'>🧘 REST DAY</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td></tr>"
-                        
+
                         if week_has_days:
                             table_body_html += week_rows_buffer
                             w_hours = week_seconds // 3600
                             w_mins = (week_seconds % 3600) // 60
                             w_time_str = f"{w_hours}h {w_mins}m" if w_hours > 0 else f"{w_mins}m"
                             table_body_html += f"<tr class='weekly-total-row'><td>WEEK {w_idx + 1} TOTALS</td><td>📊 SUMMARY</td><td>{week_dist:.2f} {unit_abbr}</td><td>{w_time_str if week_seconds > 0 else '—'}</td><td>—</td><td>{week_elev:,.0f} ft</td></tr>"
-                
+               
+
+
+
+######## 
                 spreadsheet_html = f"<table class='spreadsheet-table'><thead><tr><th>Calendar Date</th><th>Activity Status</th><th>Distance</th><th>Duration Time</th><th>Overall Pace</th><th>Climbed Elev</th></tr></thead><tbody>{table_body_html}</tbody></table>"
+
+
                 st.markdown(spreadsheet_html, unsafe_allow_html=True)
 
 
@@ -1652,18 +1809,32 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                     target_date_str = f"{cal_year}-{loop_m:02d}-{day:02d}"
                                     day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str]
                                     parity_suffix = "even" if day % 2 == 0 else "odd"
-                                    
+
+                                    # 🪵 FULL YEAR GRID TARGET LOOKUP DIAGNOSTIC
                                     if not day_runs.empty:
-                                        run_row = day_runs.iloc[0]
-                                        run_dist = run_row['Display_Distance']
-                                        run_time = run_row.get('Duration', '--:--')
-                                        btn_label = f"{day}\n\n{run_dist:.1f}{unit_abbr}\n{run_time}"
-                                        
+                                        # 🪵 LOG 1: Track full-year grid entries for multiple runs
+                                        # Initialize aggregated holders for our display label text
+                                        total_day_dist = 0.0
+                                        duration_stamps = []
+
+                                        # Inline tracker loop to unpack every single run on this specific day
+                                        for loop_idx, (_, run_row) in enumerate(day_runs.iterrows()):
+                                            total_day_dist += float(run_row['Display_Distance'])
+                                            duration_stamps.append(str(run_row.get('Duration', '--:--')))
+                                            
+                                        # Compile individual duration metrics into a joined layout display (e.g. "02:53:23 + 00:06:54")
+                                        joined_times = " + ".join(duration_stamps)
+
+                                        # Construct the multi-line calendar button layout label text cleanly
+                                        btn_label = f"{day}\n\n{total_day_dist:.1f}{unit_abbr}\n{joined_times}"
+
+                                        # 🪵 STEP 3 DIAGNOSTIC: WHAT TEXT IS INSIDE THE BUTTON BOX?
                                         with st.container():
                                             st.markdown(f'<div class="run-{parity_suffix}-marker"></div>', unsafe_allow_html=True)
                                             if st.button(btn_label, key=f"run_{parity_suffix}_{target_date_str}"):
                                                 st.session_state.selected_activity_date = target_date_str
                                                 st.rerun()
+
                                     else:
                                         with st.container():
                                             st.markdown(f'<div class="rest-{parity_suffix}-marker"></div>', unsafe_allow_html=True)
@@ -1678,47 +1849,55 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
         if st.session_state.selected_activity_date:
             active_date = st.session_state.selected_activity_date
             matched_runs = df[df['Formatted_Date'] == active_date]
-            
-            if not matched_runs.empty:
-                matched_run = matched_runs.iloc[0].to_dict()
-                st.markdown(f"### 📊 Run Summary: {active_date}")
-                
-    
-                # Single Run Elevation parsing
-                run_elevation = 0.0
-                if elev_columns:
-                    raw_elev_val = matched_run.get(elev_columns[0], "0")
-                    cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
-                    parsed_elev = pd.to_numeric(cleaned_run_elev, errors='coerce')
-                    if pd.notna(parsed_elev): run_elevation = parsed_elev
 
-                if "splits" in matched_run and isinstance(matched_run["splits"], list) and len(matched_run["splits"]) > 0:
-                    splits_df = pd.DataFrame(matched_run["splits"])
-                    splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
-                    splits_df['Pace (Minutes)'] = splits_df['pace'].apply(pace_str_to_minutes)
-                    
-                    st.caption("⏱️ Lap Split Profiles (Shorter bars are faster)")
-                    st.bar_chart(data=splits_df, x='Split Mile', y='Pace (Minutes)', use_container_width=True)
-                
-                st.metric("Total Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
-                st.metric("Duration", matched_run.get('Duration', 'N/A'))
-                if run_elevation > 0:
-                    st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
-                    
-                # ------------------------------------------------------------------
-                # LAUNCH THE DYNAMIC LAP BREAKDOWN (Passes raw dictionaries directly)
-                # ------------------------------------------------------------------
-                try:
-                    if "matched_run" in locals() and matched_run:
-                        show_run_lap_breakdown(matched_run, unit_abbr=unit_abbr)
-                        # --------------------------------------------------------------
-                        # LAUNCH THE INTENSITY OCTAGON VISUALIZATION
-                        # --------------------------------------------------------------
-                        render_zone_octagon_display(matched_run)
-                        # --------------------------------------------------------------
-                        
-                except Exception:
-                    pass
+            if not matched_runs.empty:
+                st.markdown(f"### 📊 Activity Log Summary: {active_date}")
+
+                # 🏁 Loop opens cleanly
+                for run_idx, (_, run_row_raw) in enumerate(matched_runs.iterrows()):
+                    matched_run = run_row_raw.to_dict()
+
+                    # Create a distinct visual header for multi-activity days
+                    if len(matched_runs) > 1:
+                        st.markdown(f"#### 🏃‍♂️ Workout Activity #{run_idx + 1}")
+                                        
+                    # Single Run Elevation parsing (Moved inside loop)
+                    run_elevation = 0.0     
+                    if elev_columns:        
+                        raw_elev_val = matched_run.get(elev_columns[0], "0")
+                        cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+                        parsed_elev = pd.to_numeric(cleaned_run_elev, errors='coerce')
+                        if pd.notna(parsed_elev): 
+                            run_elevation = parsed_elev
+                                        
+                    if "splits" in matched_run and isinstance(matched_run["splits"], list) and len(matched_run["splits"]) > 0:
+                        splits_df = pd.DataFrame(matched_run["splits"])
+                        splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
+                        splits_df['Pace (Minutes)'] = splits_df['pace'].apply(pace_str_to_minutes)
+                                                
+                        st.caption(f"⏱️  Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)") 
+                        st.bar_chart(data=splits_df, x='Split Mile', y='Pace (Minutes)', use_container_width=True)
+
+                    # Metric visualization metrics blocks (Moved inside loop)
+                    st.metric(f"Activity #{run_idx + 1} Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
+                    st.metric(f"Activity #{run_idx + 1} Duration", matched_run.get('Duration', 'N/A'))
+                    if run_elevation > 0:
+                        st.metric(f"Activity #{run_idx + 1} Elevation Gain", f"{run_elevation:,.0f} ft") 
+                                            
+                    # ------------------------------------------------------------------
+                    # LAUNCH THE DYNAMIC LAP BREAKDOWN (Moved inside loop)
+                    # ------------------------------------------------------------------
+                    try:                        
+                        if matched_run:
+                            show_run_lap_breakdown(matched_run, unit_abbr=unit_abbr)
+                            # --------------------------------------------------------------
+                            # LAUNCH THE INTENSITY OCTAGON VISUALIZATION
+                            # --------------------------------------------------------------
+                            render_zone_octagon_display(matched_run)
+                            # --------------------------------------------------------------
+                                        
+                    except Exception:       
+                        pass
 
 
                 if 'pace' in matched_run:

@@ -2,12 +2,12 @@
     "name": "Racer 1",
     "bodyweight": 180,
     "level": 60,
-    "total_xp": 2376,
+    "total_xp": 2410,
     "running_level": 9,
     "vo2_max": 64.2,
     "avg_heart_rate": 138,
     "resting_heart_rate": 45,
-    "lifetime_elevation_gain": 86316.0,
+    "lifetime_elevation_gain": 85024.0,
     "cadence_history": [],
     "elevation_milestone_history": [
         "bighorn",
@@ -16,7 +16,7 @@
     ],
     "deep_rem_streak": 14,
     "stat_points": 0,
-    "gold": 9974,
+    "gold": 9980,
     "inventory": [
         "Interceptor Spec-R",
         "Ghost Horizon Chassis",
@@ -35,178 +35,6 @@
     "days_tracked": 365,
     "synced_garmin_activities": [],
     "history_logs": [
-        {
-            "Date": "2026-05-01",
-            "Name": "2026-05-01-19-05-03.fit",
-            "Distance (Miles)": 21.07,
-            "Duration": "02:45:54",
-            "pace": 7.873496083762202,
-            "Elevation (ft)": "+2479.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 1.0,
-                    "time": "09:20",
-                    "pace": "9:20"
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 1.0,
-                    "time": "08:26",
-                    "pace": "8:26"
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 1.0,
-                    "time": "08:10",
-                    "pace": "8:10"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
-                    "time": "07:29",
-                    "pace": "7:29"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "07:46",
-                    "pace": "7:46"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 1.0,
-                    "time": "07:37",
-                    "pace": "7:37"
-                },
-                {
-                    "split_num": 7,
-                    "distance_mi": 1.0,
-                    "time": "07:40",
-                    "pace": "7:40"
-                },
-                {
-                    "split_num": 8,
-                    "distance_mi": 1.0,
-                    "time": "07:36",
-                    "pace": "7:36"
-                },
-                {
-                    "split_num": 9,
-                    "distance_mi": 1.0,
-                    "time": "07:45",
-                    "pace": "7:45"
-                },
-                {
-                    "split_num": 10,
-                    "distance_mi": 1.0,
-                    "time": "07:41",
-                    "pace": "7:41"
-                },
-                {
-                    "split_num": 11,
-                    "distance_mi": 1.0,
-                    "time": "08:02",
-                    "pace": "8:02"
-                },
-                {
-                    "split_num": 12,
-                    "distance_mi": 1.0,
-                    "time": "07:57",
-                    "pace": "7:57"
-                },
-                {
-                    "split_num": 13,
-                    "distance_mi": 1.0,
-                    "time": "07:53",
-                    "pace": "7:53"
-                },
-                {
-                    "split_num": 14,
-                    "distance_mi": 1.0,
-                    "time": "07:49",
-                    "pace": "7:49"
-                },
-                {
-                    "split_num": 15,
-                    "distance_mi": 1.0,
-                    "time": "07:30",
-                    "pace": "7:30"
-                },
-                {
-                    "split_num": 16,
-                    "distance_mi": 1.0,
-                    "time": "07:33",
-                    "pace": "7:33"
-                },
-                {
-                    "split_num": 17,
-                    "distance_mi": 1.0,
-                    "time": "07:22",
-                    "pace": "7:22"
-                },
-                {
-                    "split_num": 18,
-                    "distance_mi": 1.0,
-                    "time": "07:19",
-                    "pace": "7:19"
-                },
-                {
-                    "split_num": 19,
-                    "distance_mi": 1.0,
-                    "time": "07:28",
-                    "pace": "7:28"
-                },
-                {
-                    "split_num": 20,
-                    "distance_mi": 1.0,
-                    "time": "07:22",
-                    "pace": "7:22"
-                },
-                {
-                    "split_num": 21,
-                    "distance_mi": 1.0,
-                    "time": "07:09",
-                    "pace": "7:09"
-                },
-                {
-                    "split_num": 22,
-                    "distance_mi": 0.07,
-                    "time": "00:32",
-                    "pace": "7:52"
-                }
-            ],
-            "text_payload": "[2026-05-01] Run: 21.07 miles | Pace: 7.87 min/mi | Elevation Climbed: +2479.0 ft | [REWARD] +210g, +1053 XP.",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "pillar_1_velocity",
-                    "id": "rabbit",
-                    "name": "Rabbit Cruise Node",
-                    "icon": "🐇"
-                },
-                {
-                    "pillar": "pillar_2_elevation",
-                    "id": "mountain_goat",
-                    "name": "Mountain Goat Apex Shield",
-                    "icon": "🐐"
-                },
-                {
-                    "pillar": "pillar_4_volume",
-                    "id": "endurance_laurel",
-                    "name": "Endurance Laurel Shield",
-                    "icon": "📜"
-                },
-                {
-                    "pillar": "pillar_6_cardiac",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
         {
             "Date": "2026-05-17",
             "Name": "2026-05-17-12-00-04.fit",
@@ -378,7 +206,7 @@
                     "pace": "5:30"
                 }
             ],
-            "text_payload": "[2026-05-17] Run: 26.46 miles | Pace: 6.55 min/mi | Elevation Climbed: +1316.3 ft | [REWARD] +264g, +1323 XP.",
+            "text_payload": "[2026-05-17] Run: 26.46 miles | Pace: 6.55 min/mi | Elevation Climbed: +1316.3 ft | [REWARD] +264g, +1323 XP. | [CALORIE VAULT] +2646 kcal | 🎖️ Patches: 🦌🐏💥📜🫀",
             "aerobic_decoupling_percent": 0.0,
             "ambient_temp_f": 72.0,
             "zone_1_2_duration_percent": 60.0,
@@ -414,16 +242,216 @@
                     "icon": "🫀"
                 }
             ]
+        },
+        {
+            "Date": "2026-05-01",
+            "Name": "2026-05-01-19-05-03.fit",
+            "Distance (Miles)": 21.07,
+            "Duration": "02:45:54",
+            "pace": 7.873496083762202,
+            "Elevation (ft)": "+2479.0 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "09:20",
+                    "pace": "9:20"
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "08:26",
+                    "pace": "8:26"
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "08:10",
+                    "pace": "8:10"
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "07:29",
+                    "pace": "7:29"
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "07:46",
+                    "pace": "7:46"
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "07:37",
+                    "pace": "7:37"
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "07:40",
+                    "pace": "7:40"
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "07:36",
+                    "pace": "7:36"
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "07:45",
+                    "pace": "7:45"
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 1.0,
+                    "time": "07:41",
+                    "pace": "7:41"
+                },
+                {
+                    "split_num": 11,
+                    "distance_mi": 1.0,
+                    "time": "08:02",
+                    "pace": "8:02"
+                },
+                {
+                    "split_num": 12,
+                    "distance_mi": 1.0,
+                    "time": "07:57",
+                    "pace": "7:57"
+                },
+                {
+                    "split_num": 13,
+                    "distance_mi": 1.0,
+                    "time": "07:53",
+                    "pace": "7:53"
+                },
+                {
+                    "split_num": 14,
+                    "distance_mi": 1.0,
+                    "time": "07:49",
+                    "pace": "7:49"
+                },
+                {
+                    "split_num": 15,
+                    "distance_mi": 1.0,
+                    "time": "07:30",
+                    "pace": "7:30"
+                },
+                {
+                    "split_num": 16,
+                    "distance_mi": 1.0,
+                    "time": "07:33",
+                    "pace": "7:33"
+                },
+                {
+                    "split_num": 17,
+                    "distance_mi": 1.0,
+                    "time": "07:22",
+                    "pace": "7:22"
+                },
+                {
+                    "split_num": 18,
+                    "distance_mi": 1.0,
+                    "time": "07:19",
+                    "pace": "7:19"
+                },
+                {
+                    "split_num": 19,
+                    "distance_mi": 1.0,
+                    "time": "07:28",
+                    "pace": "7:28"
+                },
+                {
+                    "split_num": 20,
+                    "distance_mi": 1.0,
+                    "time": "07:22",
+                    "pace": "7:22"
+                },
+                {
+                    "split_num": 21,
+                    "distance_mi": 1.0,
+                    "time": "07:09",
+                    "pace": "7:09"
+                },
+                {
+                    "split_num": 22,
+                    "distance_mi": 0.07,
+                    "time": "00:32",
+                    "pace": "7:52"
+                }
+            ],
+            "text_payload": "[2026-05-01] Run: 21.07 miles | Pace: 7.87 min/mi | Elevation Climbed: +2479.0 ft | [REWARD] +210g, +1053 XP. | [CALORIE VAULT] +2107 kcal | 🎖️ Patches: 🐇🐐📜🫀",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "pillar_1_velocity",
+                    "id": "rabbit",
+                    "name": "Rabbit Cruise Node",
+                    "icon": "🐇"
+                },
+                {
+                    "pillar": "pillar_2_elevation",
+                    "id": "mountain_goat",
+                    "name": "Mountain Goat Apex Shield",
+                    "icon": "🐐"
+                },
+                {
+                    "pillar": "pillar_4_volume",
+                    "id": "endurance_laurel",
+                    "name": "Endurance Laurel Shield",
+                    "icon": "📜"
+                },
+                {
+                    "pillar": "pillar_6_cardiac",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "🫀"
+                }
+            ]
+        },
+        {
+            "Date": "2026-05-17",
+            "Name": "2026-05-17-11-14-18.fit",
+            "Distance (Miles)": 0.68,
+            "Duration": "00:06:54",
+            "pace": 10.094979123144261,
+            "Elevation (ft)": "+24.9 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 0.68,
+                    "time": "06:54",
+                    "pace": "10:05"
+                }
+            ],
+            "text_payload": "[2026-05-17] Run: 0.68 miles | Pace: 10.09 min/mi | Elevation Climbed: +24.9 ft | [REWARD] +6g, +34 XP. | [CALORIE VAULT] +68 kcal | 🎖️ Patches: 🫀",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "pillar_6_cardiac",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "🫀"
+                }
+            ]
         }
     ],
     "unlocked_badges": [
-        "rabbit",
-        "mountain_goat",
-        "endurance_laurel",
-        "cardio_cyborg",
         "deer",
         "bighorn",
-        "overdrive"
+        "overdrive",
+        "endurance_laurel",
+        "cardio_cyborg",
+        "rabbit",
+        "mountain_goat"
     ],
     "daily_miles": 520.4,
     "base_xp": 100,
@@ -431,8 +459,8 @@
     "last_distance": 26.2,
     "last_pace": 6.15,
     "final_metric_data": {
-        "lifetime_odometer_miles": 26.46,
-        "lifetime_calories_burned": 2646,
+        "lifetime_odometer_miles": 0.68,
+        "lifetime_calories_burned": 68,
         "current_streak_tracker": {
             "current_week_runs_count": 0,
             "last_tracked_week_start": "",
@@ -469,10 +497,15 @@
     "power_xp": 3200,
     "boss_clears": 15,
     "boss_levels": [],
-    "fuel_rating": 446,
-    "nitro_rating": 249,
-    "torque_rating": 262,
-    "fuel_level": 5,
-    "nitro_level": 3,
-    "torque_level": 3
+    "calorie_bank_balance": 9821,
+    "calorie_bank_total_earned": 9821,
+    "pantry_purchase_counts": {},
+    "pantry_single_trophies": [],
+    "pantry_cuisine_trophies": [],
+    "fuel_rating": 69,
+    "nitro_rating": 91,
+    "torque_rating": 73,
+    "fuel_level": 1,
+    "nitro_level": 1,
+    "torque_level": 1
 }

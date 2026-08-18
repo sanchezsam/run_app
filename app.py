@@ -22,6 +22,9 @@ from ledger_ui import render_training_ledger
 from showroom_ui import render_trophy_showroom_tab
 from showroom_ui import generate_dashboard_motivation_alerts
 
+# 🥞 PANTRY ADAPTER INTERFACE IMPORTS
+from pantry_ui import render_pantry_interface
+
 FILE_PATH = 'save_file.json'
 st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎️", layout="wide")
 
@@ -50,7 +53,13 @@ def load_profile_state():
         "boss_wins": 15, "fatigue": 0, "days_tracked": 365, "synced_garmin_activities": [],
         "daily_miles": 520.4, "base_xp": 100, "exponent": 1.5, "last_distance": 26.2,
         "last_pace": 6.15, "final_metric_data": {}, "stamina_xp": 3500, "agility_xp": 2800,
-        "power_xp": 3200, "boss_clears": 15, "boss_levels": [], "history_logs": []
+        "power_xp": 3200, "boss_clears": 15, "boss_levels": [], "history_logs": [],
+        # 🥞 Pantry Core Ledger persistent properties
+        "calorie_bank_balance": 5000,       # Initial spending funds
+        "calorie_bank_total_earned": 5000,  # Career accumulation metric
+        "pantry_purchase_counts": {},       # Target pool that resets to 0
+        "pantry_single_trophies": [],       # Array matching single items
+        "pantry_cuisine_trophies": []       # Array matching cuisine group flags
     }
     
     # 📁 If file is missing entirely, write the master template blueprint
@@ -102,6 +111,12 @@ if isinstance(st.session_state.profile, dict):
     st.session_state.player_xp = st.session_state.profile.get("total_xp", 8750)
     
     # 🛡️ NESTED STRUCTURE GUARD: If the app loops look for history_logs keys inside session root
+    # 🥞 Mirror pantry values into primary global tracking attributes
+    st.session_state.calorie_bank_balance = st.session_state.profile.get("calorie_bank_balance", 5000)
+    st.session_state.pantry_purchase_counts = st.session_state.profile.get("pantry_purchase_counts", {})
+    st.session_state.pantry_single_trophies = st.session_state.profile.get("pantry_single_trophies", [])
+    st.session_state.pantry_cuisine_trophies = st.session_state.profile.get("pantry_cuisine_trophies", [])
+    
     st.session_state.history_logs = st.session_state.profile.get("history_logs", [])
 
 # Guarantee telemetry dataframes re-compile immediately on every script loop.
@@ -277,6 +292,24 @@ if player is not None and os.path.exists(FILE_PATH):
 
 # Master metrics banner layout strip (Always stays visible across top header space)
 hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6 = st.columns(6)
+# 🏆 LIVE MILESTONE TROPHY CABINET SHOWCASE INJECTION
+st.write("")
+active_trophies = getattr(player, 'pantry_single_trophies', [])
+if active_trophies:
+    st.markdown("### 🏆 **EARNED ATHLETE MILESTONE TROPHIES**")
+    t_cols = st.columns(max(4, len(active_trophies)))
+    col_idx = 0
+    
+    if "Rabbit" in active_trophies:
+        with t_cols[col_idx]:
+            st.success("🐇 **Fleet-Footed Rabbit**\n\n`Pace: Elite Sub-8:30`\n\n⚡ *Speed Class Mastered*")
+        col_idx += 1
+        
+    if "Deer" in active_trophies:
+        with t_cols[col_idx]:
+            st.info("🦌 **Swift-Stride Deer**\n\n`Dist: Long Training Run`\n\n🔋 *Endurance Class Unlocked*")
+        col_idx += 1
+
 with hud_col1: st.metric('Active Level', f'{player.level}')
 with hud_col2: st.metric('Gold Balance', f'{int(getattr(player, "gold", 50))}g')
 with hud_col3: st.metric('VO2 Max Baseline', f'{player.vo2_max:.1f}')
@@ -308,7 +341,7 @@ if "active_tab_selection" not in st.session_state:
 
 tab_titles = [
     '🏠 Dashboard Overview', '👤 Athlete Profile', 'Telemetry Sync', 'Biometric Coliseum',
-    'Pro Shop & Garage', 'Performance Analytics', 'Training Ledger', '🏆 Showroom & PRs', 'Calendar'
+    'Pro Shop & Garage', '🏪 Calorie Pantry Market', 'Performance Analytics', 'Training Ledger', '🏆 Showroom & PRs', 'Calendar'
 ]
 
 
@@ -381,6 +414,10 @@ elif st.session_state.active_tab_selection == 'Pro Shop & Garage':
             with g_cols[idx % 4]:
                 car_rank = int(getattr(player, 'equipped_gear', {}).get(car, 1))
                 st.info(f"🚘 **{car}**\n\n`Tuning Rank: +{car_rank}`")
+
+elif st.session_state.active_tab_selection == '🏪 Calorie Pantry Market':
+    # 🥞 Fire up live Reset-on-Unlock multi-category pantry marketplace
+    render_pantry_interface(player, FILE_PATH)
 
 elif st.session_state.active_tab_selection == 'Performance Analytics':
     st.markdown('## 📊 Performance Analytics Dashboard')
