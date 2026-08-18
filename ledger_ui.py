@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # PART 1 OF 2: LEDGER INITIALIZATION, LOG CONVERTERS & SIDE-BY-SIDE WEEKLY PACING GRAPHS
 import time
-import random
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -295,10 +294,11 @@ def render_training_ledger(player):
                         
                         # 3. Render a dropdown expander ONLY if valid splits telemetry exists
                         if isinstance(splits_data, list) and len(splits_data) > 0:
-                            # Generate a unique key using the dataframe row index and a random tag
-                            unique_exp_key = f"exp_splits_{idx}_{wk_label}_{wk_idx}_{random.randint(1000, 9999)}"
+                            # Stable per-row key so the toggle keeps its state across reruns
+                            unique_exp_key = f"exp_splits_{wk_idx}_{wk_label}_{idx}"
                             
-                            with st.expander("⏱️ View Mile Splits Breakdown", expanded=False):
+                            # Streamlit forbids expanders inside expanders, so toggle the table instead
+                            if st.checkbox("⏱️ View Mile Splits Breakdown", key=unique_exp_key):
                                 df_splits_display = pd.DataFrame(splits_data)
                                 df_splits_display.columns = ["Split #", "Distance (Mi)", "Split Time", "Pace (/mi)"]
                                 st.dataframe(df_splits_display, use_container_width=True, hide_index=True)

@@ -323,7 +323,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
             with bm2: st.metric("Staged Gold Yield (+10g/mi)", f"+{int(total_batch_distance * 10)}g")
             with bm3: st.metric("Staged Experience Yield", f"+{int(total_batch_distance * 50)} XP")
             
-            with st.expander("🔍 View Staged Track Telemetry Breakdown Details", expanded=True):
+            with st.container(border=True):
+                st.markdown("#### 🔍 Staged Track Telemetry Breakdown Details")
                 for s in staged_sessions:
                     st.markdown(f"📄 **{s['name']}** — `[{s['date']}]` — `{s['dist']:.2f} Mi` | Running Time: `{s['duration']}` | `{s['pace']:.2f} min/mi` Pace | `+{s['ele']} ft` Climbing")
                     
@@ -453,8 +454,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      json.dump(save_data, db_file, default=str, indent=4)
                  
                  # Run legacy background engines to refresh lifelong odometers and trophy shelves
-                 if player.history_logs:
-                     process_and_award_metrics(player.history_logs[-1])
+                 for entry in player.history_logs[-len(staged_sessions):]:
+                     process_and_award_metrics(entry, FILE_PATH)
                  
                  # Re-sync memory tracking objects from disk
                  with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
@@ -838,12 +839,12 @@ def check_single_run_patches(new_run_log: dict) -> list:
 
 
 
-def process_and_award_metrics(new_run_log: dict):
+def process_and_award_metrics(new_run_log: dict, save_file_path: str = "save_file.json"):
     """
     Main evaluation pipeline. Processes incoming run payloads, updates 
     profile statistics counters, awards single-run patches, and appends earned trophies.
     """
-    SAVE_FILE = "save_file.json"
+    SAVE_FILE = save_file_path
     
     if not os.path.exists(SAVE_FILE):
         print(f"Error: {SAVE_FILE} not found during metric integration.")
