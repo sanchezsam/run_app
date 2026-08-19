@@ -36,40 +36,12 @@ def render_rpg_sidebar_header(level, xp, pct, title, defense_state, days_elapsed
     else:
         st.sidebar.success("✅ **STREAK SECURE:** Active consistency patches are safely mounted and stable.")
     st.sidebar.markdown("---")
-def render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances):
-    """Renders an interactive roadmap inside the left sidebar panel with live progression loops."""
-    st.sidebar.markdown("### 📘 Showroom Handbook")
-    st.sidebar.markdown("Track your remaining targets to unlock your next pieces of hardware.")
-    
-    st.sidebar.markdown("**🏃‍♂️ Next Mileage Milestones:**")
-    unearned_miles = [aw for aw in cfg.WEEKLY_MILEAGE_REWARDS if curr_miles < aw["miles"]]
-    next_mile_goals = unearned_miles[:2] if unearned_miles else cfg.WEEKLY_MILEAGE_REWARDS[-1:]
-    
-    for goal in next_mile_goals:
-        progress_pct = min(curr_miles / goal["miles"], 1.0)
-        remaining = goal["miles"] - curr_miles
-        header = f"🔒 {goal['title']} ({progress_pct:.0%})"
-        with st.sidebar.expander(header):
-            st.markdown(f"**Target:** {goal['miles']} Miles This Week")
-            st.markdown(f"**Current Volume:** {curr_miles:.1f} Miles")
-            st.progress(progress_pct)
-            st.markdown(f"💡 **You are only {remaining:.1f} miles away** from unlocking this reward!")
 
-    st.sidebar.markdown("<br/>**🏔️ Next Elevation Milestones:**", unsafe_allow_html=True)
-    unearned_climb = [aw for aw in cfg.WEEKLY_ELEVATION_REWARDS if curr_climb < aw["climb_ft"]]
-    next_climb_goals = unearned_climb[:2] if unearned_climb else cfg.WEEKLY_ELEVATION_REWARDS[-1:]
-    
-    for goal in next_climb_goals:
-        progress_pct = min(curr_climb / goal["climb_ft"], 1.0)
-        remaining = goal["climb_ft"] - curr_climb
-        header = f"🔒 {goal['title']} ({progress_pct:.0%})"
-        with st.sidebar.expander(header):
-            st.markdown(f"**Target:** {goal['climb_ft']:,} Vertical Feet")
-            st.markdown(f"**Current Ascent:** {curr_climb:,.0f} Feet")
-            st.progress(progress_pct)
-            st.markdown(f"💡 **You are only {remaining:,.0f} feet away** from unlocking this reward!")
-    st.sidebar.markdown("---")
+
+
+
 # ==============================================================================
+
 # 🎨 PART 2: SCOREBOARDS, VALUATIONS, BANNER SLOTS & MOTIVATION BOARDS
 # ==============================================================================
 
@@ -229,17 +201,82 @@ def generate_dashboard_motivation_alerts():
 # ==============================================================================
 # 🎨 PART 4: ORCHESTRATED SHOWROOM VIEW PORT TERMINALS (PARENT BLOCK)
 # ==============================================================================
-def render_trophy_showroom_tab(df_instances=None, defense_state="stable", eng=None):
+import streamlit as st
+import pandas as pd
+import datetime
+import metrics_config as cfg
+def render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances, target_container=None):
+    """
+    Renders an interactive roadmap inside the targeted sidebar panel with live progression loops.
+    Uses clean context mapping (with ctx:) to ensure elements append sequentially without layout fragmentation.
+    """
+    ctx = target_container if target_container is not None else st.sidebar
+    
+    with ctx:
+        st.markdown("### 📘 Showroom Handbook")
+        st.caption("Track your remaining targets to unlock your next pieces of hardware.")
+        st.markdown("---")
+        
+        # 🏃‍♂️ Mileage Milestone Computations
+        st.markdown("**🏃‍♂️ Next Mileage Milestones:**")
+        unearned_miles = [aw for aw in getattr(cfg, "WEEKLY_MILEAGE_REWARDS", []) if curr_miles < aw["miles"]]
+        next_mile_goals = unearned_miles[:2] if unearned_miles else getattr(cfg, "WEEKLY_MILEAGE_REWARDS", [])[-1:]
+        
+        if next_mile_goals:
+            for goal in next_mile_goals:
+                target_val = max(1.0, float(goal["miles"]))
+                progress_pct = min(curr_miles / target_val, 1.0)
+                remaining = max(0.0, goal["miles"] - curr_miles)
+                
+                icon = str(goal.get("icon", "🔒")).strip()
+                tier_str = str(goal.get("tier", "common")).upper()
+                description = str(goal.get("desc", "No description provided."))
+                
+                header = f"{icon} {goal['title']} ({progress_pct:.0%})"
+                
+                exp = st.expander(header)
+                exp.markdown(f"🏆 **Tier:** `{tier_str}`")
+                exp.markdown(f"*{description}*")
+                exp.markdown(f"**Target:** {goal['miles']} Miles This Week")
+                exp.markdown(f"**Current Volume:** {curr_miles:.1f} Miles")
+                exp.progress(progress_pct)
+                exp.markdown(f"💡 **You are only {remaining:.1f} miles away** from unlocking this reward!")
+        else:
+            st.caption("🎉 All weekly mileage milestones cleared!")
+
+        # 🏔️ Elevation Milestone Computations
+        st.markdown("<br/>**🏔️ Next Elevation Milestones:**", unsafe_allow_html=True)
+        unearned_climb = [aw for aw in getattr(cfg, "WEEKLY_ELEVATION_REWARDS", []) if curr_climb < aw["climb_ft"]]
+        next_climb_goals = unearned_climb[:2] if unearned_climb else getattr(cfg, "WEEKLY_ELEVATION_REWARDS", [])[-1:]
+        
+        if next_climb_goals:
+            for goal in next_climb_goals:
+                target_val = max(1.0, float(goal["climb_ft"]))
+                progress_pct = min(curr_climb / target_val, 1.0)
+                remaining = max(0.0, goal["climb_ft"] - curr_climb)
+                
+                icon = str(goal.get("icon", "🔒")).strip()
+                tier_str = str(goal.get("tier", "common")).upper()
+                description = str(goal.get("desc", "No description provided."))
+                
+                header = f"{icon} {goal['title']} ({progress_pct:.0%})"
+                
+                exp = st.expander(header)
+                exp.markdown(f"🏆 **Tier:** `{tier_str}`")
+                exp.markdown(f"*{description}*")
+                exp.markdown(f"**Target:** {goal['climb_ft']} Ft Elevation This Week")
+                exp.markdown(f"**Current Volume:** {curr_climb:.0f} Ft")
+                exp.progress(progress_pct)
+                exp.markdown(f"💡 **You are only {remaining:.0f} ft away** from unlocking this reward!")
+        else:
+            st.caption("🎉 All weekly elevation milestones cleared!")
+
+
+def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None):
     """
     Combines the dynamic filtration cockpit with advanced award matrix grids.
     100% data-driven from save_file telemetry with zero hardcoded profile defaults.
-    Features an 'All Time' lens timeline option that bypasses annual filters.
     """
-    import streamlit as st
-    import pandas as pd
-    import datetime
-    import metrics_config as cfg
-    
     st.markdown("## 🏛️ Hall of Records & Hardware Showroom")
     st.markdown("---")
 
@@ -252,7 +289,7 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", eng=No
     # 1. Grab your master activity rows safely from session state
     df_master = st.session_state.get("filtered_df", pd.DataFrame())
     
-    # 2. Process weekly calculations using standalone direct functions
+    # 2. Process weekly calculations 
     curr_miles, curr_climb = calculate_current_week_metrics(df_master)
     defense_status, days_elapsed = check_streak_defense_status(df_master)
     
@@ -267,10 +304,6 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", eng=No
         threshold = 1000
     p_pct = min(100, max(0, int((p_xp / threshold) * 100)))
 
-    # 4. Render headers and the manual requirement trackers
-    render_rpg_sidebar_header(p_level, p_xp, p_pct, p_title, defense_status, days_elapsed)
-    render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances)
- 
     df_instances = df_instances.copy()
     if "Date" in df_instances.columns and "date" not in df_instances.columns:
         df_instances["date"] = df_instances["Date"]
@@ -290,57 +323,76 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", eng=No
     if not available_years:
         available_years = [current_calendar_year]
         
-    # Build list of options with "All Time" as the top selection choice
     timeline_options = ["All Time"] + [int(y) for y in reversed(available_years)]
+
+    # =====================================================================
+    # STEP 4: TARGETED POPOUT SUB-MENU INJECTION
+    # =====================================================================
+    sidebar_target = popout_container if popout_container is not None else st.sidebar
+    
+    with sidebar_target:
+        st.markdown("### ENGINE STATUS")
+        st.markdown(f"**LVL {p_level}** • {p_title}")
+        st.markdown("👑 **ELITE_OLYMPIAN UNLOCKED**")
         
-    selected_season_year = st.sidebar.selectbox(
-        "📅 Select Seasonal Lens Timeline:",
-        options=timeline_options,
-        index=0
-    )
+        st.progress(p_pct / 100.0)
+        st.caption(f"XP: {p_xp:,} / {threshold:,} ({p_pct}%)")
+        
+        if defense_status == "Fortified" or defense_status == "Stable" or defense_status is True:
+            st.success("✅ **STREAK SECURE:** Active consistency patches are safely mounted and stable.")
+        else:
+            st.warning("⚠️ **STREAK VULNERABLE:** Consistency metrics are dropping context thresholds.")
+            
+        st.markdown("---")
+        
+        # Call requirements renderer streaming your custom parameters
+        render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances, target_container=sidebar_target)
+        
+        st.markdown("---")
 
-    # Map the selectbox choice to the appropriate value for the records engine
-    if selected_season_year == "All Time":
-        year_val = None
-    else:
-        year_val = int(selected_season_year)
+        selected_season_year = st.selectbox(
+            "📅 Select Seasonal Lens Timeline:",
+            options=timeline_options,
+            index=0
+        )
+        
+        hardware_filter_choices = ["Trophies", "Medals", "Ribbons", "Patches"]
+        selected_hardware_types = st.multiselect(
+            "🛡️ Filter Showcase Assets:",
+            options=hardware_filter_choices,
+            default=hardware_filter_choices
+        )
+        
+        year_val = None if selected_season_year == "All Time" else int(selected_season_year)
+        pr_data = calculate_personal_records(df_master, target_year=year_val)
+        
+        if not df_instances.empty and 'Parsed_Date' in df_instances.columns:
+            if selected_season_year == "All Time":
+                df_filtered_display = df_instances.copy()
+            else:
+                df_filtered_display = df_instances[df_instances['Parsed_Date'].dt.year == int(selected_season_year)]
+        else:
+            df_filtered_display = df_instances.copy()
 
-    # Force the engine to parse df_master for your chosen timeline year context (None maps to All Time)
-    pr_data = calculate_personal_records(df_master, target_year=year_val)
+        type_conversion_mapping = {"Trophies": "trophy", "Medals": "medal", "Ribbons": "ribbon", "Patches": "patch"}
+        active_type_strings = [type_conversion_mapping[lbl] for lbl in selected_hardware_types]
 
-    # Render the dynamic scoreboards onto the showroom dashboard layout
+        if not df_filtered_display.empty and "type" in df_filtered_display.columns:
+            df_filtered_display = df_filtered_display[df_filtered_display["type"].str.lower().isin(active_type_strings)]
+        
+        st.markdown("---")
+        st.info(f"""
+        📊 **Active Season Metrics ({selected_season_year}):**
+        * Total Hardware Unlocked: `{len(df_filtered_display)}`
+        * Condition Profile Vector: `{str(defense_state).upper()}`
+        """)
+
+    # =====================================================================
+    # STEP 5: MAIN WINDOW SHOWCASE SHELVES
+    # =====================================================================
     render_personal_records_banner(pr_data)
     st.markdown("<br/>", unsafe_allow_html=True)
-
-    # Filter data rows based on whether "All Time" or a specific year was picked
-    if not df_instances.empty and 'Parsed_Date' in df_instances.columns:
-        if selected_season_year == "All Time":
-            df_filtered_display = df_instances.copy()
-        else:
-            df_filtered_display = df_instances[df_instances['Parsed_Date'].dt.year == int(selected_season_year)]
-    else:
-        df_filtered_display = df_instances.copy()
-
-    hardware_filter_choices = ["Trophies", "Medals", "Ribbons", "Patches"]
-    selected_hardware_types = st.sidebar.multiselect(
-        "🛡️ Filter Showcase Assets:",
-        options=hardware_filter_choices,
-        default=hardware_filter_choices
-    )
-
-    type_conversion_mapping = {"Trophies": "trophy", "Medals": "medal", "Ribbons": "ribbon", "Patches": "patch"}
-    active_type_strings = [type_conversion_mapping[lbl] for lbl in selected_hardware_types]
-
-    if not df_filtered_display.empty and "type" in df_filtered_display.columns:
-        df_filtered_display = df_filtered_display[df_filtered_display["type"].str.lower().isin(active_type_strings)]
-
-    st.sidebar.markdown("<br/>", unsafe_allow_html=True)
-    st.sidebar.info(f"""
-    📊 **Active Season Metrics ({selected_season_year}):**
-    * Total Hardware Unlocked: `{len(df_filtered_display)}`
-    * Condition Profile Vector: `{str(defense_state).upper()}`
-    """)
-
+    
     render_top_shelf_showcase(df_filtered_display)
     st.markdown("<br/>", unsafe_allow_html=True)
 
@@ -359,10 +411,7 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", eng=No
     }
 
     if df_filtered_display.empty:
-        if selected_season_year == "All Time":
-            st.info("ℹ️ No active awards logged inside your All Time history with current filters.")
-        else:
-            st.info(f"ℹ️ No active awards logged inside the {selected_season_year} seasonal lens with current filters.")
+        st.info(f"ℹ️ No active awards logged inside the {selected_season_year} seasonal lens with current filters.")
         render_drilldown_ledger_drawer(df_filtered_display)
         return
 

@@ -293,50 +293,110 @@ with st.sidebar:
     st.caption(f"Logged in as: **{getattr(player, 'name', 'Racer 1')}**")
     st.markdown("---")
     
-    # Category Group 1: Core Hub
-    st.markdown("🎮 **CORE ATHLETE HUB**")
-    if st.button("🏠 Dashboard Overview", key="nav_sidebar_dash", type="primary" if st.session_state.active_tab_selection == "🏠 Dashboard Overview" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "🏠 Dashboard Overview"
-        st.rerun()
-    if st.button("👤 Athlete Profile", key="nav_sidebar_prof", type="primary" if st.session_state.active_tab_selection == "👤 Athlete Profile" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "👤 Athlete Profile"
-        st.rerun()
-        
-    st.markdown("")
-    # Category Group 2: Data Ingest & Logging
-    st.markdown("⚡ **DATA INGESTION**")
-    if st.button("📥 Telemetry Sync", key="nav_sidebar_sync", type="primary" if st.session_state.active_tab_selection == "Telemetry Sync" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "Telemetry Sync"
-        st.rerun()
-    if st.button("📜 Training Ledger", key="nav_sidebar_ledger", type="primary" if st.session_state.active_tab_selection == "Training Ledger" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "Training Ledger"
-        st.rerun()
-    if st.button("📅 Calendar Schedule", key="nav_sidebar_cal", type="primary" if st.session_state.active_tab_selection == "Calendar" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "Calendar"
-        st.rerun()
-        
-    st.markdown("")
-    # Category Group 3: Performance Arenas
-    st.markdown("🏟️ **COMPETITION ARENAS**")
-    if st.button("🏟️ Biometric Coliseum", key="nav_sidebar_coli", type="primary" if st.session_state.active_tab_selection == "Biometric Coliseum" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "Biometric Coliseum"
-        st.rerun()
-    if st.button("📊 Performance Analytics", key="nav_sidebar_anly", type="primary" if st.session_state.active_tab_selection == "Performance Analytics" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "Performance Analytics"
-        st.rerun()
-    if st.button("🏆 Showroom & PRs", key="nav_sidebar_show", type="primary" if st.session_state.active_tab_selection == "🏆 Showroom & PRs" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "🏆 Showroom & PRs"
-        st.rerun()
-        
-    st.markdown("")
-    # Category Group 4: Marketplace Economy
-    st.markdown("🛒 **MARKETPLACE ECONOMY**")
-    if st.button("🛍️ Pro Shop & Garage", key="nav_sidebar_shop", type="primary" if st.session_state.active_tab_selection == "Pro Shop & Garage" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "Pro Shop & Garage"
-        st.rerun()
-    if st.button("🏪 Calorie Pantry Market", key="nav_sidebar_pantry", type="primary" if st.session_state.active_tab_selection == "🏪 Calorie Pantry Market" else "secondary", use_container_width=True):
-        st.session_state.active_tab_selection = "🏪 Calorie Pantry Market"
-        st.rerun()
+    # 🎯 STEP 1: Check if the Showroom is selected.
+    # If active, inject custom CSS to widen the sidebar dynamically from ~336px to 580px,
+    # and adjust the column ratios to give the popout sub-menu plenty of space.
+    if st.session_state.get("active_tab_selection") == "🏆 Showroom & PRs":
+        st.markdown(
+            """
+            <style>
+            [data-testid="stSidebar"] {
+                min-width: 580px !important;
+                max-width: 580px !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        # Give the main menu a solid proportion (1) and the popout sub-menu more breathing room (1.5)
+        sb_col1, sb_col2 = st.columns([1, 1.5])
+    else:
+        # Fallback: When on other tabs, do not inject the CSS, allowing the sidebar
+        # to automatically snap back to its regular, default narrow layout.
+        sb_col1 = st.container()
+        sb_col2 = None
+
+    # 🎯 STEP 2: Place all your existing navigation buttons inside the left column (sb_col1)
+    with sb_col1:
+        # Category Group 1: Core Hub
+        st.markdown("🎮 **CORE ATHLETE HUB**")
+        if st.button("🏠 Dashboard Overview", key="nav_sidebar_dash", type="primary" if st.session_state.active_tab_selection == "🏠 Dashboard Overview" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "🏠 Dashboard Overview"
+            st.rerun()
+        if st.button("👤 Athlete Profile", key="nav_sidebar_prof", type="primary" if st.session_state.active_tab_selection == "👤 Athlete Profile" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "👤 Athlete Profile"
+            st.rerun()
+            
+        st.markdown("")
+        # Category Group 2: Data Ingest & Logging
+        st.markdown("⚡ **DATA INGESTION**")
+        if st.button("📥 Telemetry Sync", key="nav_sidebar_sync", type="primary" if st.session_state.active_tab_selection == "Telemetry Sync" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "Telemetry Sync"
+            st.rerun()
+        if st.button("📜 Training Ledger", key="nav_sidebar_ledger", type="primary" if st.session_state.active_tab_selection == "Training Ledger" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "Training Ledger"
+            st.rerun()
+        if st.button("📅 Calendar Schedule", key="nav_sidebar_cal", type="primary" if st.session_state.active_tab_selection == "Calendar" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "Calendar"
+            st.rerun()
+            
+        st.markdown("")
+        # Category Group 3: Performance Arenas
+        st.markdown("🏟️ **COMPETITION ARENAS**")
+        if st.button("🏟️ Biometric Coliseum", key="nav_sidebar_coli", type="primary" if st.session_state.active_tab_selection == "Biometric Coliseum" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "Biometric Coliseum"
+            st.rerun()
+        if st.button("📊 Performance Analytics", key="nav_sidebar_anly", type="primary" if st.session_state.active_tab_selection == "Performance Analytics" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "Performance Analytics"
+            st.rerun()
+        if st.button("🏆 Showroom & PRs", key="nav_sidebar_show", type="primary" if st.session_state.active_tab_selection == "🏆 Showroom & PRs" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "🏆 Showroom & PRs"
+            st.rerun()
+            
+        st.markdown("")
+        # Category Group 4: Marketplace Economy
+        st.markdown("🛒 **MARKETPLACE ECONOMY**")
+        if st.button("🛍️ Pro Shop & Garage", key="nav_sidebar_shop", type="primary" if st.session_state.active_tab_selection == "Pro Shop & Garage" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "Pro Shop & Garage"
+            st.rerun()
+        if st.button("🏪 Calorie Pantry Market", key="nav_sidebar_pantry", type="primary" if st.session_state.active_tab_selection == "🏪 Calorie Pantry Market" else "secondary", use_container_width=True):
+            st.session_state.active_tab_selection = "🏪 Calorie Pantry Market"
+            st.rerun()
+
+
+# =====================================================================
+# SHOWROOM ROUTING ROUTINE (KEEP THIS EXACTLY THE SAME AROUND LINE 429)
+# =====================================================================
+#if st.session_state.active_tab_selection == "🏆 Showroom & PRs":
+#    raw_profile = st.session_state.get("profile", {})
+#    raw_logs_list = raw_profile.get("history_logs", [])
+#    clean_dicts_list = []
+#    if isinstance(raw_logs_list, list):
+#        for entry in raw_logs_list:
+#            if isinstance(entry, dict):
+#                clean_dicts_list.append(entry)
+#                
+#    if len(clean_dicts_list) > 0:
+#        df_raw_wrapper = pd.DataFrame(clean_dicts_list)
+#        df_instances = showroom_eng.compile_all_award_instances(df_raw_wrapper)
+#    else:
+#        df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
+#        
+#    if "award_code" not in df_instances.columns:
+#        df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
+#        
+#    defense_state = raw_profile.get("defense_state", "stable")
+#    
+#    # Forward the now roomier sb_col2 container layout to the renderer function
+#    render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2)
+#
+#elif st.session_state.active_tab_selection == 'Calendar':
+#    show_cal(player)
+
+
+
+
+
 
 # --- TAB CONTROLLER CONDITIONAL RENDERING ---
 if st.session_state.active_tab_selection == '🏠 Dashboard Overview':
@@ -408,25 +468,32 @@ elif st.session_state.active_tab_selection == 'Performance Analytics':
         st.info('Gather activity logs to map telemetry parameters.')
 elif st.session_state.active_tab_selection == 'Training Ledger':
     render_training_ledger(player)
-elif st.session_state.active_tab_selection == '🏆 Showroom & PRs':
-    import showroom_engine as showroom_eng
-    import pandas as pd
+elif st.session_state.active_tab_selection == "🏆 Showroom & PRs":
+    # 🎯 FIX: Recover the raw_profile dictionary from session state.
+    # This prevents the NameError by ensuring the variable is fully defined
+    # before its keys ('history_logs' and 'defense_state') are accessed below.
     raw_profile = st.session_state.get("profile", {})
+
     raw_logs_list = raw_profile.get("history_logs", [])
     clean_dicts_list = []
     if isinstance(raw_logs_list, list):
         for entry in raw_logs_list:
             if isinstance(entry, dict):
                 clean_dicts_list.append(entry)
+
     if len(clean_dicts_list) > 0:
         df_raw_wrapper = pd.DataFrame(clean_dicts_list)
         df_instances = showroom_eng.compile_all_award_instances(df_raw_wrapper)
     else:
         df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
+
     if "award_code" not in df_instances.columns:
         df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
+
     defense_state = raw_profile.get("defense_state", "stable")
-    render_trophy_showroom_tab(df_instances, defense_state)
+
+    # Forward the pre-allocated second column container layout to the renderer function
+    render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2)
+
 elif st.session_state.active_tab_selection == 'Calendar':
     show_cal(player)
-
