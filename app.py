@@ -426,17 +426,17 @@ elif st.session_state.active_tab_selection == 'Biometric Coliseum':
     render_coliseum(player, FILE_PATH)
 elif st.session_state.active_tab_selection == 'Pro Shop & Garage':
     render_shop_interface(player, FILE_PATH)
-    st.markdown("---")
-    st.markdown("### 🏎 Vault Garage: Acquired Performance Machines")
-    owned_cars = getattr(player, 'inventory', [])
-    if not owned_cars:
-        st.info("ℹ Your garage bay is currently empty.")
-    else:
-        g_cols = st.columns(min(4, len(owned_cars)))
-        for idx, car in enumerate(owned_cars):
-            with g_cols[idx % 4]:
-                car_rank = int(getattr(player, 'equipped_gear', {}).get(car, 1))
-                st.info(f"🚘 **{car}**\n\n`Tuning Rank: +{car_rank}`")
+    #st.markdown("---")
+    #st.markdown("### 🏎 Vault Garage: Acquired Performance Machines")
+    #owned_cars = getattr(player, 'inventory', [])
+    #if not owned_cars:
+    #    st.info("ℹ Your garage bay is currently empty.")
+    #else:
+    #    g_cols = st.columns(min(4, len(owned_cars)))
+    #    for idx, car in enumerate(owned_cars):
+    #        with g_cols[idx % 4]:
+    #            car_rank = int(getattr(player, 'equipped_gear', {}).get(car, 1))
+    #            st.info(f"🚘 **{car}**\n\n`Tuning Rank: +{car_rank}`")
 elif st.session_state.active_tab_selection == '🏪 Calorie Pantry Market':
     render_pantry_interface(player, FILE_PATH)
 elif st.session_state.active_tab_selection == 'Performance Analytics':

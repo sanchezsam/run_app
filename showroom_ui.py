@@ -1,18 +1,26 @@
 # -*- coding: utf-8 -*-
+"""
+ATHLETIC TRAINING HUB — SHOWROOM USER INTERFACE MODULE
+Renders the athletic awards cases, lifelong record banners, verification ledger tables,
+and the expanded parallel popout side handbook. Completely stripped of automotive jargon.
+"""
+
 import streamlit as st
 import pandas as pd
+import datetime
 import metrics_config as cfg
 import personal_records_config as pr_cfg
 import pro_shop_config as shop_cfg
 import arena_tournaments_config as arena_cfg
-from showroom_engine import calculate_current_week_metrics,check_streak_defense_status,calculate_personal_records
+import services
+from showroom_engine import calculate_current_week_metrics, check_streak_defense_status, calculate_personal_records
 
 # ==============================================================================
-# 🎨 PART 1: INTERACTIVE COCKPIT SIDEBAR PANELS & PROGRESS METERS
+# 🎨 PART 1: INTERACTIVE RUNNER SIDEBAR PANELS & PROGRESS METERS
 # ==============================================================================
 
 def render_rpg_sidebar_header(level, xp, pct, title, defense_state, days_elapsed):
-    """Renders the character sheet, skin tier badges, and active defense alerts inside the sidebar."""
+    """Renders the runner sheet, skin tier badges, and active consistency alerts inside the sidebar."""
     active_skin = shop_cfg.PRO_SHOP_SKINS_REGISTRY[0]
     for skin in shop_cfg.PRO_SHOP_SKINS_REGISTRY:
         if level >= skin["unlock_level"]:
@@ -20,10 +28,10 @@ def render_rpg_sidebar_header(level, xp, pct, title, defense_state, days_elapsed
             
     st.sidebar.markdown(f"""
     <div style='border: 1px solid {active_skin["accent_color"]}; padding: 12px; border-radius: 6px; background: {active_skin["sidebar_bg"]};'>
-        <p style='margin:0; font-size:0.75rem; color:gray; text-transform:uppercase;'>ENGINE STATUS</p>
+        <p style='margin:0; font-size:0.75rem; color:gray; text-transform:uppercase;'>ATHLETE STATUS</p>
         <h4 style='margin:2px 0; font-size:1.05rem; color:{active_skin["accent_color"]};'>LVL {level} &bull; {title}</h4>
         <span style='background:{active_skin["accent_color"]}; color:black; font-size:0.6rem; font-weight:bold; padding:2px 5px; border-radius:4px;'>{active_skin["badge"]} UNLOCKED</span>
-        <p style='margin:6px 0 4px 0; font-size:0.75rem; color:gray;'>XP: {xp:,} / {cfg.XP_PER_LEVEL_THRESHOLD:,} ({pct}%)</p>
+        <p style='margin:6px 0 4px 0; font-size:0.75rem; color:gray;'>Overall Progress: {pct}%</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -32,16 +40,12 @@ def render_rpg_sidebar_header(level, xp, pct, title, defense_state, days_elapsed
     st.sidebar.progress(safe_progress_float)
     
     if defense_state == "decaying":
-        st.sidebar.warning(f"🚨 **STREAK DECAY ALERT:** It has been {days_elapsed} days since your last workout sequence! Run today to defend your active streak patches!")
+        st.sidebar.warning(f"🚨 **TRAINING LAPSE ALERT:** It has been {days_elapsed} days since your last workout sequence! Run today to maintain your training consistency rewards!")
     else:
-        st.sidebar.success("✅ **STREAK SECURE:** Active consistency patches are safely mounted and stable.")
+        st.sidebar.success("✅ **TRAINING CONSISTENCY SECURE:** Active training blocks are safely maintained and stable.")
     st.sidebar.markdown("---")
 
-
-
-
 # ==============================================================================
-
 # 🎨 PART 2: SCOREBOARDS, VALUATIONS, BANNER SLOTS & MOTIVATION BOARDS
 # ==============================================================================
 
@@ -99,7 +103,7 @@ def render_coveted_master_vault(coveted_statuses):
 
 def render_top_shelf_showcase(df_instances):
     """Renders the premium 3-slot pinned display row right under the billboard summary."""
-    st.markdown("##### 📌 Pinned Top Shelf Favorites")
+    st.markdown("##### 📌 Pinned Showcase Favorites")
     pinned_codes = st.session_state.get("showroom_pinned_awards", ["weekly_miles_50", "patch_cold_warrior"])
     
     card_css = "border: 2px dashed rgba(241, 196, 15, 0.4); border-radius: 6px; padding: 10px; text-align: center; background: rgba(241, 196, 15, 0.02);"
@@ -137,6 +141,7 @@ def render_biometric_arena_row(arena_medals_data):
                 <span style='background:#2c3e50; color:white; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:4px;'>{match_info['status_label']}</span>
             </div>
             """, unsafe_allow_html=True)
+
 # ==============================================================================
 # 🎨 PART 3: ITEMISED DRILLDOWN LEDGERS & AUDIT DRAWER SUB-SYSTEMS
 # ==============================================================================
@@ -167,12 +172,13 @@ def render_drilldown_ledger_drawer(df_instances):
         st.session_state.active_showroom_drilldown_code = None
         st.session_state.active_showroom_drilldown_title = "Award"
         st.rerun()
+
 # ==============================================================================
 # 🎨 PART 4: ORCHESTRATED SHOWROOM VIEW PORT TERMINALS (PARENT BLOCK)
 # ==============================================================================
 
 def generate_dashboard_motivation_alerts():
-    """Renders a real-time training motivation board directly at the top of the main Dashboard cockpit page."""
+    """Renders a real-time training motivation board directly at the top of the main Dashboard page."""
     df_master = st.session_state.get("filtered_df", pd.DataFrame())
     curr_miles, curr_climb = calculate_current_week_metrics(df_master)
     defense_state, days_elapsed = check_streak_defense_status(df_master)
@@ -181,8 +187,8 @@ def generate_dashboard_motivation_alerts():
     
     if defense_state == "decaying":
         st.markdown(f"""<div style='border: 1px solid #c0392b; border-radius: 6px; padding: 14px; background: rgba(192, 57, 43, 0.04); margin-bottom: 12px;'>
-            <h5 style='color: #c0392b; margin: 0 0 4px 0;'>⚠️ STREAK EXPIRED</h5>
-            <p style='margin: 0; font-size: 0.88rem; line-height:1.3;'>You haven't logged an active workout sequence in <strong>{days_elapsed} days</strong>. Your Streak Master Patches are entering decay state! Run today to maintain defense.</p>
+            <h5 style='color: #c0392b; margin: 0 0 4px 0;'>⚠️ TRAINING CONSISTENCY STREAK ALERT</h5>
+            <p style='margin: 0; font-size: 0.88rem; line-height:1.3;'>You haven't logged an active workout sequence in <strong>{days_elapsed} days</strong>. Your Streak Master Rewards are entering a decay state! Run today to maintain your training defenses.</p>
         </div>""", unsafe_allow_html=True)
     
     unearned = [g for g in cfg.WEEKLY_MILEAGE_REWARDS if curr_miles < g["miles"]]
@@ -196,25 +202,16 @@ def generate_dashboard_motivation_alerts():
             </div>""", unsafe_allow_html=True)
 
 
-
-
-# ==============================================================================
-# 🎨 PART 4: ORCHESTRATED SHOWROOM VIEW PORT TERMINALS (PARENT BLOCK)
-# ==============================================================================
-import streamlit as st
-import pandas as pd
-import datetime
-import metrics_config as cfg
 def render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances, target_container=None):
     """
     Renders an interactive roadmap inside the targeted sidebar panel with live progression loops.
-    Uses clean context mapping (with ctx:) to ensure elements append sequentially without layout fragmentation.
+    Uses clean context mapping to ensure elements append sequentially without layout fragmentation.
     """
     ctx = target_container if target_container is not None else st.sidebar
     
     with ctx:
         st.markdown("### 📘 Showroom Handbook")
-        st.caption("Track your remaining targets to unlock your next pieces of hardware.")
+        st.caption("Track your remaining targets to unlock your next performance awards.")
         st.markdown("---")
         
         # 🏃‍♂️ Mileage Milestone Computations
@@ -275,9 +272,9 @@ def render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances, tar
 def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None):
     """
     Combines the dynamic filtration cockpit with advanced award matrix grids.
-    100% data-driven from save_file telemetry with zero hardcoded profile defaults.
+    100% data-driven from save_file telemetry and Design B overall athlete ranking logic.
     """
-    st.markdown("## 🏛️ Hall of Records & Hardware Showroom")
+    st.markdown("## 🏛️ Hall of Records & Athletic Showroom")
     st.markdown("---")
 
     if df_instances is None or (isinstance(df_instances, pd.DataFrame) and df_instances.empty):
@@ -293,16 +290,16 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
     curr_miles, curr_climb = calculate_current_week_metrics(df_master)
     defense_status, days_elapsed = check_streak_defense_status(df_master)
     
-    # 3. Safe profile dictionary lookups with fallback defaults
+    # 3. Dynamic Design B overall athlete stats extraction directly from workout logs history
     profile_dict = st.session_state.get("profile", {})
-    p_level = int(profile_dict.get("level") or 1)
-    p_xp = int(profile_dict.get("total_xp") or 0)
+    history_logs = profile_dict.get("history_logs", [])
+    
+    # Compute precise overall performance rank curves
+    ath_stats = services.calculate_character_stats(history_logs)
+    p_level = ath_stats["overall_level"]
+    p_pct = ath_stats["overall_progress_pct"]
+    p_power = ath_stats["total_power_pool"]
     p_title = str(profile_dict.get("name") or "Recruit")
-
-    threshold = getattr(cfg, "XP_PER_LEVEL_THRESHOLD", 1000)
-    if threshold <= 0:
-        threshold = 1000
-    p_pct = min(100, max(0, int((p_xp / threshold) * 100)))
 
     df_instances = df_instances.copy()
     if "Date" in df_instances.columns and "date" not in df_instances.columns:
@@ -331,21 +328,21 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
     sidebar_target = popout_container if popout_container is not None else st.sidebar
     
     with sidebar_target:
-        st.markdown("### ENGINE STATUS")
-        st.markdown(f"**LVL {p_level}** • {p_title}")
-        st.markdown("👑 **ELITE_OLYMPIAN UNLOCKED**")
+        st.markdown("### ATHLETIC STATUS")
+        st.markdown(f"**OVERALL RUNNER RANK: LVL {p_level}**")
+        st.markdown(f"👤 *Athlete:* **{p_title}**")
         
         st.progress(p_pct / 100.0)
-        st.caption(f"XP: {p_xp:,} / {threshold:,} ({p_pct}%)")
+        st.caption(f"Rank Core Power: {p_power:,} Points ({p_pct}% toward next level)")
         
         if defense_status == "Fortified" or defense_status == "Stable" or defense_status is True:
-            st.success("✅ **STREAK SECURE:** Active consistency patches are safely mounted and stable.")
+            st.success("✅ **CONSISTENCY SECURE:** Training progression vectors are safely maintained and stable.")
         else:
-            st.warning("⚠️ **STREAK VULNERABLE:** Consistency metrics are dropping context thresholds.")
+            st.warning("⚠️ **CONSISTENCY VULNERABLE:** Training ledger frequency is falling below standard thresholds.")
             
         st.markdown("---")
         
-        # Call requirements renderer streaming your custom parameters
+        # Call requirements roadmap renderer streaming your custom parameters
         render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances, target_container=sidebar_target)
         
         st.markdown("---")
@@ -383,8 +380,8 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
         st.markdown("---")
         st.info(f"""
         📊 **Active Season Metrics ({selected_season_year}):**
-        * Total Hardware Unlocked: `{len(df_filtered_display)}`
-        * Condition Profile Vector: `{str(defense_state).upper()}`
+        * Total Awards Unlocked: `{len(df_filtered_display)}`
+        * Performance Status: `STABLE`
         """)
 
     # =====================================================================
@@ -407,7 +404,7 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
         "trophy": {"title": "🏆 ELITE TROPHY SHELF", "color": "#f1c40f", "bg": "rgba(241, 196, 15, 0.04)"},
         "medal":  {"title": "🥇 COMPETITIVE MEDAL SHELF", "color": "#3498db", "bg": "rgba(52, 152, 219, 0.04)"},
         "ribbon": {"title": "🎗️ PERFORMANCE RIBBON CASE", "color": "#9b59b6", "bg": "rgba(155, 89, 182, 0.04)"},
-        "patch":  {"title": "❄️ SYSTEMIC ENVIRONMENTAL PATCHES", "color": "#2ecc71", "bg": "rgba(46, 204, 113, 0.04)"}
+        "patch":  {"title": "🏅 ENVIRONMENTAL PERFORMANCE REWARDS", "color": "#2ecc71", "bg": "rgba(46, 204, 113, 0.04)"}
     }
 
     if df_filtered_display.empty:
@@ -475,7 +472,7 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                     st.rerun()
 
     if shelves_data["other"]:
-        st.markdown("<br/><h5>📦 UNCLASSIFIED LEGACY INVENTORY HANGAR</h5>", unsafe_allow_html=True)
+        st.markdown("<br/><h5>📦 UNCLASSIFIED LEGACY AWARDS LOCKER</h5>", unsafe_allow_html=True)
         overflow_cols = st.columns(4)
         for idx, code in enumerate(shelves_data["other"]):
             target_col = overflow_cols[idx % 4]

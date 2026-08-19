@@ -1,8 +1,38 @@
 # -*- coding: utf-8 -*-
+"""
+MASTER CALORIE PANTRY INTERFACE DASHBOARD (pantry_ui.py)
+Manages the Calorie Vault spending menus, culinary mastery progression grids,
+and the high-volume mystery box unboxing simulation engines.
+Integrates base64 asset graphics streaming with an automatic high-fidelity emoji fallback.
+"""
+
 import streamlit as st
 import json
 import random
+import os
+import base64
 from pantry_config import PANTRY_MENU, TROPHY_TIERS, VAULT_BOX_REGISTRY
+
+def render_pantry_asset(img_path: str, fallback_emoji: str, size_px: int = 65) -> str:
+    """
+    Checks if a local asset image exists on disk, encodes it into a live base64 inline stream,
+    and returns a clean HTML image string. Falls back to a retro neon dashed emoji container if missing.
+    """
+    if img_path and os.path.exists(img_path):
+        try:
+            with open(img_path, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read()).decode()
+            return f'<img src="data:image/png;base64,{encoded_string}" style="width: {size_px}px; height: {size_px}px; object-fit: contain; border-radius: 6px; filter: drop-shadow(0px 0px 4px rgba(0, 240, 255, 0.25)); margin-bottom: 4px;">'
+        except Exception:
+            pass
+    # Visual arcade placeholder fallback block if image is not present
+    return f'''
+    <div style="font-size: {int(size_px * 0.6)}px; line-height: {size_px}px; height: {size_px}px; width: {size_px}px; 
+                text-align: center; margin-bottom: 4px; border: 2px dashed rgba(255,255,255,0.12); 
+                border-radius: 8px; background: rgba(255,255,255,0.015); display: inline-block;">
+        {fallback_emoji}
+    </div>
+    '''
 
 def render_pantry_interface(player, FILE_PATH):
     st.markdown('## 🏪 The Master Calorie Pantry Market')
@@ -72,8 +102,8 @@ def render_pantry_interface(player, FILE_PATH):
     if "pantry_active_tab" not in st.session_state:
         st.session_state.pantry_active_tab = "trophy_cabinet"
 
-    # Synchronize dynamic runtime price state constraints for specialized frenzied boxes
-    for box in VAULT_BOX_REGISTRY["strategy"]:
+    # Synchronize dynamic runtime price state constraints for specialized frenzied boxes safely
+    for box in VAULT_BOX_REGISTRY.get("strategy", []):
         if box["id"] == "box_frenzy":
             box["cost"] = st.session_state.discount_frenzy_cost
 
@@ -148,7 +178,6 @@ def render_pantry_interface(player, FILE_PATH):
         st.markdown("###### 📊 Click a medal type below to expand details grouped by cuisine:")
         medal_cols = st.columns(5)
         medals_meta = [("Bronze", "🥉"), ("Silver", "🥈"), ("Gold", "🥇"), ("Platinum", "💿"), ("Diamond", "💎")]
-        
         for m_idx, (m_name, m_icon) in enumerate(medals_meta):
             with medal_cols[m_idx]:
                 is_active = st.session_state.active_trophy_tier == m_name
@@ -189,7 +218,7 @@ def render_pantry_interface(player, FILE_PATH):
                 st.session_state.active_trophy_tier = "Summary"
                 st.rerun()
 
-        st.markdown('---')
+        st.markdown("---")
         with st.expander("📦 View Lifetime Career Inventory Stock Ledger Balance", expanded=False):
             has_purchased_anything = False
             inv_cols = st.columns(4)
@@ -248,10 +277,21 @@ def render_pantry_interface(player, FILE_PATH):
                         owned_count = purchase_counts.get(f_id, 0)
                         current_item_tier = next((t for t in range(5) if f"{f_id}:{t}" not in single_trophies), 5)
                         is_progression_locked = current_item_tier > min_unfinished_tier
-                                
+                        
                         item_row_col, btn_row_col = st.columns([1.9, 2.1])
                         with item_row_col:
-                            st.markdown(f"**{emoji} {name}**\n(`🔥 {cost}` kcal)")
+                            # Stream live base64 graphic with an interactive emoji fallback box
+                            asset_html = render_pantry_asset(food.get("img_path", ""), emoji, size_px=55)
+                            st.markdown(f'''
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                {asset_html}
+                                <div>
+                                    <b style="font-size: 14px;">{name}</b><br>
+                                    <span style="color: #ff9800; font-size: 12px;">🔥 {cost} kcal</span>
+                                </div>
+                            </div>
+                            ''', unsafe_allow_html=True)
+
                             if current_item_tier < 5:
                                 active_tier_idx = current_item_tier - 1 if (is_progression_locked and current_item_tier > 0) else current_item_tier
                                 target_req = thresholds[active_tier_idx]
@@ -339,15 +379,28 @@ def render_pantry_interface(player, FILE_PATH):
             ("📈 Strategy & Dynamic Modifiers", "strategy")
         ]
         
+        last_bought_cache = st.session_state.get("pantry_last_bought", None)
+
         for section_title, registry_key in sections_meta:
+            if registry_key not in VAULT_BOX_REGISTRY:
+                continue
+                
             st.markdown(f"#### {section_title}")
             row_cols = st.columns(4)
             
             for b_idx, b_conf in enumerate(VAULT_BOX_REGISTRY[registry_key]):
-                with row_cols[b_idx]:
+                with row_cols[b_idx % 4]:
                     with st.container(border=True):
-                        st.markdown(f"### {b_conf['icon']} {b_conf['name'].replace('### ', '')}")
-                        st.markdown(f"`🔥 {b_conf['cost']}` kcal")
+                        # Render box portrait inline base64 asset graphics elegantly
+                        box_html = render_pantry_asset(b_conf.get("img_path", ""), b_conf["icon"], size_px=60)
+                        st.markdown(f'''
+                        <div style="text-align: center; margin-bottom: 5px;">
+                            {box_html}
+                            <h4 style="margin: 4px 0;">{b_conf['name'].replace('### ', '')}</h4>
+                            <span style="color: #00f0ff; font-weight: bold;">🔥 {b_conf['cost']} kcal</span>
+                        </div>
+                        ''', unsafe_allow_html=True)
+                        
                         st.caption(b_conf["desc"])
                         
                         t_theme = None
@@ -398,7 +451,7 @@ def render_pantry_interface(player, FILE_PATH):
                                         with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
                                         st.session_state.pantry_highlight_emoji, st.session_state.pantry_highlight = cd["flag"], f"✨ 🏆 **COVETED TROPHY DIRECT UNLOCK!** 🏆 ✨ Instantly awarded the {cd['flag']} **{cg} {TROPHY_TIERS[ct]['name']} Flag**!"
                                         st.rerun()
-                                    else: chosen_pool = pool_high
+                                else: chosen_pool = pool_high
                                     
                             elif b_conf["type"] == "theme" and t_theme: chosen_pool = [(t_theme, PANTRY_MENU[t_theme], x) for x in PANTRY_MENU[t_theme]["items"]]
                             elif b_conf["type"] == "grandmaster": chosen_pool = pool_high if roll < 25.0 and pool_high else pool_mid
@@ -441,11 +494,12 @@ def render_pantry_interface(player, FILE_PATH):
                                 
                             elif b_conf["type"] == "fridge":
                                 active_fridge = [(c, d, x, purchase_counts[x["id"]]) for c, d in PANTRY_MENU.items() for x in d["items"] if purchase_counts.get(x["id"],0) > 0]
-                                sac = random.choice(active_fridge)
-                                for it in sac[1]["items"]: purchase_counts[it["id"]] = 0
-                                boosted = random.choice(sac[1]["items"])
-                                emoji, name, val = execute_box_award(sac[0], sac[1], boosted, points=3)
-                                st.session_state.pantry_highlight_emoji, st.session_state.pantry_highlight = emoji, f"🧹 **FRIDGE SWEEP COMPLETE!** Sacrificed category progress fragments to deliver an instant **+3 Boost** to {emoji} **{name}**!"
+                                if active_fridge:
+                                    sac = random.choice(active_fridge)
+                                    for it in sac[1]["items"]: purchase_counts[it["id"]] = 0
+                                    boosted = random.choice(sac[1]["items"])
+                                    emoji, name, val = execute_box_award(sac[0], sac[1], boosted, points=3)
+                                    st.session_state.pantry_highlight_emoji, st.session_state.pantry_highlight = emoji, f"🧹 **FRIDGE SWEEP COMPLETE!** Sacrificed category progress fragments to deliver an instant **+3 Boost** to {emoji} **{name}**!"
                                 st.rerun()
 
                             if not chosen_pool: chosen_pool = all_flat
