@@ -48,7 +48,7 @@ THEME_CONFIG = {
 # ==========================================
 # UPGRADE 1: PERFORMANCE MEMORY CACHING
 # ==========================================
-@st.cache_data(ttl=600)
+#@st.cache_data(ttl=600)
 
 
 

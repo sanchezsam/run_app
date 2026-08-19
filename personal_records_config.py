@@ -36,6 +36,16 @@ PERSONAL_RECORDS_REGISTRY = [
         "calculation_type": "peak_year"    # Summarizes rolling annual calendar groups
     },
     {
+        "id": "longest_weekly_mileage",
+        "title": "📅 HIGHEST WEEKLY MILEAGE",
+        "border_color": "#2ecc71",        # Emerald green accent highlight
+        "data_column": "Display_Distance",
+        "metric_suffix": "Mi",
+        "fallback_value": "0.0 Mi",
+        "fallback_date": "Week: No Data",
+        "calculation_type": "peak_week"    # Summarizes rolling weekly calendar groups
+    },
+    {
         "id": "fastest_5k",
         "title": "🏁 COURSE PR (5K)",
         "border_color": "#2ecc71",        # Green accent highlight

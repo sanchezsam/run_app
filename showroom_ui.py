@@ -5,7 +5,7 @@ import metrics_config as cfg
 import personal_records_config as pr_cfg
 import pro_shop_config as shop_cfg
 import arena_tournaments_config as arena_cfg
-import showroom_engine as eng
+from showroom_engine import calculate_current_week_metrics,check_streak_defense_status,calculate_personal_records
 
 # ==============================================================================
 # 🎨 PART 1: INTERACTIVE COCKPIT SIDEBAR PANELS & PROGRESS METERS
@@ -202,8 +202,8 @@ def render_drilldown_ledger_drawer(df_instances):
 def generate_dashboard_motivation_alerts():
     """Renders a real-time training motivation board directly at the top of the main Dashboard cockpit page."""
     df_master = st.session_state.get("filtered_df", pd.DataFrame())
-    curr_miles, curr_climb = eng.calculate_current_week_metrics(df_master)
-    defense_state, days_elapsed = eng.check_streak_defense_status(df_master)
+    curr_miles, curr_climb = calculate_current_week_metrics(df_master)
+    defense_state, days_elapsed = check_streak_defense_status(df_master)
     
     st.markdown("### 🚨 Live Performance Training Briefing")
     
@@ -229,12 +229,17 @@ def generate_dashboard_motivation_alerts():
 # ==============================================================================
 # 🎨 PART 4: ORCHESTRATED SHOWROOM VIEW PORT TERMINALS (PARENT BLOCK)
 # ==============================================================================
-
-def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
+def render_trophy_showroom_tab(df_instances=None, defense_state="stable", eng=None):
     """
     Combines the dynamic filtration cockpit with advanced award matrix grids.
     100% data-driven from save_file telemetry with zero hardcoded profile defaults.
+    Features an 'All Time' lens timeline option that bypasses annual filters.
     """
+    import streamlit as st
+    import pandas as pd
+    import datetime
+    import metrics_config as cfg
+    
     st.markdown("## 🏛️ Hall of Records & Hardware Showroom")
     st.markdown("---")
 
@@ -244,29 +249,32 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
     if df_instances is None or "award_code" not in df_instances.columns:
         df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
 
+    # 1. Grab your master activity rows safely from session state
     df_master = st.session_state.get("filtered_df", pd.DataFrame())
-    curr_miles, curr_climb = eng.calculate_current_week_metrics(df_master)
-    defense_status, days_elapsed = eng.check_streak_defense_status(df_master)
     
+    # 2. Process weekly calculations using standalone direct functions
+    curr_miles, curr_climb = calculate_current_week_metrics(df_master)
+    defense_status, days_elapsed = check_streak_defense_status(df_master)
+    
+    # 3. Safe profile dictionary lookups with fallback defaults
     profile_dict = st.session_state.get("profile", {})
-    
-    p_level = int(profile_dict.get("level"))
-    p_xp = int(profile_dict.get("total_xp"))
-    p_title = str(profile_dict.get("name"))
+    p_level = int(profile_dict.get("level") or 1)
+    p_xp = int(profile_dict.get("total_xp") or 0)
+    p_title = str(profile_dict.get("name") or "Recruit")
 
     threshold = getattr(cfg, "XP_PER_LEVEL_THRESHOLD", 1000)
     if threshold <= 0:
         threshold = 1000
     p_pct = min(100, max(0, int((p_xp / threshold) * 100)))
 
+    # 4. Render headers and the manual requirement trackers
     render_rpg_sidebar_header(p_level, p_xp, p_pct, p_title, defense_status, days_elapsed)
     render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances)
-    
+ 
     df_instances = df_instances.copy()
     if "Date" in df_instances.columns and "date" not in df_instances.columns:
         df_instances["date"] = df_instances["Date"]
 
-    import datetime
     current_calendar_year = datetime.datetime.now().year
     
     if not df_instances.empty and "date" in df_instances.columns:
@@ -282,14 +290,34 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
     if not available_years:
         available_years = [current_calendar_year]
         
+    # Build list of options with "All Time" as the top selection choice
+    timeline_options = ["All Time"] + [int(y) for y in reversed(available_years)]
+        
     selected_season_year = st.sidebar.selectbox(
         "📅 Select Seasonal Lens Timeline:",
-        options=available_years,
-        index=len(available_years) - 1
+        options=timeline_options,
+        index=0
     )
-    
+
+    # Map the selectbox choice to the appropriate value for the records engine
+    if selected_season_year == "All Time":
+        year_val = None
+    else:
+        year_val = int(selected_season_year)
+
+    # Force the engine to parse df_master for your chosen timeline year context (None maps to All Time)
+    pr_data = calculate_personal_records(df_master, target_year=year_val)
+
+    # Render the dynamic scoreboards onto the showroom dashboard layout
+    render_personal_records_banner(pr_data)
+    st.markdown("<br/>", unsafe_allow_html=True)
+
+    # Filter data rows based on whether "All Time" or a specific year was picked
     if not df_instances.empty and 'Parsed_Date' in df_instances.columns:
-        df_filtered_display = df_instances[df_instances['Parsed_Date'].dt.year == selected_season_year]
+        if selected_season_year == "All Time":
+            df_filtered_display = df_instances.copy()
+        else:
+            df_filtered_display = df_instances[df_instances['Parsed_Date'].dt.year == int(selected_season_year)]
     else:
         df_filtered_display = df_instances.copy()
 
@@ -312,10 +340,7 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
     * Total Hardware Unlocked: `{len(df_filtered_display)}`
     * Condition Profile Vector: `{str(defense_state).upper()}`
     """)
-    pr_data = profile_dict.get("personal_records", {})
-    render_personal_records_banner(pr_data)
-    st.markdown("<br/>", unsafe_allow_html=True)
-    
+
     render_top_shelf_showcase(df_filtered_display)
     st.markdown("<br/>", unsafe_allow_html=True)
 
@@ -334,7 +359,10 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
     }
 
     if df_filtered_display.empty:
-        st.info(f"ℹ️ No active awards logged inside the {selected_season_year} seasonal lens with current filters.")
+        if selected_season_year == "All Time":
+            st.info("ℹ️ No active awards logged inside your All Time history with current filters.")
+        else:
+            st.info(f"ℹ️ No active awards logged inside the {selected_season_year} seasonal lens with current filters.")
         render_drilldown_ledger_drawer(df_filtered_display)
         return
 
@@ -345,7 +373,6 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
     for code in unique_awards:
         match_runs = df_filtered_display[df_filtered_display["award_code"] == code]
         if not match_runs.empty and "type" in match_runs.columns:
-            # 🎯 FIXED HERE: Executed selection slice index mapping correctly
             award_type = str(match_runs["type"].iloc[0]).lower()
         else:
             award_type = "patch"
@@ -373,7 +400,6 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
         for idx, code in enumerate(award_codes_on_shelf):
             target_col = grid_cols[idx % 4]
             match_runs = df_filtered_display[df_filtered_display["award_code"] == code]
-            # 🎯 FIXED HERE: Executed row index assignment brackets
             award_match = match_runs.iloc[0]
             count = len(match_runs)
             
@@ -404,7 +430,6 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable"):
         overflow_cols = st.columns(4)
         for idx, code in enumerate(shelves_data["other"]):
             target_col = overflow_cols[idx % 4]
-            # 🎯 FIXED HERE: Executed row index assignment brackets
             award_match = df_filtered_display[df_filtered_display["award_code"] == code].iloc[0]
             with target_col:
                 st.info(f"⚙️ **{code}**\n\nMetric: `{award_match.get('metric', 'N/A')}`")
