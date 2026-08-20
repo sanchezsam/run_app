@@ -10,6 +10,13 @@ import os
 import json
 import base64
 import streamlit as st
+import streamlit as st
+import pandas as pd
+import metrics_config as cfg
+import personal_records_config as pr_cfg
+import pro_shop_config as shop_cfg
+import arena_tournaments_config as arena_cfg
+from showroom_engine import calculate_current_week_metrics,check_streak_defense_status,calculate_personal_records
 
 # ⚙️ IMPORT Master Performance Registries and Threshold Structures
 from metrics_config import (
@@ -23,6 +30,98 @@ class LiveDiskHydrator:
     """Lightweight object utility to map fresh disk JSON into an attribute namespace."""
     def __init__(self, data_dict):
         self.__dict__.update(data_dict)
+def render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances, target_container=None):
+    """
+    Renders an interactive roadmap inside the targeted sidebar panel with live progression loops.
+    Uses clean context mapping (with ctx:) to ensure elements append sequentially without layout fragmentation.
+    """
+    ctx = target_container if target_container is not None else st.sidebar
+    
+    with ctx:
+        st.markdown("### 📘 Showroom Handbook")
+        st.caption("Track your remaining targets to unlock your next pieces of hardware.")
+        st.markdown("---")
+        
+        # 🏃‍♂️ Mileage Milestone Computations
+        st.markdown("**🏃‍♂️ Next Mileage Milestones:**")
+        unearned_miles = [aw for aw in getattr(cfg, "WEEKLY_MILEAGE_REWARDS", []) if curr_miles < aw["miles"]]
+        next_mile_goals = unearned_miles[:2] if unearned_miles else getattr(cfg, "WEEKLY_MILEAGE_REWARDS", [])[-1:]
+        
+        if next_mile_goals:
+            for goal in next_mile_goals:
+                target_val = max(1.0, float(goal["miles"]))
+                progress_pct = min(curr_miles / target_val, 1.0)
+                remaining = max(0.0, goal["miles"] - curr_miles)
+                
+                icon = str(goal.get("icon", "🔒")).strip()
+                tier_str = str(goal.get("tier", "common")).upper()
+                description = str(goal.get("desc", "No description provided."))
+                
+                header = f"{icon} {goal['title']} ({progress_pct:.0%})"
+                
+                exp = st.expander(header)
+                exp.markdown(f"🏆 **Tier:** `{tier_str}`")
+                exp.markdown(f"*{description}*")
+                exp.markdown(f"**Target:** {goal['miles']} Miles This Week")
+                exp.markdown(f"**Current Volume:** {curr_miles:.1f} Miles")
+                exp.progress(progress_pct)
+                exp.markdown(f"💡 **You are only {remaining:.1f} miles away** from unlocking this reward!")
+        else:
+            st.caption("🎉 All weekly mileage milestones cleared!")
+
+        # 🏔️ Elevation Milestone Computations
+        st.markdown("<br/>**🏔️ Next Elevation Milestones:**", unsafe_allow_html=True)
+        unearned_climb = [aw for aw in getattr(cfg, "WEEKLY_ELEVATION_REWARDS", []) if curr_climb < aw["climb_ft"]]
+        next_climb_goals = unearned_climb[:2] if unearned_climb else getattr(cfg, "WEEKLY_ELEVATION_REWARDS", [])[-1:]
+        
+        if next_climb_goals:
+            for goal in next_climb_goals:
+                target_val = max(1.0, float(goal["climb_ft"]))
+                progress_pct = min(curr_climb / target_val, 1.0)
+                remaining = max(0.0, goal["climb_ft"] - curr_climb)
+                
+                icon = str(goal.get("icon", "🔒")).strip()
+                tier_str = str(goal.get("tier", "common")).upper()
+                description = str(goal.get("desc", "No description provided."))
+                
+                header = f"{icon} {goal['title']} ({progress_pct:.0%})"
+                
+                exp = st.expander(header)
+                exp.markdown(f"🏆 **Tier:** `{tier_str}`")
+                exp.markdown(f"*{description}*")
+                exp.markdown(f"**Target:** {goal['climb_ft']} Ft Elevation This Week")
+                exp.markdown(f"**Current Volume:** {curr_climb:.0f} Ft")
+                exp.progress(progress_pct)
+                exp.markdown(f"💡 **You are only {remaining:.0f} ft away** from unlocking this reward!")
+        else:
+            st.caption("🎉 All weekly elevation milestones cleared!")
+
+def render_rpg_sidebar_header(level, xp, pct, title, defense_state, days_elapsed):
+    """Renders the character sheet, skin tier badges, and active defense alerts inside the sidebar."""
+    active_skin = shop_cfg.PRO_SHOP_SKINS_REGISTRY[0]
+    for skin in shop_cfg.PRO_SHOP_SKINS_REGISTRY:
+        if level >= skin["unlock_level"]:
+            active_skin = skin
+            
+    st.sidebar.markdown(f"""
+    <div style='border: 1px solid {active_skin["accent_color"]}; padding: 12px; border-radius: 6px; background: {active_skin["sidebar_bg"]};'>
+        <p style='margin:0; font-size:0.75rem; color:gray; text-transform:uppercase;'>ENGINE STATUS</p>
+        <h4 style='margin:2px 0; font-size:1.05rem; color:{active_skin["accent_color"]};'>LVL {level} &bull; {title}</h4>
+        <span style='background:{active_skin["accent_color"]}; color:black; font-size:0.6rem; font-weight:bold; padding:2px 5px; border-radius:4px;'>{active_skin["badge"]} UNLOCKED</span>
+        <p style='margin:6px 0 4px 0; font-size:0.75rem; color:gray;'>XP: {xp:,} / {cfg.XP_PER_LEVEL_THRESHOLD:,} ({pct}%)</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Enforce float bounds strictly between 0.0 and 1.0 to prevent Streamlit crashes
+    safe_progress_float = min(1.0, max(0.0, float(pct) / 100.0))
+    st.sidebar.progress(safe_progress_float)
+    
+    if defense_state == "decaying":
+        st.sidebar.warning(f"🚨 **STREAK DECAY ALERT:** It has been {days_elapsed} days since your last workout sequence! Run today to defend your active streak patches!")
+    else:
+        st.sidebar.success("✅ **STREAK SECURE:** Active consistency patches are safely mounted and stable.")
+    st.sidebar.markdown("---")
+
 
 def force_disk_profile_hydration():
     """Bypasses Streamlit session memory cache to read raw live profiles from disk."""
@@ -109,7 +208,13 @@ def render_showroom_asset(img_path: str, fallback_emoji: str, size_px: int = 65)
     return False
 
 
-def render_trophy_showroom_tab(player=None, *args, **kwargs):
+
+import streamlit as st
+import pandas as pd
+import datetime
+import metrics_config as cfg
+
+def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None):
     """
     Primary module coordinator rendering the hardware catalog across horizontal tabs.
     Forces deep disk hydration on every render pass to eliminate Streamlit web layout
@@ -134,9 +239,158 @@ def render_trophy_showroom_tab(player=None, *args, **kwargs):
         st.error("Athlete player profile record could not be hydrated safely. Please verify that your profile database is active.")
         return
 
+
+    if df_instances is None or (isinstance(df_instances, pd.DataFrame) and df_instances.empty):
+        df_instances = st.session_state.get("filtered_df", pd.DataFrame())
+                
+    if df_instances is None or "award_code" not in df_instances.columns:
+        df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
+
+    # 1. Grab your master activity rows safely from session state
+    df_master = st.session_state.get("filtered_df", pd.DataFrame()) 
+    
+    # 2. Process weekly calculations 
+    curr_miles, curr_climb = calculate_current_week_metrics(df_master)
+    defense_status, days_elapsed = check_streak_defense_status(df_master)
+            
+    # 3. Safe profile dictionary lookups with fallback defaults
+    profile_dict = st.session_state.get("profile", {})
+    p_level = int(profile_dict.get("level") or 1)
+    p_xp = int(profile_dict.get("total_xp") or 0)
+    p_title = str(profile_dict.get("name") or "Recruit")
+
+    threshold = getattr(cfg, "XP_PER_LEVEL_THRESHOLD", 1000)
+    if threshold <= 0:
+        threshold = 1000
+    p_pct = min(100, max(0, int((p_xp / threshold) * 100)))
+
+
+
+
+
+
+
+
+
+
+
+    df_instances = df_instances.copy()
+    if "Date" in df_instances.columns and "date" not in df_instances.columns:
+        df_instances["date"] = df_instances["Date"]
+
+    current_calendar_year = datetime.datetime.now().year
+    
+    if not df_instances.empty and "date" in df_instances.columns:
+        try:
+            df_instances['Parsed_Date'] = pd.to_datetime(df_instances['date'], errors='coerce')
+            available_years = sorted(df_instances['Parsed_Date'].dt.year.dropna().unique())
+            available_years = [int(y) for y in available_years]
+        except Exception:
+            available_years = []
+    else:
+        available_years = []
+        
+    if not available_years:
+        available_years = [current_calendar_year]
+        
+    timeline_options = ["All Time"] + [int(y) for y in reversed(available_years)]
+
+    # =====================================================================
+    # STEP 4: TARGETED POPOUT SUB-MENU INJECTION
+    # =====================================================================
+    sidebar_target = popout_container if popout_container is not None else st.sidebar
+    
+    with sidebar_target:
+        st.markdown("### ENGINE STATUS")
+        st.markdown(f"**LVL {p_level}** • {p_title}")
+        st.markdown("👑 **ELITE_OLYMPIAN UNLOCKED**")
+        
+        st.progress(p_pct / 100.0)
+        st.caption(f"XP: {p_xp:,} / {threshold:,} ({p_pct}%)")
+        
+        if defense_status == "Fortified" or defense_status == "Stable" or defense_status is True:
+            st.success("✅ **STREAK SECURE:** Active consistency patches are safely mounted and stable.")
+        else:
+            st.warning("⚠️ **STREAK VULNERABLE:** Consistency metrics are dropping context thresholds.")
+            
+        st.markdown("---")
+        
+        # Call requirements renderer streaming your custom parameters
+        render_sidebar_requirements_manual(curr_miles, curr_climb, df_instances, target_container=sidebar_target)
+        
+        st.markdown("---")
+
+        selected_season_year = st.selectbox(
+            "📅 Select Seasonal Lens Timeline:",
+            options=timeline_options,
+            index=0
+        )
+        
+        ###SELECT DISPLAY HARDWARE TYPE
+        ######hardware_filter_choices = ["Trophies", "Medals", "Ribbons", "Patches"]
+        ######selected_hardware_types = st.multiselect(
+        ######    "🛡️ Filter Showcase Assets:",
+        ######    options=hardware_filter_choices,
+        ######    default=hardware_filter_choices
+        ######)
+        
+        year_val = None if selected_season_year == "All Time" else int(selected_season_year)
+        pr_data = calculate_personal_records(df_master, target_year=year_val)
+        
+        if not df_instances.empty and 'Parsed_Date' in df_instances.columns:
+            if selected_season_year == "All Time":
+                df_filtered_display = df_instances.copy()
+            else:
+                df_filtered_display = df_instances[df_instances['Parsed_Date'].dt.year == int(selected_season_year)]
+        else:
+            df_filtered_display = df_instances.copy()
+
+        type_conversion_mapping = {"Trophies": "trophy", "Medals": "medal", "Ribbons": "ribbon", "Patches": "patch"}
+        ####active_type_strings = [type_conversion_mapping[lbl] for lbl in selected_hardware_types]
+
+        ####if not df_filtered_display.empty and "type" in df_filtered_display.columns:
+        ####    df_filtered_display = df_filtered_display[df_filtered_display["type"].str.lower().isin(active_type_strings)]
+        
+        st.markdown("---")
+        st.info(f"""
+        📊 **Active Season Metrics ({selected_season_year}):**
+        * Total Hardware Unlocked: `{len(df_filtered_display)}`
+        * Condition Profile Vector: `{str(defense_state).upper()}`
+        """)
+
+
+
     st.markdown("## 🏅 Hardware Showroom & Achievements Matrix")
     st.markdown("Track your unlocked single-run performance patches, cumulative milestone shelves, and coveted elite targets.")
     st.markdown("---")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # Instantiate horizontal subview selector tabs
     patch_tab, trophy_tab, milestone_tab = st.tabs([
@@ -204,6 +458,7 @@ def render_trophy_showroom_tab(player=None, *args, **kwargs):
                                         f"x{unlocked_count}</span>", 
                                         unsafe_allow_html=True
                                     )
+
                                     st.caption(f"{tier['icon']} Verified Clear Profile")
                                     st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;">{tier["desc"]}</p>', unsafe_allow_html=True)
                                 else:

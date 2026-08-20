@@ -367,31 +367,31 @@ with st.sidebar:
 # =====================================================================
 # SHOWROOM ROUTING ROUTINE (KEEP THIS EXACTLY THE SAME AROUND LINE 429)
 # =====================================================================
-#if st.session_state.active_tab_selection == "🏆 Showroom & PRs":
-#    raw_profile = st.session_state.get("profile", {})
-#    raw_logs_list = raw_profile.get("history_logs", [])
-#    clean_dicts_list = []
-#    if isinstance(raw_logs_list, list):
-#        for entry in raw_logs_list:
-#            if isinstance(entry, dict):
-#                clean_dicts_list.append(entry)
-#                
-#    if len(clean_dicts_list) > 0:
-#        df_raw_wrapper = pd.DataFrame(clean_dicts_list)
-#        df_instances = showroom_eng.compile_all_award_instances(df_raw_wrapper)
-#    else:
-#        df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
-#        
-#    if "award_code" not in df_instances.columns:
-#        df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
-#        
-#    defense_state = raw_profile.get("defense_state", "stable")
-#    
-#    # Forward the now roomier sb_col2 container layout to the renderer function
-#    render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2)
-#
-#elif st.session_state.active_tab_selection == 'Calendar':
-#    show_cal(player)
+if st.session_state.active_tab_selection == "🏆 Showroom & PRs":
+    raw_profile = st.session_state.get("profile", {})
+    raw_logs_list = raw_profile.get("history_logs", [])
+    clean_dicts_list = []
+    if isinstance(raw_logs_list, list):
+        for entry in raw_logs_list:
+            if isinstance(entry, dict):
+                clean_dicts_list.append(entry)
+                
+    if len(clean_dicts_list) > 0:
+        df_raw_wrapper = pd.DataFrame(clean_dicts_list)
+        df_instances = showroom_eng.compile_all_award_instances(df_raw_wrapper)
+    else:
+        df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
+        
+    if "award_code" not in df_instances.columns:
+        df_instances = pd.DataFrame(columns=["award_code", "date", "metric", "type", "details"])
+        
+    defense_state = raw_profile.get("defense_state", "stable")
+    
+    # Forward the now roomier sb_col2 container layout to the renderer function
+    render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2)
+
+elif st.session_state.active_tab_selection == 'Calendar':
+    show_cal(player)
 
 
 
