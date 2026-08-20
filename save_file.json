@@ -1,40 +1,13 @@
 {
-    "history_logs": [],
-    "unlocked_badges": [],
-    "final_metric_data": {
-        "lifetime_odometer_miles": 0.0,
-        "lifetime_calories_burned": 0,
-        "current_streak_tracker": {
-            "current_week_runs_count": 0,
-            "last_tracked_week_start": "",
-            "consecutive_4_run_weeks": 0,
-            "consecutive_52_run_weeks": 0
-        },
-        "trophy_cabinet": {
-            "shelf_a_mileage": [],
-            "shelf_b_elevation": [],
-            "shelf_c_calories": [],
-            "prestige_loops": {
-                "mileage_loops_count": 0,
-                "elevation_loops_count": 0,
-                "calorie_loops_count": 0
-            }
-        },
-        "all_time_personal_records": {
-            "fastest_1_mile_seconds": 99999,
-            "fastest_5k_seconds": 99999,
-            "fastest_10k_seconds": 99999,
-            "longest_single_run_miles": 0.0
-        }
-    },
     "name": "Racer 1",
-    "level": 25,
-    "total_xp": 8750,
+    "bodyweight": 180,
+    "level": 60,
+    "total_xp": 1006,
     "running_level": 9,
     "vo2_max": 64.2,
     "avg_heart_rate": 138,
     "resting_heart_rate": 45,
-    "lifetime_elevation_gain": 85000,
+    "lifetime_elevation_gain": 85797.0,
     "cadence_history": [],
     "elevation_milestone_history": [
         "bighorn",
@@ -43,11 +16,7 @@
     ],
     "deep_rem_streak": 14,
     "stat_points": 0,
-    "gold": 9500,
-    "endurance_level": 5,
-    "pace_level": 5,
-    "hill_climbing_level": 5,
-    "gold_balance": 9500,
+    "gold": 9701,
     "inventory": [
         "Interceptor Spec-R",
         "Ghost Horizon Chassis",
@@ -65,19 +34,239 @@
     "fatigue": 0,
     "days_tracked": 365,
     "synced_garmin_activities": [],
+    "history_logs": [
+        {
+            "Date": "2026-08-08",
+            "Name": "2026-08-08-22-37-58.fit",
+            "Distance (Miles)": 20.12,
+            "Duration": "02:24:31",
+            "pace": 7.1833,
+            "Elevation (ft)": "+797 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "08:24",
+                    "pace": "8:24"
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "07:31",
+                    "pace": "7:31"
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "07:32",
+                    "pace": "7:32"
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "07:37",
+                    "pace": "7:37"
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "07:12",
+                    "pace": "7:12"
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "07:15",
+                    "pace": "7:15"
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "07:18",
+                    "pace": "7:18"
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "07:21",
+                    "pace": "7:21"
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "07:12",
+                    "pace": "7:12"
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 1.0,
+                    "time": "06:43",
+                    "pace": "6:43"
+                },
+                {
+                    "split_num": 11,
+                    "distance_mi": 1.0,
+                    "time": "06:40",
+                    "pace": "6:40"
+                },
+                {
+                    "split_num": 12,
+                    "distance_mi": 1.0,
+                    "time": "06:23",
+                    "pace": "6:23"
+                },
+                {
+                    "split_num": 13,
+                    "distance_mi": 1.0,
+                    "time": "06:35",
+                    "pace": "6:35"
+                },
+                {
+                    "split_num": 14,
+                    "distance_mi": 1.0,
+                    "time": "06:44",
+                    "pace": "6:44"
+                },
+                {
+                    "split_num": 15,
+                    "distance_mi": 1.0,
+                    "time": "06:49",
+                    "pace": "6:49"
+                },
+                {
+                    "split_num": 16,
+                    "distance_mi": 1.0,
+                    "time": "07:05",
+                    "pace": "7:05"
+                },
+                {
+                    "split_num": 17,
+                    "distance_mi": 1.0,
+                    "time": "07:05",
+                    "pace": "7:05"
+                },
+                {
+                    "split_num": 18,
+                    "distance_mi": 1.0,
+                    "time": "07:02",
+                    "pace": "7:02"
+                },
+                {
+                    "split_num": 19,
+                    "distance_mi": 1.0,
+                    "time": "07:20",
+                    "pace": "7:20"
+                },
+                {
+                    "split_num": 20,
+                    "distance_mi": 1.0,
+                    "time": "07:27",
+                    "pace": "7:27"
+                },
+                {
+                    "split_num": 21,
+                    "distance_mi": 0.11,
+                    "time": "00:57",
+                    "pace": "8:34"
+                },
+                {
+                    "split_num": 22,
+                    "distance_mi": 0.01,
+                    "time": "00:09",
+                    "pace": "18:28"
+                }
+            ],
+            "text_payload": "[2026-08-08] Run: 20.12 miles | Pace: 7:11 min/mi | Elevation Climbed: +797 ft | [REWARD] +201g, +1006 XP. | [CALORIE REWARDS] +1830 kcal | 🎖️ Rewards: 🦌🐏📜🫀",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "stride_velocity",
+                    "id": "deer",
+                    "name": "Deer Sprint Node",
+                    "icon": "🦌"
+                },
+                {
+                    "pillar": "vertical_elevation",
+                    "id": "bighorn",
+                    "name": "Bighorn Climb Module",
+                    "icon": "🐏"
+                },
+                {
+                    "pillar": "endurance_volume",
+                    "id": "endurance_laurel",
+                    "name": "Endurance Laurel Shield",
+                    "icon": "📜"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "🫀"
+                }
+            ]
+        }
+    ],
+    "unlocked_badges": [
+        "deer",
+        "bighorn",
+        "endurance_laurel",
+        "cardio_cyborg"
+    ],
     "daily_miles": 520.4,
     "base_xp": 100,
     "exponent": 1.5,
     "last_distance": 26.2,
     "last_pace": 6.15,
+    "final_metric_data": {
+        "lifetime_odometer_miles": 20.12,
+        "lifetime_calories_burned": 2012,
+        "current_streak_tracker": {
+            "current_week_runs_count": 0,
+            "last_tracked_week_start": "",
+            "consecutive_4_run_weeks": 0,
+            "consecutive_52_run_weeks": 0
+        },
+        "trophy_cabinet": {
+            "shelf_a_mileage": [],
+            "shelf_b_elevation": [
+                "bronze_ridge",
+                "silver_ascent",
+                "gold_alpine"
+            ],
+            "shelf_c_calories": [],
+            "prestige_loops": {
+                "mileage_loops_count": 0,
+                "elevation_loops_count": 0,
+                "calorie_loops_count": 0
+            }
+        },
+        "all_time_personal_records": {
+            "fastest_1_mile_seconds": 99999,
+            "fastest_5k_seconds": 99999,
+            "fastest_10k_seconds": 99999,
+            "longest_single_run_miles": 0.0
+        }
+    },
+    "endurance_level": 5,
+    "pace_level": 5,
+    "hill_climbing_level": 5,
+    "gold_balance": 9500,
     "stamina_xp": 3500,
     "agility_xp": 2800,
     "power_xp": 3200,
     "boss_clears": 15,
     "boss_levels": [],
-    "calorie_bank_balance": 5000,
-    "calorie_bank_total_earned": 5000,
+    "calorie_bank_balance": 6830,
+    "calorie_bank_total_earned": 6830,
     "pantry_purchase_counts": {},
     "pantry_single_trophies": [],
-    "pantry_cuisine_trophies": []
+    "pantry_cuisine_trophies": [],
+    "stamina_rating": 351,
+    "efficiency_rating": 224,
+    "power_rating": 184,
+    "stamina_level": 4,
+    "efficiency_level": 3,
+    "power_level": 2
 }
