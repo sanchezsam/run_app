@@ -214,7 +214,9 @@ import pandas as pd
 import datetime
 import metrics_config as cfg
 
-def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None):
+#def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None):
+def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None, widget_id="default"):
+
     """
     Primary module coordinator rendering the hardware catalog across horizontal tabs.
     Forces deep disk hydration on every render pass to eliminate Streamlit web layout
@@ -320,12 +322,48 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
         
         st.markdown("---")
 
-        selected_season_year = st.selectbox(
+       
+
+
+
+        # 1. Initialize a single, shared cross-viewport data pipeline slot
+        if "active_lens_year" not in st.session_state:
+            st.session_state["active_lens_year"] = "All Time"
+        
+        # 2. Callback function to ensure both selectboxes always match when clicked
+        def sync_seasonal_lens_filters():
+            # Detect which widget was interacted with and copy its state over globally
+            current_key = f"showroom_lens_widget_instance_{widget_id}"
+            if current_key in st.session_state:
+                st.session_state["active_lens_year"] = st.session_state[current_key]
+        
+        # 3. Find the current universal selection index
+        try:
+            default_index = timeline_options.index(st.session_state["active_lens_year"])
+        except ValueError:
+            default_index = 0
+        
+        # 4. Render the selectbox cleanly without ID collision or state fragmentation
+        st.selectbox(
             "📅 Select Seasonal Lens Timeline:",
             options=timeline_options,
-            index=0
+            index=default_index,
+            key=f"showroom_lens_widget_instance_{widget_id}",  # Avoids duplicate key crash
+            on_change=sync_seasonal_lens_filters              # Syncs both drop-downs immediately
         )
         
+        # 5. Point the rest of your script to the shared universal selection value
+        selected_season_year = st.session_state["active_lens_year"]
+
+
+
+
+
+
+
+
+
+
         ###SELECT DISPLAY HARDWARE TYPE
         ######hardware_filter_choices = ["Trophies", "Medals", "Ribbons", "Patches"]
         ######selected_hardware_types = st.multiselect(
@@ -403,12 +441,21 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
     # 🛡️ VIEW PANEL: SINGLE-RUN PERFORMANCE PATCHES
     # =========================================================================
     with patch_tab:
-        st.markdown("### 🛡️ Single-Run Performance Patches")
+        st.markdown("### 🛡 Single-Run Performance Patches")
         st.caption("Earned by triggering specialized athletic criteria configurations during an individual training log session.")
-        
         patch_categories = FINAL_METRIC_CONFIG.get("single_run_patches", {})
-        badges_list = getattr(player, "unlocked_badges", [])
-        history_logs = getattr(player, "history_logs", [])
+        raw_history = getattr(player, "history_logs", [])
+        raw_badges = getattr(player, "unlocked_badges", [])
+        if selected_season_year == "All Time":
+            history_logs = raw_history
+            badges_list = raw_badges
+        else:
+            # Assumes log entries or badges have a date string format like 'YYYY-MM-DD' 
+            # or contain the year string inside their ledger row metadata text
+            year_str = str(selected_season_year)
+            history_logs = [log for log in raw_history if year_str in str(log)]
+            badges_list = [badge for badge in raw_badges if year_str in str(badge)]
+        # -------------------------------------------------------------
         
         for cat_id, cat_meta in patch_categories.items():
             st.markdown(f"#### {cat_meta['name']}")

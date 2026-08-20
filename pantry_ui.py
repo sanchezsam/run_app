@@ -26,13 +26,9 @@ def render_pantry_asset(img_path: str, fallback_emoji: str, size_px: int = 65) -
         except Exception:
             pass
     # Visual arcade placeholder fallback block if image is not present
-    return f'''
-    <div style="font-size: {int(size_px * 0.6)}px; line-height: {size_px}px; height: {size_px}px; width: {size_px}px; 
-                text-align: center; margin-bottom: 4px; border: 2px dashed rgba(255,255,255,0.12); 
-                border-radius: 8px; background: rgba(255,255,255,0.015); display: inline-block;">
-        {fallback_emoji}
-    </div>
-    '''
+    # Visual arcade placeholder fallback block if image is not present
+    return f'''<div style="font-size: {int(size_px * 0.6)}px; line-height: {size_px}px; height: {size_px}px; width: {size_px}px; text-align: center; margin-bottom: 4px; border: 2px dashed rgba(255,255,255,0.12); border-radius: 8px; background: rgba(255,255,255,0.015); display: inline-block;">{fallback_emoji}</div>'''
+
 
 def render_pantry_interface(player, FILE_PATH):
     st.markdown('## 🏪 The Master Calorie Pantry Market')
@@ -282,15 +278,16 @@ def render_pantry_interface(player, FILE_PATH):
                         with item_row_col:
                             # Stream live base64 graphic with an interactive emoji fallback box
                             asset_html = render_pantry_asset(food.get("img_path", ""), emoji, size_px=55)
+
                             st.markdown(f'''
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                {asset_html}
-                                <div>
-                                    <b style="font-size: 14px;">{name}</b><br>
-                                    <span style="color: #ff9800; font-size: 12px;">🔥 {cost} kcal</span>
-                                </div>
-                            </div>
-                            ''', unsafe_allow_html=True)
+                                       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                       {asset_html}
+                                       <div>
+                                       <b style="font-size: 14px;">{name}</b><br>
+                                       <span style="color: #ff9800; font-size: 12px;">🔥 {cost} kcal</span>
+                                       </div>
+                                       </div>
+                                       ''', unsafe_allow_html=True)
 
                             if current_item_tier < 5:
                                 active_tier_idx = current_item_tier - 1 if (is_progression_locked and current_item_tier > 0) else current_item_tier
