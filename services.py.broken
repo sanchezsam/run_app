@@ -119,7 +119,27 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
     # Mountain Time Zone Correction Offset: Subtract 6 hours from raw UTC
     tz_offset = timedelta(hours=6)
 
-    # 1. Loop records to gather overall workout metrics
+    # 🛠️ PRE-PARSE STEP: Grab high-precision device hardware totals to override raw math accumulation
+    session_timer_time = None
+    session_ascent = None
+    session_calories = None
+    session_distance = None
+
+    for session in fit_file.get_messages('session'):
+        s_data = {data.name: data.value for data in session}
+        if s_data.get('total_timer_time') is not None:
+            session_timer_time = float(s_data['total_timer_time'])
+        elif s_data.get('total_moving_time') is not None:
+            session_timer_time = float(s_data['total_moving_time'])
+            
+        if s_data.get('total_ascent') is not None:
+            session_ascent = float(s_data['total_ascent'])
+        if s_data.get('total_calories') is not None:
+            session_calories = int(s_data['total_calories'])
+        if s_data.get('total_distance') is not None:
+            session_distance = float(s_data['total_distance'])
+
+    # 1. Loop records to gather overall workout metrics (All original code preserved)
     for record in fit_file.get_messages('record'):
         data_dict = {data.name: data.value for data in record}
         
@@ -168,6 +188,17 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
 
     # Ingestion metrics consolidation
     total_seconds = (timestamps[-1] - timestamps[0]).total_seconds() if len(timestamps) >= 2 else 0
+    
+    # Apply session device overrides to bypass raw accumulated math noise
+    if session_timer_time is not None:
+        total_seconds = session_timer_time
+    if session_ascent is not None:
+        total_ascent_meters = session_ascent
+    if session_calories is not None:
+        total_calories = session_calories
+    if session_distance is not None:
+        total_distance_meters = session_distance
+
     avg_hr = sum(heart_rates) / len(heart_rates) if heart_rates else 0
     total_miles_calculated = total_distance_meters * 0.000621371
     
