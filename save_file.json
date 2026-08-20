@@ -1,606 +1,9 @@
 {
-    "name": "Racer 1",
-    "bodyweight": 180,
-    "level": 69,
-    "total_xp": 115,
-    "running_level": 9,
-    "vo2_max": 64.2,
-    "avg_heart_rate": 138,
-    "resting_heart_rate": 45,
-    "lifetime_elevation_gain": 86286.0,
-    "cadence_history": [],
-    "elevation_milestone_history": [
-        "bighorn",
-        "alpine_vert_challenge",
-        "overdrive"
-    ],
-    "deep_rem_streak": 14,
-    "stat_points": 0,
-    "gold": 9432,
-    "inventory": [
-        "Interceptor Spec-R",
-        "Ghost Horizon Chassis",
-        "Carbon Overlord V8",
-        "Nike Vaporfly 4%",
-        "Ciele Athletics GOCap",
-        "Patagonia Houdini Windbreaker",
-        "Nike Dri-FIT ADV Aeroswift",
-        "Goodr No Bounce Optics",
-        "Oakley Speed Jacket Sunglasses"
-    ],
-    "equipped_gear": {
-        "Interceptor Spec-R": 3,
-        "Ghost Horizon Chassis": 2,
-        "Nike Vaporfly 4%": 1,
-        "Ciele Athletics GOCap": 4,
-        "Patagonia Houdini Windbreaker": 1,
-        "Nike Dri-FIT ADV Aeroswift": 1,
-        "Goodr No Bounce Optics": 1,
-        "Oakley Speed Jacket Sunglasses": 1
-    },
-    "registered_races": [
-        "Berlin Olympiastadion Track",
-        "Chamonix Ultra Trail"
-    ],
-    "boss_wins": 15,
-    "fatigue": 0,
-    "days_tracked": 365,
-    "synced_garmin_activities": [],
-    "history_logs": [
-        {
-            "Date": "2026-08-18 12:00:31",
-            "Name": "2026-08-18-18-00-31.fit",
-            "Distance (Miles)": 5.01,
-            "Duration": "00:44:40",
-            "pace": 8.91,
-            "Elevation (ft)": "+694.2 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 1.0,
-                    "time": "10:45",
-                    "pace": "10:45"
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 1.0,
-                    "time": "10:10",
-                    "pace": "10:10"
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 1.0,
-                    "time": "08:55",
-                    "pace": "8:55"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
-                    "time": "07:25",
-                    "pace": "7:25"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "05:48",
-                    "pace": "5:48"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 0.01,
-                    "time": "00:04",
-                    "pace": "5:57"
-                }
-            ],
-            "text_payload": "[2026-08-18 12:00:31] Run: 5.01 miles | Pace: 8.91 min/mi | Elevation Climbed: +694.2 ft | [REWARD] +50g, +250 XP. | [CALORIE REWARDS] +501 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc3f\ufe0f\ud83d\udca5\ud83e\udec0",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "vertical_elevation",
-                    "id": "marmot",
-                    "name": "Marmot Traction Unit",
-                    "icon": "\ud83d\udc3f\ufe0f"
-                },
-                {
-                    "pillar": "race_strategy",
-                    "id": "overdrive",
-                    "name": "Overdrive Finisher Core",
-                    "icon": "\ud83d\udca5"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "\ud83e\udec0"
-                }
-            ]
-        },
-        {
-            "Date": "2026-08-17 11:29:16",
-            "Name": "2026-08-16-17-29-16.fit",
-            "Distance (Miles)": 11.13,
-            "Duration": "01:27:13",
-            "pace": 7.84,
-            "Elevation (ft)": "+835.3 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 1.0,
-                    "time": "09:41",
-                    "pace": "9:41"
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 1.0,
-                    "time": "08:53",
-                    "pace": "8:53"
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 1.0,
-                    "time": "08:16",
-                    "pace": "8:16"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
-                    "time": "08:05",
-                    "pace": "8:05"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "08:01",
-                    "pace": "8:01"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 1.0,
-                    "time": "07:15",
-                    "pace": "7:15"
-                },
-                {
-                    "split_num": 7,
-                    "distance_mi": 1.0,
-                    "time": "07:04",
-                    "pace": "7:04"
-                },
-                {
-                    "split_num": 8,
-                    "distance_mi": 1.0,
-                    "time": "06:44",
-                    "pace": "6:44"
-                },
-                {
-                    "split_num": 9,
-                    "distance_mi": 1.0,
-                    "time": "06:37",
-                    "pace": "6:37"
-                },
-                {
-                    "split_num": 10,
-                    "distance_mi": 1.0,
-                    "time": "06:18",
-                    "pace": "6:18"
-                },
-                {
-                    "split_num": 11,
-                    "distance_mi": 1.0,
-                    "time": "06:57",
-                    "pace": "6:57"
-                },
-                {
-                    "split_num": 12,
-                    "distance_mi": 0.13,
-                    "time": "00:55",
-                    "pace": "7:14"
-                }
-            ],
-            "text_payload": "[2026-08-17 11:29:16] Run: 11.13 miles | Pace: 7.84 min/mi | Elevation Climbed: +835.3 ft | [REWARD] +111g, +556 XP. | [CALORIE REWARDS] +1112 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc07\ud83d\udc0f\u23f2\ufe0f\ud83d\uddfa\ufe0f\ud83e\udec0",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "rabbit",
-                    "name": "Rabbit Cruise Node",
-                    "icon": "\ud83d\udc07"
-                },
-                {
-                    "pillar": "vertical_elevation",
-                    "id": "bighorn",
-                    "name": "Bighorn Climb Module",
-                    "icon": "\ud83d\udc0f"
-                },
-                {
-                    "pillar": "race_strategy",
-                    "id": "split_striker",
-                    "name": "Split Striker Module",
-                    "icon": "\u23f2\ufe0f"
-                },
-                {
-                    "pillar": "endurance_volume",
-                    "id": "horizon_mapper",
-                    "name": "Horizon Mapper Processor",
-                    "icon": "\ud83d\uddfa\ufe0f"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "\ud83e\udec0"
-                }
-            ]
-        },
-        {
-            "Date": "2026-08-16 18:51:49",
-            "Name": "2026-08-17-00-51-49.fit",
-            "Distance (Miles)": 8.42,
-            "Duration": "01:22:22",
-            "pace": 9.78,
-            "Elevation (ft)": "+977.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 1.0,
-                    "time": "10:10",
-                    "pace": "10:10"
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 1.0,
-                    "time": "09:07",
-                    "pace": "9:07"
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 1.0,
-                    "time": "09:10",
-                    "pace": "9:10"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
-                    "time": "09:35",
-                    "pace": "9:35"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "10:05",
-                    "pace": "10:05"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 1.0,
-                    "time": "09:20",
-                    "pace": "9:20"
-                },
-                {
-                    "split_num": 7,
-                    "distance_mi": 1.0,
-                    "time": "09:23",
-                    "pace": "9:23"
-                },
-                {
-                    "split_num": 8,
-                    "distance_mi": 1.0,
-                    "time": "09:31",
-                    "pace": "9:31"
-                },
-                {
-                    "split_num": 9,
-                    "distance_mi": 0.42,
-                    "time": "03:50",
-                    "pace": "9:05"
-                }
-            ],
-            "text_payload": "[2026-08-16 18:51:49] Run: 8.42 miles | Pace: 9.78 min/mi | Elevation Climbed: +977.0 ft | [REWARD] +84g, +421 XP. | [CALORIE REWARDS] +842 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc0f\u23f2\ufe0f\ud83d\udc63\ud83e\udec0",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "vertical_elevation",
-                    "id": "bighorn",
-                    "name": "Bighorn Climb Module",
-                    "icon": "\ud83d\udc0f"
-                },
-                {
-                    "pillar": "race_strategy",
-                    "id": "split_striker",
-                    "name": "Split Striker Module",
-                    "icon": "\u23f2\ufe0f"
-                },
-                {
-                    "pillar": "endurance_volume",
-                    "id": "stride_tracker",
-                    "name": "Stride Tracker Array",
-                    "icon": "\ud83d\udc63"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "\ud83e\udec0"
-                }
-            ]
-        },
-        {
-            "Date": "2026-08-14 12:28:24",
-            "Name": "2026-08-14-18-28-24.fit",
-            "Distance (Miles)": 8.02,
-            "Duration": "01:12:01",
-            "pace": 8.98,
-            "Elevation (ft)": "+735.6 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 1.0,
-                    "time": "09:42",
-                    "pace": "9:42"
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 1.0,
-                    "time": "08:42",
-                    "pace": "8:42"
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 1.0,
-                    "time": "08:29",
-                    "pace": "8:29"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
-                    "time": "08:41",
-                    "pace": "8:41"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "08:52",
-                    "pace": "8:52"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 1.0,
-                    "time": "08:19",
-                    "pace": "8:19"
-                },
-                {
-                    "split_num": 7,
-                    "distance_mi": 1.0,
-                    "time": "08:24",
-                    "pace": "8:24"
-                },
-                {
-                    "split_num": 8,
-                    "distance_mi": 1.0,
-                    "time": "08:15",
-                    "pace": "8:15"
-                },
-                {
-                    "split_num": 9,
-                    "distance_mi": 0.02,
-                    "time": "00:12",
-                    "pace": "9:38"
-                }
-            ],
-            "text_payload": "[2026-08-14 12:28:24] Run: 8.02 miles | Pace: 8.98 min/mi | Elevation Climbed: +735.6 ft | [REWARD] +80g, +401 XP. | [CALORIE REWARDS] +802 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc3f\ufe0f\ud83d\udc63\ud83e\udec0",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "vertical_elevation",
-                    "id": "marmot",
-                    "name": "Marmot Traction Unit",
-                    "icon": "\ud83d\udc3f\ufe0f"
-                },
-                {
-                    "pillar": "endurance_volume",
-                    "id": "stride_tracker",
-                    "name": "Stride Tracker Array",
-                    "icon": "\ud83d\udc63"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "\ud83e\udec0"
-                }
-            ]
-        },
-        {
-            "Date": "2026-01-12 06:58:29",
-            "Name": "2026-01-12-12-58-29.fit",
-            "Distance (Miles)": 9.62,
-            "Duration": "00:57:58",
-            "pace": 6.02,
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 1.0,
-                    "time": "06:25",
-                    "pace": "6:25"
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 1.0,
-                    "time": "06:00",
-                    "pace": "6:00"
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 1.0,
-                    "time": "06:00",
-                    "pace": "6:00"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
-                    "time": "06:01",
-                    "pace": "6:01"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "06:01",
-                    "pace": "6:01"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 1.0,
-                    "time": "05:58",
-                    "pace": "5:58"
-                },
-                {
-                    "split_num": 7,
-                    "distance_mi": 1.0,
-                    "time": "05:57",
-                    "pace": "5:57"
-                },
-                {
-                    "split_num": 8,
-                    "distance_mi": 1.0,
-                    "time": "05:53",
-                    "pace": "5:53"
-                },
-                {
-                    "split_num": 9,
-                    "distance_mi": 1.0,
-                    "time": "05:51",
-                    "pace": "5:51"
-                },
-                {
-                    "split_num": 10,
-                    "distance_mi": 0.62,
-                    "time": "03:49",
-                    "pace": "6:07"
-                }
-            ],
-            "text_payload": "[2026-01-12 06:58:29] Run: 9.62 miles | Pace: 6.02 min/mi | Elevation Climbed: +0.0 ft | [REWARD] +96g, +480 XP. | [CALORIE REWARDS] +962 kcal | \ud83c\udf96\ufe0f Rewards: \ud83e\udd8c\ud83d\udc63\ud83e\udec0",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "deer",
-                    "name": "Deer Sprint Node",
-                    "icon": "\ud83e\udd8c"
-                },
-                {
-                    "pillar": "endurance_volume",
-                    "id": "stride_tracker",
-                    "name": "Stride Tracker Array",
-                    "icon": "\ud83d\udc63"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "\ud83e\udec0"
-                }
-            ]
-        },
-        {
-            "Date": "2026-01-12 12:41:15",
-            "Name": "2026-01-12-18-41-15.fit",
-            "Distance (Miles)": 5.14,
-            "Duration": "00:46:53",
-            "pace": 9.12,
-            "Elevation (ft)": "+551.8 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 1.0,
-                    "time": "09:41",
-                    "pace": "9:41"
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 1.0,
-                    "time": "09:38",
-                    "pace": "9:38"
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 1.0,
-                    "time": "08:51",
-                    "pace": "8:51"
-                },
-                {
-                    "split_num": 4,
-                    "distance_mi": 1.0,
-                    "time": "08:51",
-                    "pace": "8:51"
-                },
-                {
-                    "split_num": 5,
-                    "distance_mi": 1.0,
-                    "time": "08:25",
-                    "pace": "8:25"
-                },
-                {
-                    "split_num": 6,
-                    "distance_mi": 0.14,
-                    "time": "01:07",
-                    "pace": "8:08"
-                }
-            ],
-            "text_payload": "[2026-01-12 12:41:15] Run: 5.14 miles | Pace: 9.12 min/mi | Elevation Climbed: +551.8 ft | [REWARD] +51g, +257 XP. | [CALORIE REWARDS] +513 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc3f\ufe0f\ud83d\udca5\ud83e\udec0",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "vertical_elevation",
-                    "id": "marmot",
-                    "name": "Marmot Traction Unit",
-                    "icon": "\ud83d\udc3f\ufe0f"
-                },
-                {
-                    "pillar": "race_strategy",
-                    "id": "overdrive",
-                    "name": "Overdrive Finisher Core",
-                    "icon": "\ud83d\udca5"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "\ud83e\udec0"
-                }
-            ]
-        }
-    ],
-    "unlocked_badges": [
-        "marmot",
-        "overdrive",
-        "cardio_cyborg",
-        "rabbit",
-        "bighorn",
-        "split_striker",
-        "horizon_mapper",
-        "stride_tracker",
-        "deer"
-    ],
-    "daily_miles": 520.4,
-    "base_xp": 100,
-    "exponent": 1.5,
-    "last_distance": 26.2,
-    "last_pace": 6.15,
+    "history_logs": [],
+    "unlocked_badges": [],
     "final_metric_data": {
-        "lifetime_odometer_miles": 13.16,
-        "lifetime_calories_burned": 1316,
+        "lifetime_odometer_miles": 0.0,
+        "lifetime_calories_burned": 0,
         "current_streak_tracker": {
             "current_week_runs_count": 0,
             "last_tracked_week_start": "",
@@ -609,11 +12,7 @@
         },
         "trophy_cabinet": {
             "shelf_a_mileage": [],
-            "shelf_b_elevation": [
-                "bronze_ridge",
-                "silver_ascent",
-                "gold_alpine"
-            ],
+            "shelf_b_elevation": [],
             "shelf_c_calories": [],
             "prestige_loops": {
                 "mileage_loops_count": 0,
@@ -628,37 +27,57 @@
             "longest_single_run_miles": 0.0
         }
     },
+    "name": "Racer 1",
+    "level": 25,
+    "total_xp": 8750,
+    "running_level": 9,
+    "vo2_max": 64.2,
+    "avg_heart_rate": 138,
+    "resting_heart_rate": 45,
+    "lifetime_elevation_gain": 85000,
+    "cadence_history": [],
+    "elevation_milestone_history": [
+        "bighorn",
+        "alpine_vert_challenge",
+        "overdrive"
+    ],
+    "deep_rem_streak": 14,
+    "stat_points": 0,
+    "gold": 9500,
     "endurance_level": 5,
     "pace_level": 5,
     "hill_climbing_level": 5,
     "gold_balance": 9500,
+    "inventory": [
+        "Interceptor Spec-R",
+        "Ghost Horizon Chassis",
+        "Carbon Overlord V8"
+    ],
+    "equipped_gear": {
+        "Interceptor Spec-R": 3,
+        "Ghost Horizon Chassis": 2
+    },
+    "registered_races": [
+        "Berlin Olympiastadion Track",
+        "Chamonix Ultra Trail"
+    ],
+    "boss_wins": 15,
+    "fatigue": 0,
+    "days_tracked": 365,
+    "synced_garmin_activities": [],
+    "daily_miles": 520.4,
+    "base_xp": 100,
+    "exponent": 1.5,
+    "last_distance": 26.2,
+    "last_pace": 6.15,
     "stamina_xp": 3500,
     "agility_xp": 2800,
     "power_xp": 3200,
     "boss_clears": 15,
     "boss_levels": [],
-    "calorie_bank_balance": 9732,
-    "calorie_bank_total_earned": 9732,
+    "calorie_bank_balance": 5000,
+    "calorie_bank_total_earned": 5000,
     "pantry_purchase_counts": {},
     "pantry_single_trophies": [],
-    "pantry_cuisine_trophies": [],
-    "stamina_rating": 197,
-    "efficiency_rating": 199,
-    "power_rating": 222,
-    "stamina_level": 2,
-    "efficiency_level": 2,
-    "power_level": 3,
-    "weight_kg": 180,
-    "gear_colors": {
-        "Nike Vaporfly 4%": "Basic Factory",
-        "Ciele Athletics GOCap": "Basic Factory",
-        "Patagonia Houdini Windbreaker": "Basic Factory",
-        "Nike Dri-FIT ADV Aeroswift": "Basic Factory",
-        "Goodr No Bounce Optics": "Basic Factory",
-        "Oakley Speed Jacket Sunglasses": "Default Issue"
-    },
-    "equipped_shoe_name": "Nike Vaporfly 4%",
-    "equipped_headgear_name": "Ciele Athletics GOCap",
-    "equipped_jacket_name": "Patagonia Houdini Windbreaker",
-    "equipped_singlet_name": "Nike Dri-FIT ADV Aeroswift"
+    "pantry_cuisine_trophies": []
 }

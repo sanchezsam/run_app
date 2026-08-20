@@ -7,6 +7,7 @@ dynamically from metrics_config.py with clean base64 image streaming fallbacks.
 """
 
 import os
+import json
 import base64
 import streamlit as st
 
@@ -18,35 +19,55 @@ from metrics_config import (
     COVETED_TARGETS
 )
 
+class LiveDiskHydrator:
+    """Lightweight object utility to map fresh disk JSON into an attribute namespace."""
+    def __init__(self, data_dict):
+        self.__dict__.update(data_dict)
+
+def force_disk_profile_hydration():
+    """Bypasses Streamlit session memory cache to read raw live profiles from disk."""
+    if os.path.exists("save_file.json"):
+        try:
+            with open("save_file.json", "r", encoding="utf-8") as f:
+                return LiveDiskHydrator(json.load(f))
+        except Exception:
+            pass
+    return None
+
 def generate_dashboard_motivation_alerts(player=None, *args, **kwargs):
     """
     Generates dynamic athletic motivation alerts for the dashboard viewports.
-    Safely handles empty parameters from legacy app.py invokers by automatically
-    resolving the player entity from parameters or persistent session state memory.
+    Prioritizes active session state entities to guarantee fresh profile loading.
     """
-    # 1. If passed as the first positional argument
-    if player is None and args:
-        player = args[0]
-        
-    # 2. Defensive state resolution fallback wrapper
-    if player is None:
-        for key in ["player", "active_player", "athlete", "df_instances"]:
+    disk_player = force_disk_profile_hydration()
+    if disk_player is not None:
+        player = disk_player
+    else:
+        resolved_player = None
+        for key in ["player", "active_player", "athlete", "current_player"]:
             if key in st.session_state and st.session_state[key] is not None:
-                player = st.session_state[key]
+                resolved_player = st.session_state[key]
                 break
+        if resolved_player is not None:
+            player = resolved_player
+        elif player is None and args:
+            player = args[0]
         
     if player is None:
         st.sidebar.info("🏃‍♂️ **Training Hub Matrix:** Securely tracking your athletic milestones. Keep pushing!")
         return
         
     badges_list = getattr(player, "unlocked_badges", [])
+    history_list = getattr(player, "history_logs", [])
     metric_totals = getattr(player, "final_metric_data", {})
     lifetime_miles = float(metric_totals.get("lifetime_odometer_miles", 0.0))
     
-    if not badges_list:
+    has_any_achievements = len(badges_list) > 0 or any("Rewards:" in str(log) for log in history_list)
+    
+    if not has_any_achievements:
         st.sidebar.info("🏃‍♂️ **Aero-Baseline Status:** Log your initial file telemetry split to unlock your primary performance patches!")
-    elif lifetime_miles > 0:
-        st.sidebar.success(f"⚡ **Training Hub Matrix:** Career odometer stands at **{lifetime_miles:,.1f} miles** across {len(badges_list)} unlocked milestone patches. Stride on!")
+    else:
+        st.sidebar.success(f"⚡ **Training Hub Matrix:** Career tracking active. Core odometer metrics and historical training logs synchronized. Stride on!")
 
 
 def render_showroom_asset(img_path: str, fallback_emoji: str, size_px: int = 65) -> bool:
@@ -91,19 +112,23 @@ def render_showroom_asset(img_path: str, fallback_emoji: str, size_px: int = 65)
 def render_trophy_showroom_tab(player=None, *args, **kwargs):
     """
     Primary module coordinator rendering the hardware catalog across horizontal tabs.
-    Dynamically harvests the player object from positional arguments (args[0])
-    or active session state contexts to ensure safe database hydration.
+    Forces deep disk hydration on every render pass to eliminate Streamlit web layout
+    caching desynchronizations automatically.
     """
-    # 1. If passed as the first positional argument (e.g., df_instances)
-    if player is None and args:
-        player = args[0]
-        
-    # 2. Fallback to common session state storage keys
-    if player is None:
+    # Force live file sync from disk database state
+    disk_player = force_disk_profile_hydration()
+    if disk_player is not None:
+        player = disk_player
+    else:
+        resolved_player = None
         for key in ["player", "active_player", "athlete", "current_player", "df_instances"]:
             if key in st.session_state and st.session_state[key] is not None:
-                player = st.session_state[key]
+                resolved_player = st.session_state[key]
                 break
+        if resolved_player is not None:
+            player = resolved_player
+        elif player is None and args:
+            player = args[0]
                 
     if player is None:
         st.error("Athlete player profile record could not be hydrated safely. Please verify that your profile database is active.")
@@ -129,6 +154,7 @@ def render_trophy_showroom_tab(player=None, *args, **kwargs):
         
         patch_categories = FINAL_METRIC_CONFIG.get("single_run_patches", {})
         badges_list = getattr(player, "unlocked_badges", [])
+        history_logs = getattr(player, "history_logs", [])
         
         for cat_id, cat_meta in patch_categories.items():
             st.markdown(f"#### {cat_meta['name']}")
@@ -142,11 +168,25 @@ def render_trophy_showroom_tab(player=None, *args, **kwargs):
                 for idx, tier in enumerate(row_slice):
                     with cols[idx]:
                         with st.container(border=True):
-                            # Quantify how many times this specific patch has been achieved
-                            unlocked_count = sum(
-                                1 for b in badges_list 
-                                if tier["name"] in str(b) or tier["id"] in str(b)
-                            )
+                            unlocked_count = 0
+                            
+                            # Pass A: Scan explicitly tracked item entries inside the standard badges array
+                            for b in badges_list:
+                                b_str = str(b).lower()
+                                if (tier["id"].lower() in b_str or 
+                                    tier["name"].lower() in b_str or 
+                                    (tier.get("icon") and tier.get("icon") in str(b))):
+                                    unlocked_count += 1
+                                    
+                            # Pass B: Unconditional substring matching over the entire history log ledger lines
+                            for log in history_logs:
+                                log_str = str(log)
+                                # Check for name, config ID, or native emoji icon anywhere in the entry row text
+                                if (tier.get("icon") and tier.get("icon") in log_str) or \
+                                   (tier["id"].lower() in log_str.lower()) or \
+                                   (tier["name"].lower() in log_str.lower()):
+                                    unlocked_count += 1
+                                        
                             is_unlocked = unlocked_count > 0
                             
                             grid_col1, grid_col2 = st.columns([1, 3.2])
@@ -285,10 +325,9 @@ def render_trophy_showroom_tab(player=None, *args, **kwargs):
                     st.markdown(f"### {target['icon']} {target['title']}")
                     st.markdown(f"*{target['desc']}*")
                     
-                    # Inspect career history tracking fields for elite completion string identifiers
                     is_completed = (
-                        any(target["title"] in str(badge) for badge in badges_list) or
-                        any(target["title"] in str(log) for log in history_list)
+                        any(target["title"].lower() in str(badge).lower() or target.get("icon") in str(badge) for badge in badges_list) or
+                        any(target["title"].lower() in str(log).lower() or target.get("icon") in str(log) for log in history_list)
                     )
                     
                     if is_completed:
