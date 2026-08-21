@@ -108,38 +108,111 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
     Parses a raw bytes stream of a Garmin .fit file and extracts core metrics.
     Localizes UTC timestamps to Mountain Time (MDT) and runs rolling PR maps.
     """
+    #fit_file = FitFile(file_bytes)
+    #total_distance_meters = 0.0
+    #total_calories = None
+    #heart_rates = []
+    #timestamps = []
+    #total_ascent_meters = 0.0
+    #last_altitude = None
+    #
+    ## Mountain Time Zone Correction Offset: Subtract 6 hours from raw UTC
+    #tz_offset = timedelta(hours=6)
+
+    ## 1. Loop records to gather overall workout metrics
+    #for record in fit_file.get_messages('record'):
+    #    data_dict = {data.name: data.value for data in record}
+    #    
+    #    if 'timestamp' in data_dict and data_dict['timestamp'] is not None:
+    #        timestamps.append(data_dict['timestamp'] - tz_offset)
+    #    
+    #    current_alt = data_dict.get('enhanced_altitude') or data_dict.get('altitude')
+    #    if current_alt is not None:
+    #        current_alt = float(current_alt)
+    #        if last_altitude is not None and current_alt > last_altitude:
+    #            total_ascent_meters += (current_alt - last_altitude)
+    #        last_altitude = current_alt
+    #    
+    #    if 'distance' in data_dict and data_dict['distance'] is not None:
+    #        total_distance_meters = float(data_dict['distance'])
+    #    if 'calories' in data_dict and data_dict['calories'] is not None:
+    #        total_calories = int(data_dict['calories'])
+    #    if 'heart_rate' in data_dict and data_dict['heart_rate'] is not None:
+    #        heart_rates.append(int(data_dict['heart_rate']))
+
+
     fit_file = FitFile(file_bytes)
     total_distance_meters = 0.0
+    total_seconds = 0.0
+    total_ascent_meters = 0.0
     total_calories = None
     heart_rates = []
     timestamps = []
-    total_ascent_meters = 0.0
-    last_altitude = None
     
     # Mountain Time Zone Correction Offset: Subtract 6 hours from raw UTC
     tz_offset = timedelta(hours=6)
 
-    # 1. Loop records to gather overall workout metrics
+    # 1. Pull pre-filtered summary stats calculated directly by the Garmin device
+    for session in fit_file.get_messages('session'):
+        session_data = {d.name: d.value for d in session}
+        if session_data.get('total_timer_time') is not None:
+            total_seconds = float(session_data['total_timer_time'])
+        if session_data.get('total_distance') is not None:
+            total_distance_meters = float(session_data['total_distance'])
+        if session_data.get('total_ascent') is not None:
+            total_ascent_meters = float(session_data['total_ascent'])
+        if session_data.get('total_calories') is not None:
+            total_calories = int(session_data['total_calories'])
+
+    # 2. Loop records to gather timestamp timelines and heart rate metrics safely
     for record in fit_file.get_messages('record'):
         data_dict = {data.name: data.value for data in record}
         
         if 'timestamp' in data_dict and data_dict['timestamp'] is not None:
             timestamps.append(data_dict['timestamp'] - tz_offset)
         
-        current_alt = data_dict.get('enhanced_altitude') or data_dict.get('altitude')
-        if current_alt is not None:
-            current_alt = float(current_alt)
-            if last_altitude is not None and current_alt > last_altitude:
-                total_ascent_meters += (current_alt - last_altitude)
-            last_altitude = current_alt
+        # --- THE NOISY ALTITUDE ACCUMULATION IS COMPLETELY REMOVED FROM HERE ---
         
-        if 'distance' in data_dict and data_dict['distance'] is not None:
+        if total_distance_meters == 0.0 and 'distance' in data_dict and data_dict['distance'] is not None:
             total_distance_meters = float(data_dict['distance'])
-        if 'calories' in data_dict and data_dict['calories'] is not None:
+        if total_calories is None and 'calories' in data_dict and data_dict['calories'] is not None:
             total_calories = int(data_dict['calories'])
         if 'heart_rate' in data_dict and data_dict['heart_rate'] is not None:
             heart_rates.append(int(data_dict['heart_rate']))
 
+
+
+
+
+
+
+
+
+    #### 2. Loop lap messages to extract specific mile splits
+    ###mile_splits = []
+    ###lap_counter = 1
+    ###
+    ###for lap in fit_file.get_messages('lap'):
+    ###    lap_data = {data.name: data.value for data in lap}
+    ###    lap_dist_meters = lap_data.get('total_distance') or 0.0
+    ###    lap_secs = lap_data.get('total_timer_time') or lap_data.get('total_elapsed_time') or 0.0
+    ###    
+    ###    if lap_dist_meters > 0.05 and lap_secs > 0:
+    ###        lap_miles = lap_dist_meters * 0.000621371
+    ###        lap_min_int = int(lap_secs // 60)
+    ###        lap_sec_int = int(lap_secs % 60)
+    ###        
+    ###        lap_pace_raw = (lap_secs / 60.0) / lap_miles if lap_miles > 0 else 0.0
+    ###        pace_min = int(lap_pace_raw)
+    ###        pace_sec = int((lap_pace_raw - pace_min) * 60)
+    ###        
+    ###        mile_splits.append({
+    ###            "split_num": lap_counter,
+    ###            "distance_mi": round(lap_miles, 2),
+    ###            "time": f"{lap_min_int:02d}:{lap_sec_int:02d}",
+    ###            "pace": f"{pace_min}:{pace_sec:02d}"
+    ###        })
+    ###        lap_counter += 1
     # 2. Loop lap messages to extract specific mile splits
     mile_splits = []
     lap_counter = 1
@@ -151,12 +224,20 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
         
         if lap_dist_meters > 0.05 and lap_secs > 0:
             lap_miles = lap_dist_meters * 0.000621371
-            lap_min_int = int(lap_secs // 60)
-            lap_sec_int = int(lap_secs % 60)
+            
+            # --- FIX #1: ROUND TO THE NEAREST WHOLE SECOND TO PREVENT TRUNCATION ---
+            rounded_lap_secs = int(round(lap_secs))
+            lap_min_int = rounded_lap_secs // 60
+            lap_sec_int = rounded_lap_secs % 60
             
             lap_pace_raw = (lap_secs / 60.0) / lap_miles if lap_miles > 0 else 0.0
             pace_min = int(lap_pace_raw)
-            pace_sec = int((lap_pace_raw - pace_min) * 60)
+            pace_sec = int(round((lap_pace_raw - pace_min) * 60))
+            
+            # Adjust if seconds round up to 60
+            if pace_sec >= 60:
+                pace_min += 1
+                pace_sec = 0
             
             mile_splits.append({
                 "split_num": lap_counter,
@@ -166,8 +247,52 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
             })
             lap_counter += 1
 
+    # =========================================================================
+    # ⏱ FIX #2: CONVERT OVERALL DECIMAL PACE TO CLOCK STRING (e.g., 7.18 -> "7:11")
+    # =========================================================================
+    avg_hr = sum(heart_rates) / len(heart_rates) if heart_rates else 0
+    total_miles_calculated = total_distance_meters * 0.000621371
+    
+    if total_miles_calculated > 0.05 and total_seconds > 0:
+        total_minutes_float = total_seconds / 60.0
+        overall_decimal_pace = total_minutes_float / total_miles_calculated
+        
+        # Split decimal into clear minutes and seconds clock components
+        overall_pace_min = int(overall_decimal_pace)
+        overall_pace_sec = int(round((overall_decimal_pace - overall_pace_min) * 60))
+        
+        if overall_pace_sec >= 60:
+            overall_pace_min += 1
+            overall_pace_sec = 0
+            
+        pace_display_string = f"{overall_pace_min}:{overall_pace_sec:02d}"
+    else:
+        pace_display_string = "00:00"
+
+
+
+
+
+
+
+
+
+
+
     # Ingestion metrics consolidation
-    total_seconds = (timestamps[-1] - timestamps[0]).total_seconds() if len(timestamps) >= 2 else 0
+    ###total_seconds = (timestamps[-1] - timestamps[0]).total_seconds() if len(timestamps) >= 2 else 0
+    # Extracts pre-filtered actual moving timer time computed directly by the Garmin device
+    total_seconds=0.0
+    for session in fit_file.get_messages('session'):
+        s_data = {d.name: d.value for d in session}
+        if s_data.get('total_timer_time') is not None:
+            total_seconds = float(s_data['total_timer_time'])
+
+    # Fallback wrapper remains active just in case the metadata message is missing
+    if total_seconds == 0.0 and len(timestamps) >= 2:
+        total_seconds = (timestamps[-1] - timestamps[0]).total_seconds()
+
+
     avg_hr = sum(heart_rates) / len(heart_rates) if heart_rates else 0
     total_miles_calculated = total_distance_meters * 0.000621371
     
@@ -189,7 +314,7 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
         "date": formatted_date,
         "duration_seconds": total_seconds,
         "elevation_gain_ft": round(total_ascent_meters * 3.28084, 1),
-        "pace": round(overall_decimal_pace, 2),
+        "pace":pace_display_string,
         "splits": mile_splits,
         "rolling_mile_pr": calculate_rolling_one_mile_pr(fit_file),
         "continuous_climb_pr": calculate_continuous_ascent_pr(fit_file),
@@ -336,9 +461,21 @@ def calculate_character_stats(history_logs: List[Dict[str, Any]]) -> Dict[str, A
         if not isinstance(run, dict):
             continue
             
-        # 1. Clean data fields safely
         miles = float(run.get('Distance (Miles)', run.get('distance_mi', 0.0)))
-        pace = float(run.get('pace', 11.0))
+        
+        raw_pace = run.get('pace', 11.0)
+        if isinstance(raw_pace, str) and ":" in raw_pace:
+            try:
+                parts = raw_pace.split(":")
+                pace = float(parts[0]) + (float(parts[1]) / 60.0)
+            except (ValueError, IndexError):
+                pace = 11.0
+        else:
+            try:
+                pace = float(raw_pace)
+            except (ValueError, TypeError):
+                pace = 11.0
+
         
         elev_str = str(run.get('Elevation (ft)', run.get('elevation_gain_ft', '0'))).replace('+', '').replace('ft', '').strip()
         elevation = float(elev_str) if elev_str else 0.0
@@ -512,9 +649,28 @@ def get_live_combat_stats(history_logs: List[Dict[str, Any]]) -> Dict[str, Any]:
         df = pd.DataFrame(records)
         df['Date'] = pd.to_datetime(df['Date'])
         
+        #df['Miles'] = pd.to_numeric(df['Distance (Miles)'], errors='coerce').fillna(0.0)
+        #df['Pace_Val'] = pd.to_numeric(df['pace'], errors='coerce').fillna(11.0)
         df['Miles'] = pd.to_numeric(df['Distance (Miles)'], errors='coerce').fillna(0.0)
-        df['Pace_Val'] = pd.to_numeric(df['pace'], errors='coerce').fillna(11.0)
-        
+
+        # --- NEW STRING INSULATED PACE PARSER ---
+        def parse_pace_to_float(p):
+            if isinstance(p, (int, float)):
+                return float(p)
+            if isinstance(p, str) and ":" in p:
+                try:
+                    parts = p.split(":")
+                    # Converts "7:11" into 7 + (11 / 60) = 7.1833
+                    return float(parts[0]) + (float(parts[1]) / 60.0)
+                except (ValueError, IndexError):
+                    return 11.0
+            try:
+                return float(p)
+            except (ValueError, TypeError):
+                return 11.0
+
+        df['Pace_Val'] = df['pace'].apply(parse_pace_to_float)
+
         elev_str = df['Elevation (ft)'].astype(str).str.replace('+', '', regex=False).str.replace('ft', '', regex=False).str.strip()
         df['Elev'] = pd.to_numeric(elev_str, errors='coerce').fillna(0.0)
         
@@ -529,6 +685,12 @@ def get_live_combat_stats(history_logs: List[Dict[str, Any]]) -> Dict[str, Any]:
         e_ratio = acute_miles / chronic_miles if chronic_miles > 0 else 1.0
         e_ratio = max(0.4, min(1.5, e_ratio))
         
+
+
+
+
+
+
         # 1. Aerobic Stamina Capacity: Scales baseline race endurance tank
         base_stamina = 100
         stamina_bonus = int((acute_miles * 1.0) * (e_ratio ** 2))

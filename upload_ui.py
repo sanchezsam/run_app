@@ -43,8 +43,26 @@ def compute_current_ratings(logs_array, current_stamina_rating=100, current_effi
     # Process only the single incoming run batch to calculate trend deltas
     for entry in logs_array[-1:]:  # Focus strictly on processing the latest ingestion log
         if isinstance(entry, dict):
+            #dist = float(entry.get("Distance (Miles)", entry.get("dist", 0.0)))
+            #pace = float(entry.get("pace", 0.0))
             dist = float(entry.get("Distance (Miles)", entry.get("dist", 0.0)))
-            pace = float(entry.get("pace", 0.0))
+
+            # --- SAFE FORMAT PARSER FOR DECIMAL FLOATS OR CLOCK STRINGS ---
+            raw_pace_val = entry.get("pace", 0.0)
+            if isinstance(raw_pace_val, (int, float)):
+                pace = float(raw_pace_val)
+            else:
+                try:
+                    if isinstance(raw_pace_val, str) and ":" in raw_pace_val:
+                        parts = raw_pace_val.strip().split(":")
+                        pace_min_part = int(parts[0])
+                        pace_sec_part = int(parts[1])
+                        pace = float(pace_min_part + (pace_sec_part / 60.0))
+                    else:
+                        pace = float(raw_pace_val)
+                except (ValueError, TypeError, IndexError):
+                    pace = 11.0  # Safe recovery baseline pace
+
             
             ele = entry.get("Elevation (ft)", entry.get("ele", 0.0))
             if isinstance(ele, str):
@@ -325,7 +343,9 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
             
             with st.expander("🔍 View Staged Track Telemetry Breakdown Details", expanded=True):
                 for s in staged_sessions:
-                    st.markdown(f"📄 **{s['name']}** — `[{s['date']}]` — `{s['dist']:.2f} Mi` | Running Time: `{s['duration']}` | `{s['pace']:.2f} min/mi` Pace | `+{s['ele']} ft` Climbing")
+                    #st.markdown(f"📄 **{s['name']}** — `[{s['date']}]` — `{s['dist']:.2f} Mi` | Running Time: `{s['duration']}` | `{s['pace']:.2f} min/mi` Pace | `+{s['ele']} ft` Climbing")
+                    st.markdown(f"📄 **{s['name']}** — `[{s['date']}]` — `{s['dist']:.2f} Mi` | Running Time: `{s['duration']}` | `{s['pace']} min/mi` Pace | `+{s['ele']} ft` Climbing")
+
                     
                     if "splits" in s and s["splits"] is not None and len(s["splits"]) > 0:
                         with st.expander("⏱️ View Mile Splits Breakdown"):
@@ -369,12 +389,20 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      total_calories_ingested += session_kcal
          
                      raw_s_pace = s.get('pace', 0.0)
-                     if raw_s_pace is None or (isinstance(raw_s_pace, float) and (math.isnan(raw_s_pace) or raw_s_pace <= 0)):
-                         clean_pace_val = 0.0
+                     if raw_s_pace is None or raw_s_pace == "00:00" or (isinstance(raw_s_pace, float) and (math.isnan(raw_s_pace) or raw_s_pace <= 0)):
+                         clean_pace_val = "00:00"
                          pace_text = "—"
+                     elif isinstance(raw_s_pace, str) and ":" in raw_s_pace:
+                         # --- FIX: IF IT IS ALREADY A CLOCK STRING, PRESERVE IT WITHOUT CASTING ---
+                         clean_pace_val = raw_s_pace
+                         pace_text = raw_s_pace
                      else:
-                         clean_pace_val = float(raw_s_pace)
-                         pace_text = f"{clean_pace_val:.2f}"
+                         try:
+                             clean_pace_val = float(raw_s_pace)
+                             pace_text = f"{clean_pace_val:.2f}"
+                         except (ValueError, TypeError):
+                             clean_pace_val = "11:00"
+                             pace_text = "11:00"
 
                      text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Pace: {pace_text} min/mi | Elevation Climbed: +{s.get('ele', 0)} ft | [REWARD] +{gold}g, +{xp} XP. | [CALORIE REWARDS] +{int(s.get('calories', 0))} kcal"
                      
@@ -611,19 +639,53 @@ def check_single_run_patches(new_run_log: dict) -> list:
     raw_ele_val = new_run_log.get("Elevation (ft)", new_run_log.get("ele", new_run_log.get("Elevation", "0")))
     run_elevation = clean_elevation_string(str(raw_ele_val))
 
+    ##raw_pace_val = new_run_log.get("pace", 0.0)
+    ##if raw_pace_val is None or (isinstance(raw_pace_val, float) and (math.isnan(raw_pace_val) or raw_pace_val <= 0)):
+    ##    run_pace_seconds = None
+    ##    avg_pace_str = "00:00"
+    ##else:            
+    ##    pace_float = float(raw_pace_val)
+    ##    avg_min = int(pace_float)
+    ##    avg_sec = int(round((pace_float - avg_min) * 100))
+    ##    if avg_sec >= 60:
+    ##        avg_sec = min(59, avg_sec)
     raw_pace_val = new_run_log.get("pace", 0.0)
-    if raw_pace_val is None or (isinstance(raw_pace_val, float) and (math.isnan(raw_pace_val) or raw_pace_val <= 0)):
-        run_pace_seconds = None
-        avg_pace_str = "00:00"
-    else:            
-        pace_float = float(raw_pace_val)
-        avg_min = int(pace_float)
-        avg_sec = int(round((pace_float - avg_min) * 100))
-        if avg_sec >= 60:
-            avg_sec = min(59, avg_sec)
+    
+    # Initialize baseline defaults
+    run_pace_seconds = 0
+    avg_pace_str = "00:00"
+    
+    if raw_pace_val and raw_pace_val != "00:00":
+        if isinstance(raw_pace_val, str) and ":" in raw_pace_val:
+            try:
+                # Cleanly decode the "MM:SS" clock string back into integer components
+                parts = raw_pace_val.strip().split(":")
+                avg_min = int(parts[0])
+                avg_sec = int(parts[1])
+                
+                # Compute total duration in seconds for badge criteria limits
+                run_pace_seconds = (avg_min * 60) + avg_sec
+                avg_pace_str = f"{avg_min}:{avg_sec:02d}"
+            except (ValueError, TypeError, IndexError):    
+                run_pace_seconds = 660  # 11:00 min/mi backup baseline
+                avg_pace_str = "11:00"
+        else:
+            try:     
+                # Secure fallback processing if pace is passed down as a raw numeric float
+                pace_float = float(raw_pace_val)
+                if not math.isnan(pace_float) and pace_float > 0:
+                    avg_min = int(pace_float)
+                    avg_sec = int(round((pace_float - avg_min) * 60))
+                    if avg_sec >= 60:
+                        avg_min += 1
+                        avg_sec = 0
+                    run_pace_seconds = (avg_min * 60) + avg_sec
+                    avg_pace_str = f"{avg_min}:{avg_sec:02d}"
+            except (ValueError, TypeError):
+                run_pace_seconds = 660
+                avg_pace_str = "11:00"
             
-        run_pace_seconds = (avg_min * 60) + avg_sec
-        avg_pace_str = f"{avg_min:02d}:{avg_sec:02d}"
+        # --- THE REDUNDANT CRASHING REASSIGNMENT LINES HAVE BEEN REMOVED FROM HERE ---
 
     raw_splits_array = new_run_log.get("splits", [])
     if isinstance(raw_splits_array, list):
@@ -637,6 +699,15 @@ def check_single_run_patches(new_run_log: dict) -> list:
         final_kick_percent = calculate_final_kick(avg_pace_str, final_mile_str)
     else:
         final_kick_percent = 0.0
+
+
+
+
+
+
+
+
+
         
     split_variance = calculate_split_variance(pace_splits_list, run_distance) if pace_splits_list else 0.0
             
@@ -704,7 +775,19 @@ def process_and_award_metrics(new_run_log: dict):
     m_data = profile["final_metric_data"]
     
     run_distance = float(new_run_log.get("Distance (Miles)", 0.0))
-    run_pace_seconds = decimal_pace_to_seconds(new_run_log.get("pace", 0.0))
+    # --- FIX: SAFELY RESOLVE CLOCK STRINGS OR FLOATS INTO TOTAL SECONDS ---
+    raw_pace = new_run_log.get("pace", 0.0)
+    if isinstance(raw_pace, str) and ":" in raw_pace:
+        try:
+            parts = raw_pace.strip().split(":")
+            run_pace_seconds = (int(parts[0]) * 60) + int(parts[1])
+        except (ValueError, IndexError):
+            run_pace_seconds = 660  # Safe 11:00 min/mi fallback
+    else:
+        try:
+            run_pace_seconds = decimal_pace_to_seconds(float(raw_pace))
+        except (ValueError, TypeError):
+            run_pace_seconds = 660
     run_elevation = clean_elevation_string(str(new_run_log.get("Elevation (ft)", "0")))
     
     run_patches = check_single_run_patches(new_run_log.copy())
@@ -783,3 +866,16 @@ def clean_elevation_string(elev_str: str) -> int:
     except (ValueError, AttributeError):
         return 0
 
+def safe_pace_to_decimal(pace_val) -> float:
+    """Converts either a clock string 'MM:SS' or a float into a decimal minute float."""
+    if isinstance(pace_val, (int, float)):
+        return float(pace_val)
+    try:
+        if isinstance(pace_val, str) and ":" in pace_val:
+            parts = pace_val.strip().split(":")
+            minutes = int(parts[0])
+            seconds = int(parts[1])
+            return float(minutes + (seconds / 60.0))
+        return float(pace_val)
+    except (ValueError, TypeError, IndexError):
+        return 11.0 # Safe baseline fallback pace
