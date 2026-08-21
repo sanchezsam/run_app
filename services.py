@@ -188,32 +188,7 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
 
 
 
-    #### 2. Loop lap messages to extract specific mile splits
-    ###mile_splits = []
-    ###lap_counter = 1
-    ###
-    ###for lap in fit_file.get_messages('lap'):
-    ###    lap_data = {data.name: data.value for data in lap}
-    ###    lap_dist_meters = lap_data.get('total_distance') or 0.0
-    ###    lap_secs = lap_data.get('total_timer_time') or lap_data.get('total_elapsed_time') or 0.0
-    ###    
-    ###    if lap_dist_meters > 0.05 and lap_secs > 0:
-    ###        lap_miles = lap_dist_meters * 0.000621371
-    ###        lap_min_int = int(lap_secs // 60)
-    ###        lap_sec_int = int(lap_secs % 60)
-    ###        
-    ###        lap_pace_raw = (lap_secs / 60.0) / lap_miles if lap_miles > 0 else 0.0
-    ###        pace_min = int(lap_pace_raw)
-    ###        pace_sec = int((lap_pace_raw - pace_min) * 60)
-    ###        
-    ###        mile_splits.append({
-    ###            "split_num": lap_counter,
-    ###            "distance_mi": round(lap_miles, 2),
-    ###            "time": f"{lap_min_int:02d}:{lap_sec_int:02d}",
-    ###            "pace": f"{pace_min}:{pace_sec:02d}"
-    ###        })
-    ###        lap_counter += 1
-    # 2. Loop lap messages to extract specific mile splits
+    # 2. Loop lap messages to extract specific mile splits with heart rate
     mile_splits = []
     lap_counter = 1
     
@@ -222,10 +197,13 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
         lap_dist_meters = lap_data.get('total_distance') or 0.0
         lap_secs = lap_data.get('total_timer_time') or lap_data.get('total_elapsed_time') or 0.0
         
+        # Extract lap heart rate metrics from the Garmin file
+        lap_avg_hr = lap_data.get('avg_heart_rate')
+        lap_max_hr = lap_data.get('max_heart_rate')
+        
         if lap_dist_meters > 0.05 and lap_secs > 0:
             lap_miles = lap_dist_meters * 0.000621371
             
-            # --- FIX #1: ROUND TO THE NEAREST WHOLE SECOND TO PREVENT TRUNCATION ---
             rounded_lap_secs = int(round(lap_secs))
             lap_min_int = rounded_lap_secs // 60
             lap_sec_int = rounded_lap_secs % 60
@@ -234,7 +212,6 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
             pace_min = int(lap_pace_raw)
             pace_sec = int(round((lap_pace_raw - pace_min) * 60))
             
-            # Adjust if seconds round up to 60
             if pace_sec >= 60:
                 pace_min += 1
                 pace_sec = 0
@@ -243,9 +220,14 @@ def parse_garmin_fit(file_bytes) -> Dict[str, Any]:
                 "split_num": lap_counter,
                 "distance_mi": round(lap_miles, 2),
                 "time": f"{lap_min_int:02d}:{lap_sec_int:02d}",
-                "pace": f"{pace_min}:{pace_sec:02d}"
+                "pace": f"{pace_min}:{pace_sec:02d}",
+                # Add them to the split dictionary here:
+                "avg_heart_rate": int(lap_avg_hr) if lap_avg_hr else None,
+                "max_heart_rate": int(lap_max_hr) if lap_max_hr else None
             })
             lap_counter += 1
+
+
 
     # =========================================================================
     # ⏱ FIX #2: CONVERT OVERALL DECIMAL PACE TO CLOCK STRING (e.g., 7.18 -> "7:11")

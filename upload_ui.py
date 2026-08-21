@@ -350,7 +350,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                     if "splits" in s and s["splits"] is not None and len(s["splits"]) > 0:
                         with st.expander("⏱️ View Mile Splits Breakdown"):
                             df_splits = pd.DataFrame(s["splits"])
-                            df_splits.columns = ["Split #", "Distance (Mi)", "Split Time", "Pace (/mi)"]
+                            df_splits.columns = ["Split #", "Distance (Mi)", "Split Time", "Pace (/mi)", "Avg HR (bpm)", "Max HR (bpm)"]
+
                             st.dataframe(df_splits, use_container_width=True, hide_index=True)
         
         st.markdown('')
@@ -634,27 +635,13 @@ def check_single_run_patches(new_run_log: dict) -> list:
     defined in metrics_config.py. Returns a list of earned patch dictionaries.
     """          
     earned_patches = []
-                 
     run_distance = float(new_run_log.get("Distance (Miles)", new_run_log.get("dist", 0.0)))
     raw_ele_val = new_run_log.get("Elevation (ft)", new_run_log.get("ele", new_run_log.get("Elevation", "0")))
     run_elevation = clean_elevation_string(str(raw_ele_val))
-
-    ##raw_pace_val = new_run_log.get("pace", 0.0)
-    ##if raw_pace_val is None or (isinstance(raw_pace_val, float) and (math.isnan(raw_pace_val) or raw_pace_val <= 0)):
-    ##    run_pace_seconds = None
-    ##    avg_pace_str = "00:00"
-    ##else:            
-    ##    pace_float = float(raw_pace_val)
-    ##    avg_min = int(pace_float)
-    ##    avg_sec = int(round((pace_float - avg_min) * 100))
-    ##    if avg_sec >= 60:
-    ##        avg_sec = min(59, avg_sec)
     raw_pace_val = new_run_log.get("pace", 0.0)
-    
     # Initialize baseline defaults
     run_pace_seconds = 0
     avg_pace_str = "00:00"
-    
     if raw_pace_val and raw_pace_val != "00:00":
         if isinstance(raw_pace_val, str) and ":" in raw_pace_val:
             try:
@@ -662,7 +649,6 @@ def check_single_run_patches(new_run_log: dict) -> list:
                 parts = raw_pace_val.strip().split(":")
                 avg_min = int(parts[0])
                 avg_sec = int(parts[1])
-                
                 # Compute total duration in seconds for badge criteria limits
                 run_pace_seconds = (avg_min * 60) + avg_sec
                 avg_pace_str = f"{avg_min}:{avg_sec:02d}"
@@ -684,9 +670,6 @@ def check_single_run_patches(new_run_log: dict) -> list:
             except (ValueError, TypeError):
                 run_pace_seconds = 660
                 avg_pace_str = "11:00"
-            
-        # --- THE REDUNDANT CRASHING REASSIGNMENT LINES HAVE BEEN REMOVED FROM HERE ---
-
     raw_splits_array = new_run_log.get("splits", [])
     if isinstance(raw_splits_array, list):
         pace_splits_list = [item.get("pace", "") for item in raw_splits_array if isinstance(item, dict) and "pace" in item]
@@ -699,18 +682,7 @@ def check_single_run_patches(new_run_log: dict) -> list:
         final_kick_percent = calculate_final_kick(avg_pace_str, final_mile_str)
     else:
         final_kick_percent = 0.0
-
-
-
-
-
-
-
-
-
-        
     split_variance = calculate_split_variance(pace_splits_list, run_distance) if pace_splits_list else 0.0
-            
     compiled_run_metrics = {
         "average_pace_seconds": run_pace_seconds,
         "total_elevation_gain_ft": run_elevation,
@@ -735,7 +707,6 @@ def check_single_run_patches(new_run_log: dict) -> list:
         for tier in config["tiers"]:
             if "min_val" not in tier or "max_val" not in tier:
                 continue
-
             min_bound = float(tier["min_val"])
             max_bound = float(tier["max_val"])
             
@@ -751,7 +722,6 @@ def check_single_run_patches(new_run_log: dict) -> list:
                         "pillar": pillar_id, "id": tier["id"], "name": tier["name"], "icon": tier["icon"]
                     })
                     break
-                    
     return earned_patches
 
 def process_and_award_metrics(new_run_log: dict):
@@ -865,6 +835,35 @@ def clean_elevation_string(elev_str: str) -> int:
         return int(float(cleaned))
     except (ValueError, AttributeError):
         return 0
+
+
+# =========================================================================
+# 🎛️ HEART RATE ZONE STYLING UTILITY
+# =========================================================================
+
+def get_hr_zone_style(avg_hr: int) -> tuple:
+    """
+    Determines the background color, zone label, and text contrast color 
+    based on traditional running intensity heart rate zones.
+    """
+    if not avg_hr or avg_hr <= 0:
+        return "#4A5568", "No Data", "#FFFFFF"
+        
+    # Standard zones based on typical performance athlete thresholds (e.g., Max HR ~190)
+    if avg_hr < 115:
+        return "#A0AEC0", "Zone 1 (Recovery)", "#1A202C"
+    elif avg_hr < 135:
+        return "#38A169", "Zone 2 (Aerobic)", "#FFFFFF"
+    elif avg_hr < 155:
+        return "#ECC94B", "Zone 3 (Tempo)", "#1A202C"
+    elif avg_hr < 175:
+        return "#ED8936", "Zone 4 (Threshold)", "#FFFFFF"
+    else:
+        return "#E53E3E", "Zone 5 (Anaerobic)", "#FFFFFF"
+
+# =========================================================================
+# ⚙️ SAFETY TELEMETRY CONVERTERS
+# =========================================================================
 
 def safe_pace_to_decimal(pace_val) -> float:
     """Converts either a clock string 'MM:SS' or a float into a decimal minute float."""

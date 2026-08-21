@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 from metrics_config import FINAL_METRIC_CONFIG
+from upload_ui import get_hr_zone_style
+
 
 
 
@@ -1875,7 +1877,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                         splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
                         splits_df['Pace (Minutes)'] = splits_df['pace'].apply(pace_str_to_minutes)
                                                 
-                        st.caption(f"⏱️  Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)") 
+                        st.caption(f"⏱️   Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)") 
                         st.bar_chart(data=splits_df, x='Split Mile', y='Pace (Minutes)', use_container_width=True)
 
                     # Metric visualization metrics blocks (Moved inside loop)
@@ -1883,6 +1885,41 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                     st.metric(f"Activity #{run_idx + 1} Duration", matched_run.get('Duration', 'N/A'))
                     if run_elevation > 0:
                         st.metric(f"Activity #{run_idx + 1} Elevation Gain", f"{run_elevation:,.0f} ft") 
+                    
+                    # ------------------------------------------------------------------
+                    # 💓 NEW ADDITION: DYNAMIC MAX HEART RATE INDICATOR
+                    # ------------------------------------------------------------------
+                    max_hr_val = matched_run.get("max_heart_rate")
+                    splits_list = matched_run.get("splits", [])
+                    
+                    # If top-level max HR isn't populated, scan nested split lap metadata dynamically
+                    if not max_hr_val and isinstance(splits_list, list) and splits_list:
+                        valid_lap_maxes = [
+                            int(item["max_heart_rate"]) 
+                            for item in splits_list 
+                            if isinstance(item, dict) and item.get("max_heart_rate")
+                        ]
+                        if valid_lap_maxes:
+                            max_hr_val = max(valid_lap_maxes)
+
+                    if max_hr_val:
+                        try:
+                            # Reuses the exact function definition from upload_ui.py
+                            from upload_ui import get_hr_zone_style
+                            bg_color, zone_lbl, text_color = get_hr_zone_style(int(max_hr_val))
+                            
+                            hr_html = (
+                                f'<div style="background-color:{bg_color}; color:{text_color}; '
+                                f'padding:6px 12px; border-radius:8px; font-weight:bold; '
+                                f'font-size:14px; display:inline-block; margin-top:8px; margin-bottom:12px; '
+                                f'border: 1px solid rgba(0,0,0,0.1);">'
+                                f'💓 Peak Max HR: {max_hr_val} bpm — {zone_lbl}'
+                                f'</div>'
+                            )
+                            st.markdown(hr_html, unsafe_allow_html=True)
+                        except Exception:
+                            # Safe local fallback if an import path bottleneck arises
+                            st.caption(f"💓 Peak Max HR: {max_hr_val} bpm")
                                             
                     # ------------------------------------------------------------------
                     # LAUNCH THE DYNAMIC LAP BREAKDOWN (Moved inside loop)
@@ -1912,6 +1949,83 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                     st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
             else:
                 st.caption("Select a run date inside the grid to load data.")
+
+###    with main_layout_col2:
+###        if st.session_state.selected_activity_date:
+###            active_date = st.session_state.selected_activity_date
+###            matched_runs = df[df['Formatted_Date'] == active_date]
+###
+###            if not matched_runs.empty:
+###                st.markdown(f"### 📊 Activity Log Summary: {active_date}")
+###
+###                # 🏁 Loop opens cleanly
+###                for run_idx, (_, run_row_raw) in enumerate(matched_runs.iterrows()):
+###                    matched_run = run_row_raw.to_dict()
+###
+###                    # Create a distinct visual header for multi-activity days
+###                    if len(matched_runs) > 1:
+###                        st.markdown(f"#### 🏃‍♂️ Workout Activity #{run_idx + 1}")
+###                                        
+###                    # Single Run Elevation parsing (Moved inside loop)
+###                    run_elevation = 0.0     
+###                    if elev_columns:        
+###                        raw_elev_val = matched_run.get(elev_columns[0], "0")
+###                        cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+###                        parsed_elev = pd.to_numeric(cleaned_run_elev, errors='coerce')
+###                        if pd.notna(parsed_elev): 
+###                            run_elevation = parsed_elev
+###                                        
+###                    if "splits" in matched_run and isinstance(matched_run["splits"], list) and len(matched_run["splits"]) > 0:
+###                        splits_df = pd.DataFrame(matched_run["splits"])
+###                        splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
+###                        splits_df['Pace (Minutes)'] = splits_df['pace'].apply(pace_str_to_minutes)
+###                                                
+###                        st.caption(f"⏱️  Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)") 
+###                        st.bar_chart(data=splits_df, x='Split Mile', y='Pace (Minutes)', use_container_width=True)
+###
+###                    # Metric visualization metrics blocks (Moved inside loop)
+###                    st.metric(f"Activity #{run_idx + 1} Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
+###                    st.metric(f"Activity #{run_idx + 1} Duration", matched_run.get('Duration', 'N/A'))
+###                    if run_elevation > 0:
+###                        st.metric(f"Activity #{run_idx + 1} Elevation Gain", f"{run_elevation:,.0f} ft") 
+###                                            
+###                    # ------------------------------------------------------------------
+###                    # LAUNCH THE DYNAMIC LAP BREAKDOWN (Moved inside loop)
+###                    # ------------------------------------------------------------------
+###                    try:                        
+###                        if matched_run:
+###                            show_run_lap_breakdown(matched_run, unit_abbr=unit_abbr)
+###                            # --------------------------------------------------------------
+###                            # LAUNCH THE INTENSITY OCTAGON VISUALIZATION
+###                            # --------------------------------------------------------------
+###                            render_zone_octagon_display(matched_run)
+###                            # --------------------------------------------------------------
+###                                        
+###                    except Exception:       
+###                        pass
+###
+###
+###                if 'pace' in matched_run:
+###                    flat_pace = pace_str_to_minutes(matched_run['pace'])
+###                    st.metric("Flat Overall Pace", f"{matched_run['pace']} min/{unit_abbr.lower()}")
+###                    
+###                    # Grade Adjusted Pace (GAP) calculation output
+###                    gap_pace = calculate_grade_adjusted_pace(flat_pace, run_elevation, matched_run['Display_Distance'])
+###                    st.metric("🔋 Grade-Adjusted Pace (GAP)", f"{minutes_to_pace_str(gap_pace)} min/{unit_abbr.lower()}", delta=f"{run_elevation:,.0f} ft climbing effort penalty" if run_elevation > 0 else None, delta_color="inverse")
+###
+###                if run_elevation > 0:
+###                    st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
+###            else:
+###                st.caption("Select a run date inside the grid to load data.")
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2729,21 +2843,21 @@ def render_dashboard_overview(player):
 def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
     """
     Extracts real mile-by-mile split records from the activity logs to generate
-    authentic color-gradient variations, cumulative charts, and GAP metrics.
+    authentic color-gradient variations, cumulative charts, and lap heart rates.
+    Renders an HTML matrix where both the Avg HR cells and the Speed Metric bars
+    automatically match the color signature of their target training intensity zones.
     """
     import pandas as pd
     import streamlit as st
     
     st.markdown("---")
-    st.markdown("#### ⏱️ 1-Mile Split & Performance Analysis")
-    
+    st.markdown("#### ⏱️  1-Mile Split & Performance Analysis")
+                        
     if not matched_run_dict:
         st.info("Select an active run day to view performance split curves.")
         return
 
-    # Extract real nested splits array list from your schema log records
     raw_splits = matched_run_dict.get("splits", [])
-    
     lap_records = []
     cumulative_seconds = 0.0
     
@@ -2752,7 +2866,6 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
         for idx, split_item in enumerate(raw_splits):
             lap_idx = split_item.get("split_num", idx + 1)
             
-            # Extract real split distance and pace values
             try:
                 lap_dist = float(split_item.get("distance", 1.0))
             except Exception:
@@ -2760,7 +2873,6 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
                 
             pace_str = str(split_item.get("pace", "08:00"))
             
-            # Parse pace time string to integer seconds
             try:
                 parts = pace_str.strip().split(':')
                 lap_pace_secs = int(parts[0]) * 60 + int(parts[1])
@@ -2770,22 +2882,11 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
             lap_seconds = lap_dist * lap_pace_secs
             cumulative_seconds += lap_seconds
             
-            # Grade Adjusted Pace (GAP) calculation output per specific mile hill profile
-            try:
-                split_elev = float(split_item.get("elevation_gain", 0.0))
-            except Exception:
-                split_elev = 0.0
-                
-            if split_elev > 0 and lap_dist > 0:
-                climb_ratio = split_elev / (lap_dist * 5280.0)
-                gap_factor = 1.0 + (climb_ratio * 6.0) # Localised hill exertion multiplier
-                gap_seconds = lap_pace_secs / gap_factor
-                gap_mins = int(gap_seconds) // 60
-                gap_secs = int(round(gap_seconds % 60))
-                if gap_secs == 60: gap_mins += 1; gap_secs = 0
-                gap_time_str = f"{gap_mins:02d}:{gap_secs:02d}"
-            else:
-                gap_time_str = pace_str
+            lap_avg_hr = split_item.get("avg_heart_rate")
+            hr_display_str = f"{int(lap_avg_hr)} bpm" if lap_avg_hr else "—"
+
+            lap_pace_mins = lap_pace_secs / 60.0
+            lap_speed = 60.0 / lap_pace_mins if lap_pace_mins > 0 else 0.0
 
             def format_cumulative_clock(total_secs):
                 total_secs_rounded = int(round(total_secs))
@@ -2798,10 +2899,10 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
                 "Split": f"Mile {lap_idx}",
                 "Distance": f"{lap_dist:.2f} {unit_abbr.lower()}",
                 "Pace": pace_str,
-                "GAP Pace (Flat-Eq)": gap_time_str,
+                "Avg HR (bpm)": hr_display_str,
                 "Total Time": format_cumulative_clock(cumulative_seconds),
                 "Cumulative Minutes": cumulative_seconds / 60.0,
-                "Raw Pace Mins": lap_pace_secs / 60.0
+                "Speed Metric": lap_speed
             })
             
     # CASE 2: Fallback to simulated intervals if activity contains no sub-split logs
@@ -2813,31 +2914,31 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
             parts = str(average_pace_str).strip().split(':')
             base_secs = int(parts[0]) * 60 + int(parts[1]) if len(parts) == 2 else 480.0
             
-            # Introduce a minor artificial variance curve so colors look authentic even for flat imports
             remaining_dist = run_distance
             sim_lap_idx = 1
             while remaining_dist > 0:
                 current_lap_dist = 1.0 if remaining_dist >= 1.0 else remaining_dist
                 remaining_dist -= current_lap_dist
                 
-                # Slight variation math simulation (makes fatigue curve drift realistically)
                 variance_multiplier = 0.96 + (sim_lap_idx * 0.02) if run_distance > 1 else 1.0
                 lap_pace_secs = base_secs * variance_multiplier
                 lap_seconds = current_lap_dist * lap_pace_secs
                 cumulative_seconds += lap_seconds
-                
                 split_mins = int(lap_pace_secs) // 60
                 split_secs = int(round(lap_pace_secs % 60))
                 if split_secs == 60: split_mins += 1; split_secs = 0
                 
+                split_mins_float = lap_pace_secs / 60.0
+                lap_speed = 60.0 / split_mins_float if split_mins_float > 0 else 0.0
+
                 lap_records.append({
                     "Split": f"Mile {sim_lap_idx}" if current_lap_dist == 1.0 else f"Mile {sim_lap_idx} (Final)",
                     "Distance": f"{current_lap_dist:.2f} {unit_abbr.lower()}",
                     "Pace": f"{split_mins:02d}:{split_secs:02d}",
-                    "GAP Pace (Flat-Eq)": f"{split_mins:02d}:{split_secs:02d}",
+                    "Avg HR (bpm)": "—",
                     "Total Time": f"{int(cumulative_seconds)//3600:02d}:{int(cumulative_seconds%3600)//60:02d}:{int(cumulative_seconds%60):02d}" if cumulative_seconds >= 3600 else f"{int(cumulative_seconds)//60:02d}:{int(cumulative_seconds%60):02d}",
                     "Cumulative Minutes": cumulative_seconds / 60.0,
-                    "Raw Pace Mins": lap_pace_secs / 60.0
+                    "Speed Metric": lap_speed
                 })
                 sim_lap_idx += 1
         except Exception:
@@ -2848,47 +2949,169 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
         return
 
     df_splits = pd.DataFrame(lap_records)
-    st.caption("🟢 Pace Highlights: Deeper green bars or blocks reflect faster, highly efficient split intervals")
-    
-    display_columns = ["Split", "Distance", "Pace", "GAP Pace (Flat-Eq)", "Total Time"]
+    st.caption("🟢 Performance Summary Matrix: Split data segments compiled with synchronized metabolic formatting handles")
 
-    try:
-        # Build a native column configuration map to inject real-time color gauges 
-        # and formatting properties onto your datagrid elements
-        col_configurations = {
-            "Split": st.column_config.TextColumn("Split", help="Interval Identifier Segment"),
-            "Distance": st.column_config.TextColumn("Distance"),
-            "Pace": st.column_config.TextColumn("Pace"),
-            "GAP Pace (Flat-Eq)": st.column_config.TextColumn("GAP Pace (Flat-Eq)"),
-            "Total Time": st.column_config.TextColumn("Total Time"),
-            
-            # This hidden numerical metrics loop injects an automatic, highly visible
-            # color progress bar gauge directly alongside your text metrics rows!
-            "Raw Pace Mins": st.column_config.ProgressColumn(
-                "Pace Velocity Scale",
-                help="Visual speed efficiency comparison profile (Shorter/Lower is Faster)",
-                format="%.2f min",
-                min_value=float(df_splits["Raw Pace Mins"].min() * 0.9),
-                max_value=float(df_splits["Raw Pace Mins"].max() * 1.1)
-            )
-        }
+    # =========================================================================
+    # 🎨 DYNAMIC STRUCTURED TABLE RENDERING VIA HTML GENERATOR (FIXED INDENTATION)
+    # =========================================================================
+    max_speed = df_splits["Speed Metric"].max() if not df_splits.empty else 1.0
+    speed_unit = "mph" if unit_abbr.lower() == "mi" else "km/h"
+    html_rows = []
+
+    for _, row in df_splits.iterrows():
+        hr_str = str(row["Avg HR (bpm)"])
+        bg_color = "#4A5568"
+        text_color = "#FFFFFF"
+        zone_lbl = "No Data"
         
-        # Display our clean, state-aware data visualization matrix
-        st.dataframe(
-            df_splits,
-            column_order=["Split", "Distance", "Pace", "GAP Pace (Flat-Eq)", "Total Time", "Raw Pace Mins"],
-            column_config=col_configurations,
-            use_container_width=True,
-            hide_index=True
-        )
-        
-    except Exception:
-        # Secure fallback block displaying plain configurations if column configurations glitch
-        st.dataframe(df_splits[display_columns], use_container_width=True, hide_index=True)
+        if hr_str and hr_str != "—" and "bpm" in hr_str:
+            try:
+                hr_val = int(hr_str.split()[0])
+                from upload_ui import get_hr_zone_style
+                bg_color, zone_lbl, text_color = get_hr_zone_style(hr_val)
+            except:
+                pass
+
+        speed_val = row["Speed Metric"]
+        speed_pct = (speed_val / max_speed) * 100 if max_speed > 0 else 0
+
+        # Constructed via explicit line continuation to guarantee ZERO leading spaces/tabs
+        bar_html = f'<div style="display: flex; align-items: center; gap: 8px; width: 100%;">' \
+                   f'<div style="flex-grow: 1; background-color: #E2E8F0; border-radius: 4px; height: 12px; overflow: hidden;">' \
+                   f'<div style="width: {speed_pct:.1f}%; background-color: {bg_color}; height: 100%; border-radius: 4px;"></div>' \
+                   f'</div>' \
+                   f'<span style="font-size: 12px; font-weight: bold; min-width: 55px; text-align: left; color: #4A5568;">{speed_val:.1f} {speed_unit}</span>' \
+                   f'</div>'
+
+        html_rows.append(f'<tr style="border-bottom: 1px solid #E2E8F0;">' \
+                         f'<td style="padding: 10px; border: 1px solid #E2E8F0; font-weight: bold; color: #2D3748;">{row["Split"]}</td>' \
+                         f'<td style="padding: 10px; border: 1px solid #E2E8F0; text-align: center; color: #4A5568;">{row["Distance"]}</td>' \
+                         f'<td style="padding: 10px; border: 1px solid #E2E8F0; text-align: center; font-family: monospace; font-weight: bold; color: #2D3748;">{row["Pace"]}</td>' \
+                         f'<td style="background-color: {bg_color}; color: {text_color}; font-weight: bold; padding: 10px; border: 1px solid #E2E8F0; text-align: center; font-size: 13px;">{hr_str}</td>' \
+                         f'<td style="padding: 10px; border: 1px solid #E2E8F0; text-align: center; font-family: monospace; color: #4A5568;">{row["Total Time"]}</td>' \
+                         f'<td style="padding: 10px; border: 1px solid #E2E8F0; width: 35%; vertical-align: middle;">{bar_html}</td>' \
+                         f'</tr>')
+
+    table_html = f'<table style="width: 100%; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; margin-top: 10px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">' \
+                 f'<thead>' \
+                 f'<tr style="background-color: #F7FAFC; border: 1px solid #E2E8F0; border-bottom: 2px solid #CBD5E0; color: #4A5568; font-size: 13px;">' \
+                 f'<th style="padding: 12px; text-align: left; border: 1px solid #E2E8F0;">Split</th>' \
+                 f'<th style="padding: 12px; text-align: center; border: 1px solid #E2E8F0;">Distance</th>' \
+                 f'<th style="padding: 12px; text-align: center; border: 1px solid #E2E8F0;">Pace</th>' \
+                 f'<th style="padding: 12px; text-align: center; border: 1px solid #E2E8F0;">Avg HR</th>' \
+                 f'<th style="padding: 12px; text-align: center; border: 1px solid #E2E8F0;">Total Time</th>' \
+                 f'<th style="padding: 12px; text-align: left; border: 1px solid #E2E8F0; width: 35%;">Speed Scale (Color-Mapped to Intensity Zone)</th>' \
+                 f'</tr>' \
+                 f'</thead>' \
+                 f'<tbody style="font-size: 14px;">' \
+                 f'{"".join(html_rows)}' \
+                 f'</tbody>' \
+                 f'</table>'
+    
+    # Render table onto layout without markdown indentation constraints
+    st.markdown(table_html, unsafe_allow_html=True)
 
     st.markdown("##### 📈 Cumulative Runtime Build-up (Minutes)")
     chart_data = df_splits[["Split", "Cumulative Minutes"]].copy().set_index("Split")
     st.line_chart(chart_data, use_container_width=True)
+
+# =========================================================================
+# 📊 MAIN SECOND COLUMN ACTIVITY DISPLAY RENDERING
+# =========================================================================
+
+def render_activity_column(df, elev_columns, unit_abbr):
+    """Renders column 2 dashboard container views matching your loop layout structure."""
+    if "selected_activity_date" not in st.session_state:
+        st.session_state.selected_activity_date = None
+
+    main_layout_col2 = st.container()
+    
+    with main_layout_col2:
+        if st.session_state.selected_activity_date:
+            active_date = st.session_state.selected_activity_date
+            matched_runs = df[df['Formatted_Date'] == active_date]
+
+            if not matched_runs.empty:
+                st.markdown(f"### 📊 Activity Log Summary: {active_date}")
+
+                for run_idx, (_, run_row_raw) in enumerate(matched_runs.iterrows()):
+                    matched_run = run_row_raw.to_dict()
+
+                    if len(matched_runs) > 1:
+                        st.markdown(f"#### 🏃‍♂️ Workout Activity #{run_idx + 1}")
+                                        
+                    run_elevation = 0.0     
+                    if elev_columns:        
+                        raw_elev_val = matched_run.get(elev_columns[0], "0")
+                        cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+                        parsed_elev = pd.to_numeric(cleaned_run_elev, errors='coerce')
+                        if pd.notna(parsed_elev): 
+                            run_elevation = parsed_elev
+                                        
+                    if "splits" in matched_run and isinstance(matched_run["splits"], list) and len(matched_run["splits"]) > 0:
+                        splits_df = pd.DataFrame(matched_run["splits"])
+                        splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
+                        splits_df['Pace (Minutes)'] = splits_df['pace'].apply(pace_str_to_minutes)
+                                                
+                        st.caption(f"⏱️   Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)") 
+                        st.bar_chart(data=splits_df, x='Split Mile', y='Pace (Minutes)', use_container_width=True)
+
+                    st.metric(f"Activity #{run_idx + 1} Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
+                    st.metric(f"Activity #{run_idx + 1} Duration", matched_run.get('Duration', 'N/A'))
+                    if run_elevation > 0:
+                        st.metric(f"Activity #{run_idx + 1} Elevation Gain", f"{run_elevation:,.0f} ft") 
+                    
+                    max_hr_val = matched_run.get("max_heart_rate")
+                    splits_list = matched_run.get("splits", [])
+                    
+                    if not max_hr_val and isinstance(splits_list, list) and splits_list:
+                        valid_lap_maxes = [
+                            int(item["max_heart_rate"]) 
+                            for item in splits_list 
+                            if isinstance(item, dict) and item.get("max_heart_rate")
+                        ]
+                        if valid_lap_maxes:
+                            max_hr_val = max(valid_lap_maxes)
+
+                    if max_hr_val:
+                        try:
+                            bg_color, zone_lbl, text_color = get_hr_zone_style(int(max_hr_val))
+                            hr_html = (
+                                f'<div style="background-color:{bg_color}; color:{text_color}; '
+                                f'padding:6px 12px; border-radius:8px; font-weight:bold; '
+                                f'font-size:14px; display:inline-block; margin-top:8px; margin-bottom:12px; '
+                                f'border: 1px solid rgba(0,0,0,0.1);">'
+                                f'💓 Peak Max HR: {max_hr_val} bpm — {zone_lbl}'
+                                f'</div>'
+                            )
+                            st.markdown(hr_html, unsafe_allow_html=True)
+                        except Exception:
+                            st.caption(f"💓 Peak Max HR: {max_hr_val} bpm")
+                                            
+                    try:                        
+                        if matched_run:
+                            show_run_lap_breakdown(matched_run, unit_abbr=unit_abbr)
+                            render_zone_octagon_display(matched_run)
+                                        
+                    except Exception:       
+                        pass
+
+                if 'pace' in matched_run:
+                    flat_pace = pace_str_to_minutes(matched_run['pace'])
+                    st.metric("Flat Overall Pace", f"{matched_run['pace']} min/{unit_abbr.lower()}")
+                    
+                    gap_pace = calculate_grade_adjusted_pace(flat_pace, run_elevation, matched_run['Display_Distance'])
+                    st.metric("🔋 Grade-Adjusted Pace (GAP)", f"{minutes_to_pace_str(gap_pace)} min/{unit_abbr.lower()}", delta=f"{run_elevation:,.0f} ft climbing effort penalty" if run_elevation > 0 else None, delta_color="inverse")
+
+                if run_elevation > 0:
+                    st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
+            else:
+                st.caption("Select a run date inside the grid to load data.")
+
+
+
+
+
 
 
 
