@@ -1,8 +1,8 @@
-python -c "
+python3 -c "
 import json
 with open('save_file.json', 'r', encoding='utf-8') as f: 
     data = json.load(f)
-data['gold'] = 250
+data['gold'] = 0
 data['calorie_bank_balance'] = 0
 data['calorie_bank_total_earned'] = 0
 if 'final_metric_data' in data:
