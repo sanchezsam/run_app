@@ -951,7 +951,8 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
     if "calendar_display_view" not in st.session_state:
         st.session_state.calendar_display_view = "📅 Grid View"
 
-    st.radio(label="Layout Perspective Selector Switch:", options=["📅 Grid View", "📊 Spreadsheet View", "📆 Full Year View"], key="calendar_display_view", horizontal=True)
+    #st.radio(label="Layout Perspective Selector Switch:", options=["📅 Grid View", "📊 Spreadsheet View", "📆 Full Year View"], key="calendar_display_view", horizontal=True)
+    st.radio(label="Layout Perspective Selector Switch:", options=["📅 Grid View", "📊 Spreadsheet View"], key="calendar_display_view", horizontal=True)
     st.write("")
 
     sel_col1, sel_col2 = st.columns(2)
@@ -1349,8 +1350,8 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
 
                                     if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
                                         badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
-                                        if badge_emojis.strip():
-                                            run_pace = f"{run_pace}   {badge_emojis}"
+                                        #if badge_emojis.strip():
+                                        #    run_pace = f"{run_pace}   {badge_emojis}"
                                     # =====================================================================
 
                                     day_elevation = 0.0
@@ -1579,6 +1580,7 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
     width: 100% !important;
 }
 
+
 /* 🏃 ACTIVE RUN ENTRIES: Targets the button and ALL inner text labels to stop column squishing */
 div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button,
 div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button * {
@@ -1592,10 +1594,16 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
     font-family: monospace !important;
     font-size: 13px !important;
     width: 100% !important;
+    max-width: 100% !important;                /* 🎯 ADD THIS: Prevents the horizontal row asset from overflowing window limits */
+    overflow: hidden !important;               /* 🎯 ADD THIS: Sharp-clips the hover color overlay strictly inside the visible row borders */
     box-shadow: none !important;
     outline: none !important;
     white-space: pre !important;               /* 🔥 CRITICAL: Overrides inner span styles to honor all padding spaces */
+    line-height: 16px !important;              /* 🔍 Locks text height */
+    box-sizing: border-box !important;          /* 🔍 Syncs layout math */
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
 }
+
 
 /* 🛠️ WIDGET BASE PROPERTIES: Defines row boundary lines and vertical padding heights */
 div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button {
@@ -1624,26 +1632,45 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
     outline: none !important;
 }
 
-/* 🧘 REST DAY & SUMMARY ENTRIES: Matches monospace alignment matrices while making the background lighter */
+  /* 🧘 REST DAY & SUMMARY ENTRIES: Matches monospace alignment matrices while making the background lighter */
 .spreadsheet-text-block {
-    background-color: rgba(255, 255, 255, 0.07) !important;   /* Noticeably lighter transparent tracking tint */
+    background: transparent !important;
     border-bottom: 1px solid #2D3748 !important;
     font-family: monospace !important;
     font-size: 13px !important;
+    line-height: 16px !important;              /* 🔒 Locks text height to match active run rows */
     padding: 12px 16px !important;
     width: 100% !important;
-    box-sizing: border-box !important;
+    box-sizing: border-box !important;          /* 🔒 Syncs layout math to match active run rows */
     display: block !important;
     white-space: pre !important;
 }
 
+  /* 🔍 ADD THESE EXACT LINES RIGHT HERE: */
+                    div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) {
+                        gap: 0px !important;
+                    }
+                    /* 🧱 VERTICAL GAP FIX FOR REST DAYS: Strips out Streamlit's default markdown block wrapper margins */
+                    div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stMarkdown"],
+                    div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stMarkdownContainer"] p {
+                        margin: 0px !important;
+                        padding: 0px !important;
+                    }
+
+                    /* 🔍 PASTE THE NEW TRANSITION GAP RULE RIGHT HERE: */
+                    div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stMarkdown"] + div[data-testid="stButton"],
+                    div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] + div[data-testid="stMarkdown"] {
+                        margin-top: 12px !important;
+                    }
                 </style>
                 """, unsafe_allow_html=True)
 
                 # Render Table Header Layout Block using high-contrast text sizing scales
 
+                st.markdown('<div style="font-family: monospace; font-size: 13px; font-weight: bold; color: #00ffcc; padding: 12px 16px; background-color: #1a1c23; border-bottom: 2px solid #00ffcc; display: block; width: 100%; box-sizing: border-box; white-space: pre; margin-bottom: 12px;">DATE        STATUS         DISTANCE       DURATION TIME       OVERALL PACE           CLIMBED ELEV</div>', unsafe_allow_html=True)
+
                 # Render Table Header Layout Block using high-contrast text sizing scales
-                st.markdown('<div style="font-family: monospace; font-size: 13px; font-weight: bold; color: #00ffcc; padding: 14px 16px; background-color: #1a1c23; border-bottom: 2px solid #00ffcc; display: block; width: 100%; box-sizing: border-box; white-space: pre;">DATE       | STATUS       | DISTANCE     | DURATION TIME     | OVERALL PACE         | CLIMBED ELEV</div>', unsafe_allow_html=True)
+                #st.markdown('<div style="font-family: monospace; font-size: 13px; font-weight: bold; color: #00ffcc; padding: 14px 16px; background-color: #1a1c23; border-bottom: 2px solid #00ffcc; display: block; width: 100%; box-sizing: border-box; white-space: pre;">DATE       | STATUS       | DISTANCE     | DURATION TIME     | OVERALL PACE         | CLIMBED ELEV</div>', unsafe_allow_html=True)
 
 
 
@@ -1728,8 +1755,8 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
 
                                     if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
                                         badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
-                                        if badge_emojis.strip():
-                                            run_pace = f"{run_pace}  {badge_emojis}"
+                                        #if badge_emojis.strip():
+                                        #    run_pace = f"{run_pace}  {badge_emojis}"
 
                                     day_elevation = 0.0
                                     if elev_cols:
@@ -1775,7 +1802,7 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                                     dur_display = run_time.strip()
 
 
-                                    # Compile padded character matrices to establish clear tracking headers alignment
+# Compile padded character matrices to establish clear tracking headers alignment
                                     d_col = f"{target_date_str:<10}"
                                     s_col = f"{'🏃 RUN':<12}"
                                     dist_col = f"{f'{run_dist:.2f} {unit_abbr.lower()}':<12}"
@@ -1783,8 +1810,11 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                                     p_col = f"{run_pace:<20}"
                                     e_col = f"+{day_elevation:,.0f} ft"
                                     
-                                    row_text = f"{d_col}  {s_col}  {dist_col}  {t_col}  {p_col}  {e_col}"
-                                    
+                                    # 🎯 Increased the trailing padding gap to 6 explicit spaces ("      ") 
+                                    # right before `{badge_emojis}` to create a clean, intentional separation 
+                                    # between your final elevation metric and your earned milestone badges.
+                                    row_text = f"{d_col}  {s_col}  {dist_col}  {t_col}  {p_col}  {e_col}      {badge_emojis}".strip()
+ 
                                     # Render native in-memory click trackers
                                     st.markdown(f'<div class="spreadsheet-row-container">', unsafe_allow_html=True)
                                     if st.button(row_text, key=f"ledger_run_select_click_{target_date_str}_{loop_idx}", use_container_width=True):
