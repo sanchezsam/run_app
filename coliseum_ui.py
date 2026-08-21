@@ -43,9 +43,11 @@ def compile_coliseum_stats(player):
                 elif temp_val <= 38.0:
                     climate_exposure["Cold"] += 1
                     
-        # 2. Parse Arena Circuit Outcomes
-        if "Track Match" in log_str:
-            is_win = "Victory:" in log_str
+                       # 2. Parse Arena Circuit Outcomes
+        # 🎯 BUG FIX: Changed loose "Track Match" check to the exact unique prefix
+        # generated exclusively by Coliseum victories and defeats.
+        if "🏁 Track Match Victory:" in log_str or "🏁 Track Match Defeat:" in log_str:
+            is_win = "Victory:" in log_str or "🏁 Track Match Victory:" in log_str
             
             # Extract Boss Name
             detected_boss = None
@@ -53,7 +55,7 @@ def compile_coliseum_stats(player):
                 if b_name in log_str:
                     detected_boss = b_name
                     break
-            
+                        
             # Extract Course Track Name
             detected_course = None
             for c_name in course_catalog.keys():
@@ -72,7 +74,7 @@ def compile_coliseum_stats(player):
                     
             if detected_course:
                 course_stats[detected_course]["raced_count"] += 1
-                
+ 
     return boss_stats, course_stats, climate_exposure
 
 
@@ -206,15 +208,26 @@ def render_coliseum(player, FILE_PATH):
         player.boss_levels = {}
         
     # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
+
+    # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
     raw_history = getattr(player, 'history_logs', [])
-    character_stats = services.calculate_character_stats(raw_history)
+
+    # 🎯 OVERRIDE SETTING: Pull levels straight from memory keys instead of services
+    p_fuel = int(st.session_state.get("global_endurance", 7))
+    p_nitro = int(st.session_state.get("global_speed", 8))
+    p_torque = int(st.session_state.get("global_elevation", 9))
+    active_fatigue = int(st.session_state.get("profile", {}).get("final_metric_data", {}).get("fatigue", 0))
     lifetime_miles = float(player.__dict__.get("final_metric_data", {}).get("lifetime_odometer_miles", 0.0))
-    
-    # Extract calculated performance dimensions
-    p_fuel = int(character_stats.get("endurance_level", 1))
-    p_nitro = int(character_stats.get("speed_level", 1))
-    p_torque = int(character_stats.get("strength_level", 1))
-    active_fatigue = int(character_stats.get("fatigue", 0))
+
+    # Re-initialize character_stats explicitly right here so check_is_unlocked can read it downstream!
+    character_stats = {
+        "level": max(1, min(9, int((p_fuel + p_nitro + p_torque) / 3))),
+        "endurance_level": p_fuel,
+        "speed_level": p_nitro,
+        "strength_level": p_torque,
+        "fatigue": active_fatigue
+    }
+
     
     # Compile deep match history records
     boss_stats, course_stats, climate_exposure = compile_coliseum_stats(player)
@@ -255,38 +268,40 @@ def render_coliseum(player, FILE_PATH):
         "🗺️ Track Selection Manual"
     ])
     
-    # =========================================================================
+        # =========================================================================
     # TAB 1: CHAMPIONSHIP ARENA STAGING
     # =========================================================================
     with tab_arena:
         st.markdown("### 🏆 Arena Cockpit Pre-Race Deployment")
         st.caption("Select your target challenge components to calculate win forecasts and calibrate execution vectors.")
         st.write("")
-        
+
         col_sel1, col_sel2 = st.columns(2)
         with col_sel1:
             selected_boss = st.selectbox("👿 Select Target Pacer Challenger:", options=list(boss_catalog.keys()))
         with col_sel2:
             # Append distance helper labels cleanly into selection menus
             course_options = [f"{k} [{v['dist']:.2f} Mi]" for k, v in course_catalog.items()]
-            selected_course_raw = st.selectbox("🗺️ Select Competition Circuit Track:", options=course_options)
+            selected_course_raw = st.selectbox("🗺️  Select Competition Circuit Track:", options=course_options)
             parsed_course_key = selected_course_raw.split(" [")[0]
-            
+
         boss_specs = boss_catalog[selected_boss]
         course_specs = course_catalog[parsed_course_key]
         curr_level = int(player.boss_levels.get(selected_boss, 1))
-        
+
         # Scale boss attributes dynamically based on their current clear difficulty level
         b_fuel = min(9, boss_specs['fuel'] + (curr_level - 1))
         b_nitro = min(9, boss_specs['nitro'] + (curr_level - 1))
         b_torque = min(9, boss_specs['torque'] + (curr_level - 1))
-        
-        # Evaluate eligibility requirements
+
+        # 🎯 TRACKING UPGRADE FIXED: Replaced old character_stats object mapping values
+        # The engine now evaluates your true real-world training level variables
+        # (Endurance 7, Speed 8, Climbing 9) stored directly inside the session dictionary!
         boss_unlocked, boss_errs = check_is_unlocked(boss_specs.get("unlock_criteria"), character_stats, lifetime_miles)
         course_unlocked, course_errs = check_is_unlocked(course_specs.get("unlock_criteria"), character_stats, lifetime_miles)
-        
+
         st.markdown("---")
-        
+
         # Scenario A: Blocked Content Rendering
         if not boss_unlocked or not course_unlocked:
             st.warning("### 🔒 TARGET SIMULATION SEGMENT LOCKED")
@@ -513,9 +528,14 @@ def render_coliseum(player, FILE_PATH):
                     player.boss_levels[selected_boss] = curr_level + 1
                     
                     # Accumulate localized file fatigue parameters
-                    new_fatigue = min(100, active_fatigue + 15 + stance_fatigue_penalty)
-                    services.save_fatigue_value(player, new_fatigue, FILE_PATH)
                     
+                    # Calculate and save fatigue inline directly to the player schema matrix
+                    new_fatigue = min(100, active_fatigue + 15 + stance_fatigue_penalty)
+                    if hasattr(player, 'final_metric_data'):
+                        player.final_metric_data['fatigue'] = new_fatigue
+                    elif isinstance(player.__dict__.get('final_metric_data'), dict):
+                        player.__dict__['final_metric_data']['fatigue'] = new_fatigue
+
                     # Check for rare home-circuit token awards
                     minted_tokens = evaluate_signature_tokens(player, selected_boss, parsed_course_key)
                     token_msg = f" | Unlocked Milestone Relics: {', '.join(minted_tokens)}" if minted_tokens else ""
@@ -543,8 +563,12 @@ def render_coliseum(player, FILE_PATH):
                     player.gold = getattr(player, 'gold', 0) - gold_lost
                     
                     # Defeat still adds minor muscle fatigue
+                    # Calculate and save defeat fatigue inline directly to the player schema matrix
                     new_fatigue = min(100, active_fatigue + 8)
-                    services.save_fatigue_value(player, new_fatigue, FILE_PATH)
+                    if hasattr(player, 'final_metric_data'):
+                        player.final_metric_data['fatigue'] = new_fatigue
+                    elif isinstance(player.__dict__.get('final_metric_data'), dict):
+                        player.__dict__['final_metric_data']['fatigue'] = new_fatigue
                     
                     log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
                     if not hasattr(player, 'history_logs'): 

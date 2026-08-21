@@ -57,7 +57,32 @@ def compute_historical_snapshot(history_logs, target_date):
             except Exception:
                 continue
             dist_val = float(log.get("Distance (Miles)", 0.0))
-            pace_val = float(log.get("pace", 999.0))
+            #pace_val = float(log.get("pace", 999.0))
+            # 🔍 REPLACE LINE 139: pace_val = float(log.get("pace", 999.0))
+            # With this robust parsing block to handle both raw numbers and "MM:SS" string formats safely:
+            pace_raw = log.get("pace", 999.0)
+            if isinstance(pace_raw, str) and ":" in pace_raw:
+                try:
+                    parts = pace_raw.strip().split(":")
+                    if len(parts) == 2:    # MM:SS format (e.g., "7:11")
+                        pace_val = float(parts[0]) + (float(parts[1]) / 60.0)
+                    elif len(parts) == 3:  # HH:MM:SS format
+                        pace_val = (float(parts[0]) * 60.0) + float(parts[1]) + (float(parts[2]) / 60.0)
+                    else:
+                        pace_val = 999.0
+                except ValueError:
+                    pace_val = 999.0
+            else:
+                try:
+                    pace_val = float(pace_raw) if pace_raw is not None else 999.0
+                except ValueError:
+                    pace_val = 999.0
+
+
+
+
+
+
             ele_str = str(log.get("Elevation (ft)", "0")).replace('+', '').replace('ft', '').strip()
             ele_val = float(ele_str) if ele_str else 0.0
         else:
@@ -136,7 +161,43 @@ def calculate_and_render_profile(player, FILE_PATH=None):
         if isinstance(log, dict):
             log_str = log.get("text_payload", str(log))
             dist_val = float(log.get("Distance (Miles)", 0.0))
-            pace_val = float(log.get("pace", 999.0))
+            #pace_val = float(log.get("pace", 999.0))
+
+
+            # 🔍 REPLACE LINE 139: pace_val = float(log.get("pace", 999.0))
+            # With this robust parsing block to handle both raw numbers and "MM:SS" string formats safely:
+            pace_raw = log.get("pace", 999.0)
+            if isinstance(pace_raw, str) and ":" in pace_raw:
+                try:
+                    parts = pace_raw.strip().split(":")
+                    if len(parts) == 2:    # MM:SS format (e.g., "7:11")
+                        pace_val = float(parts[0]) + (float(parts[1]) / 60.0)
+                    elif len(parts) == 3:  # HH:MM:SS format
+                        pace_val = (float(parts[0]) * 60.0) + float(parts[1]) + (float(parts[2]) / 60.0)
+                    else:
+                        pace_val = 999.0
+                except ValueError:
+                    pace_val = 999.0
+            else:
+                try:
+                    pace_val = float(pace_raw) if pace_raw is not None else 999.0
+                except ValueError:
+                    pace_val = 999.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             ele_str = str(log.get("Elevation (ft)", "0")).replace('+', '').replace('ft', '').strip()
             ele_val = float(ele_str) if ele_str else 0.0
             date_raw = log.get("Date", "")

@@ -35,27 +35,60 @@ def load_profile_state():
     Safely retrieves player progression stats and history metrics from the disk save file.
     Guarantees no data overwrites by automatically healing missing keys on boot.
     """
+    # 🎯 ABSOLUTE ZERO STARTER STATE MATRIX FIXED
+    # All baseline metrics, training logs, inventory indexes, and profile structures 
+    # have been set strictly to zero or blank parameters for a total database wipe!
     default_state = {
-        "name": "Racer 1", "level": 25, "total_xp": 8750, "running_level": 9,
-        "vo2_max": 64.2, "avg_heart_rate": 138, "resting_heart_rate": 45,
-        "lifetime_elevation_gain": 85000, "cadence_history": [],
-        "elevation_milestone_history": ["bighorn", "alpine_vert_challenge", "overdrive"],
-        "deep_rem_streak": 14, "stat_points": 0, "gold": 9500,
-        "endurance_level": 5, "pace_level": 5, "hill_climbing_level": 5, "gold_balance": 9500,
-        "inventory": ["Interceptor Spec-R", "Ghost Horizon Chassis", "Carbon Overlord V8"],
-        "equipped_gear": {"Interceptor Spec-R": 3, "Ghost Horizon Chassis": 2},
-        "registered_races": ["Berlin Olympiastadion Track", "Chamonix Ultra Trail"],
-        "boss_wins": 15, "fatigue": 0, "days_tracked": 365, "synced_garmin_activities": [],
-        "daily_miles": 520.4, "base_xp": 100, "exponent": 1.5, "last_distance": 26.2,
-        "last_pace": 6.15, "final_metric_data": {}, "stamina_xp": 3500, "agility_xp": 2800,
-        "power_xp": 3200, "boss_clears": 15, "boss_levels": [], "history_logs": [],
+        "name": "Racer 1", 
+        "level": 0,                     # 🏅 Zeroed
+        "total_xp": 0,                  # ✨ Zeroed
+        "running_level": 0,             # 🏃 Zeroed
+        "vo2_max": 0.0,                 # 🫁 Zeroed
+        "avg_heart_rate": 0, 
+        "resting_heart_rate": 0,        # 💓 Zeroed
+        "lifetime_elevation_gain": 0,   # ⛰️ Zeroed
+        "cadence_history": [],
+        "elevation_milestone_history": [], 
+        "deep_rem_streak": 0, 
+        "stat_points": 0, 
+        "gold": 0,                      # 💰 Zeroed
+        "endurance_level": 0,           # 🔋 Zeroed
+        "pace_level": 0,                # ⚡ Zeroed
+        "hill_climbing_level": 0,       # ⛰️ Zeroed
+        "gold_balance": 0,              # 💰 Zeroed
+        "inventory": [],                
+        "equipped_gear": {},
+        "registered_races": [],
+        "boss_wins": 0,                 # 🏁 Zeroed
+        "fatigue": 0, 
+        "days_tracked": 0, 
+        "synced_garmin_activities": [],
+        "daily_miles": 0.0,             # 📏 Zeroed
+        "base_xp": 0,                   # ✨ Zeroed
+        "exponent": 0.0,                # 📐 Zeroed
+        "last_distance": 0.0,
+        "last_pace": 0.0, 
+        "final_metric_data": {}, 
+        "stamina_xp": 0, 
+        "agility_xp": 0,
+        "power_xp": 0, 
+        "boss_clears": 0,               # 🏁 Zeroed
+        "boss_levels": {}, 
+        "history_logs": [],
+        
         # 🥞 Pantry Core Ledger persistent properties
-        "calorie_bank_balance": 5000, 
-        "calorie_bank_total_earned": 5000, 
+        "calorie_bank_balance": 0,      # 🍪 Zeroed
+        "calorie_bank_total_earned": 0, # 🍪 Zeroed
         "pantry_purchase_counts": {}, 
         "pantry_single_trophies": [], 
         "pantry_cuisine_trophies": [] 
     }
+    # 🧼 HARD REBOOT OVERRIDE:
+    # Detects and destroys sticky cached entries inside your active browser session tab
+    sticky_keys_to_wipe = ["profile", "global_endurance", "global_speed", "global_elevation"]
+    for state_key in sticky_keys_to_wipe:
+        if state_key in st.session_state:
+            del st.session_state[state_key]
 
     if not os.path.exists(FILE_PATH):
         with open(FILE_PATH, 'w', encoding='utf-8') as f:
@@ -91,10 +124,10 @@ st.session_state.account_created = True
 st.session_state.setup_complete = True
 
 if isinstance(st.session_state.profile, dict):
-    st.session_state.player_level = st.session_state.profile.get("level", 25)
-    st.session_state.player_gold = st.session_state.profile.get("gold", 9500)
-    st.session_state.player_xp = st.session_state.profile.get("total_xp", 8750)
-    st.session_state.calorie_bank_balance = st.session_state.profile.get("calorie_bank_balance", 5000)
+    st.session_state.player_level = st.session_state.profile.get("level", 0)
+    st.session_state.player_gold = st.session_state.profile.get("gold", 0)
+    st.session_state.player_xp = st.session_state.profile.get("total_xp", 0)
+    st.session_state.calorie_bank_balance = st.session_state.profile.get("calorie_bank_balance", 0)
     st.session_state.pantry_purchase_counts = st.session_state.profile.get("pantry_purchase_counts", {})
     st.session_state.pantry_single_trophies = st.session_state.profile.get("pantry_single_trophies", [])
     st.session_state.pantry_cuisine_trophies = st.session_state.profile.get("pantry_cuisine_trophies", [])
@@ -264,8 +297,12 @@ if player is not None and os.path.exists(FILE_PATH):
                 st.info("🦌 **Swift-Stride Deer**\n\n`Dist: Long Training Run`\n\n 🔋 *Endurance Class Unlocked*")
                 col_idx += 1
 
+    # 🎯 UPDATED HUD METRICS DISPLAY GRID FIXED
+    # All inline getattr defaults have been set to absolute zero baseline models.
+    # This guarantees that if a player object is read with blank or missing variables,
+    # the screen cleanly loads absolute zero metrics instead of stale fallback values!
     with hud_col1: st.metric('Active Level', f'{player.level}')
-    with hud_col2: st.metric('Gold Balance', f'{int(getattr(player, "gold", 50))} g')
+    with hud_col2: st.metric('Gold Balance', f'{int(getattr(player, "gold", 0))} g')  # 💰 Changed fallback from 50 to 0
     with hud_col3: st.metric('VO2 Max Baseline', f'{player.vo2_max:.1f}')
     with hud_col4: st.metric('Fatigue Accumulation', f'{int(getattr(player, "fatigue", 0))}/100')
     with hud_col5: st.metric('🏁 Checkered Flags', f'{getattr(player, "boss_clears", 0)} Wins')
