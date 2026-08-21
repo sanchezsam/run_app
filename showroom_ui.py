@@ -17,6 +17,8 @@ import personal_records_config as pr_cfg
 import pro_shop_config as shop_cfg
 import arena_tournaments_config as arena_cfg
 from showroom_engine import calculate_current_week_metrics,check_streak_defense_status,calculate_personal_records
+from dashboard_ui import show_run_lap_breakdown, render_zone_octagon_display
+
 
 # ⚙️ IMPORT Master Performance Registries and Threshold Structures
 from metrics_config import (
@@ -213,6 +215,44 @@ import streamlit as st
 import pandas as pd
 import datetime
 import metrics_config as cfg
+
+
+
+def parse_pace_to_float(pace_str):
+    """Safely converts a string pace format like '7:11/mi' into a float value."""
+    if not pace_str or ":" not in str(pace_str):
+        return 999.0
+    try:
+        clean_p = str(pace_str).split("/")[0].strip()
+        parts = clean_p.split(":")
+        return float(parts[0]) + (float(parts[1]) / 60.0)
+    except:
+        return 999.0
+
+def render_mile_splits_table(distance, avg_pace_str):
+    """Generates a clean, pipes-free monospace layout table of individual mile intervals."""
+    try:
+        total_miles = max(1, int(float(distance)))
+        st.markdown("<p style='font-family: monospace; font-size: 11px; color: #00ffcc; margin: 4px 0;'>📋 MILE-BY-MILE SPLITS MAP</p>", unsafe_allow_html=True)
+        
+        split_header = f"{'MILE':<8}{'SPLIT PACE':<12}{'CADENCE':<10}"
+        st.text(split_header)
+        st.markdown("<div style='border-bottom: 1px dashed #2D3748; margin-bottom: 4px;'></div>", unsafe_allow_html=True)
+        
+        for mile in range(1, total_miles + 1):
+            st.text(f"{f'Mile {mile}':<8}{avg_pace_str:<12}{'178 spm':<10}")
+    except:
+        st.caption("Splits details not available for this record.")
+
+
+
+
+
+
+
+
+
+
 
 #def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None):
 def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout_container=None, widget_id="default"):
@@ -440,78 +480,154 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
     # =========================================================================
     # 🛡️ VIEW PANEL: SINGLE-RUN PERFORMANCE PATCHES
     # =========================================================================
-    with patch_tab:
-        st.markdown("### 🛡 Single-Run Performance Patches")
-        st.caption("Earned by triggering specialized athletic criteria configurations during an individual training log session.")
-        patch_categories = FINAL_METRIC_CONFIG.get("single_run_patches", {})
-        raw_history = getattr(player, "history_logs", [])
-        raw_badges = getattr(player, "unlocked_badges", [])
-        if selected_season_year == "All Time":
-            history_logs = raw_history
-            badges_list = raw_badges
-        else:
-            # Assumes log entries or badges have a date string format like 'YYYY-MM-DD' 
-            # or contain the year string inside their ledger row metadata text
-            year_str = str(selected_season_year)
-            history_logs = [log for log in raw_history if year_str in str(log)]
-            badges_list = [badge for badge in raw_badges if year_str in str(badge)]
-        # -------------------------------------------------------------
-        
-        for cat_id, cat_meta in patch_categories.items():
-            st.markdown(f"#### {cat_meta['name']}")
-            tiers = cat_meta.get("tiers", [])
-            
-            # Formulate 3-column rows dynamically to display individual metrics
-            for i in range(0, len(tiers), 3):
-                row_slice = tiers[i:i+3]
-                cols = st.columns(3)
-                
-                for idx, tier in enumerate(row_slice):
-                    with cols[idx]:
-                        with st.container(border=True):
-                            unlocked_count = 0
-                            
-                            # Pass A: Scan explicitly tracked item entries inside the standard badges array
-                            for b in badges_list:
-                                b_str = str(b).lower()
-                                if (tier["id"].lower() in b_str or 
-                                    tier["name"].lower() in b_str or 
-                                    (tier.get("icon") and tier.get("icon") in str(b))):
-                                    unlocked_count += 1
-                                    
-                            # Pass B: Unconditional substring matching over the entire history log ledger lines
-                            for log in history_logs:
-                                log_str = str(log)
-                                # Check for name, config ID, or native emoji icon anywhere in the entry row text
-                                if (tier.get("icon") and tier.get("icon") in log_str) or \
-                                   (tier["id"].lower() in log_str.lower()) or \
-                                   (tier["name"].lower() in log_str.lower()):
-                                    unlocked_count += 1
-                                        
-                            is_unlocked = unlocked_count > 0
-                            
-                            grid_col1, grid_col2 = st.columns([1, 3.2])
-                            with grid_col1:
-                                render_showroom_asset(
-                                    img_path=tier.get("img_path"), 
-                                    fallback_emoji=tier.get("icon", "🛡️"), 
-                                    size_px=65
-                                )
-                            with grid_col2:
-                                if is_unlocked:
-                                    st.markdown(
-                                        f"**{tier['name']}** "
-                                        f'<span style="color:#2ecc71;font-weight:bold;margin-left:4px;">'
-                                        f"x{unlocked_count}</span>", 
-                                        unsafe_allow_html=True
-                                    )
+    # =============================================================================
+    # CODE BLOCK 1: STATE INITIALIZATION & SETUP
+    # =============================================================================
+    if "selected_patch_id" not in st.session_state:
+        st.session_state.selected_patch_id = None
+    if "selected_patch_name" not in st.session_state:
+        st.session_state.selected_patch_name = None
 
-                                    st.caption(f"{tier['icon']} Verified Clear Profile")
-                                    st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;">{tier["desc"]}</p>', unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f'<span style="opacity:0.4;font-weight:bold;">{tier["name"]}</span>', unsafe_allow_html=True)
-                                    st.caption("🔒 Locked Objective")
-                                    st.markdown(f'<p style="font-size:11px;color:gray;margin:0;">{tier["desc"]}</p>', unsafe_allow_html=True)
+    # Track distinct UI rendering contexts across function execution loops
+    current_w_id = locals().get("widget_id", "default_showroom")
+    # =============================================================================
+    # CODE BLOCK 2: DATA EXTRACTION & TIMELINE FILTERING
+    # =============================================================================
+    patch_categories = FINAL_METRIC_CONFIG.get("single_run_patches", {})
+    raw_history = getattr(player, "history_logs", [])
+    raw_badges = getattr(player, "unlocked_badges", [])
+    
+    # Safe fallback unit indicator mapping
+    unit_abbr = locals().get("unit_abbr", "mi")
+
+    # Filter arrays cleanly based on your calendar filter settings
+    if selected_season_year == "All Time":
+        history_logs = raw_history
+        badges_list = raw_badges
+    else:
+        year_str = str(selected_season_year)
+        history_logs = [log for log in raw_history if year_str in str(log)]
+        badges_list = [badge for badge in raw_badges if year_str in str(badge)]
+    # =============================================================================
+    # CODE BLOCK 3: SQUARE RESPONSIVE GRID LAYOUT & DUAL-CHUNK PANELS
+    # =============================================================================
+    with patch_tab:
+        # Split layout view panel generation rules
+        if st.session_state.selected_patch_id:
+            left_layout, right_layout = st.columns([2, 1.2])
+        else:
+            left_layout = st.container()
+            right_layout = None
+
+        # --- LEFT SIDE: Patches Visual Matrix Card Grid ---
+        with left_layout:
+            st.markdown("### 🛡 Single-Run Performance Patches")
+            st.caption("Earned by triggering specialized athletic criteria configurations.")
+            
+            for cat_id, cat_meta in patch_categories.items():
+                st.markdown(f"#### {cat_meta['name']}")
+                tiers = cat_meta.get("tiers", [])
+                
+                for i in range(0, len(tiers), 3):
+                    row_slice = tiers[i:i+3]
+                    cols = st.columns(3)
+                    
+                    for idx, tier in enumerate(row_slice):
+                        with cols[idx]:
+                            # Container structural border holds the items into square groupings
+                            with st.container(border=True):
+                                earning_activities = []
+                                for log in history_logs:
+                                    log_str = str(log).lower()
+                                    if (tier["id"].lower() in log_str) or (tier["name"].lower() in log_str):
+                                        earning_activities.append(log)
+                                        
+                                unlocked_count = len(earning_activities)
+                                is_unlocked = unlocked_count > 0
+                                
+                                grid_col1, grid_col2 = st.columns([1, 3.2])
+                                with grid_col1:
+                                    render_showroom_asset(
+                                        img_path=tier.get("img_path"), 
+                                        fallback_emoji=tier.get("icon", "🛡️"), 
+                                        size_px=65
+                                    )
+                                with grid_col2:
+                                    if is_unlocked:
+                                        st.markdown(f"**{tier['name']}** <span style='color:#2ecc71;font-weight:bold;'>x{unlocked_count}</span>", unsafe_allow_html=True)
+                                        st.caption(f"{tier['icon']} Verified Clear Profile")
+                                        st.markdown(f'<p style="font-size:11px;color:#808495;margin-bottom:8px;">{tier["desc"]}</p>', unsafe_allow_html=True)
+                                        
+                                        # FIXED: Removed use_container_width=True to lock width boundaries to static dimensions
+                                        btn_grid_key = f"btn_{tier['id']}_{selected_season_year}_{current_w_id}_{cat_id}_{i}_{idx}"
+                                        if st.button(f"👁️ View Runs", key=btn_grid_key):
+                                            st.session_state.selected_patch_id = tier['id']
+                                            st.session_state.selected_patch_name = tier['name']
+                                            st.rerun()
+                                    else:
+                                        st.markdown(f'<span style="opacity:0.4;font-weight:bold;">{tier["name"]}</span>', unsafe_allow_html=True)
+                                        st.caption("🔒 Locked Objective")
+                                        st.markdown(f'<p style="font-size:11px;color:gray;margin:0;">{tier["desc"]}</p>', unsafe_allow_html=True)
+
+        # --- RIGHT SIDE: Detailed Breakdown Summary Deck ---
+        if right_layout and st.session_state.selected_patch_id:
+            with right_layout:
+                with st.container(border=True):
+                    st.markdown(f"### 🛡️ Patch Details")
+                    st.caption(f"Selected: **{st.session_state.selected_patch_name}**")
+                    
+                    if st.button("Close Panel X", key=f"close_panel_key_{current_w_id}", use_container_width=True):
+                        st.session_state.selected_patch_id = None
+                        st.session_state.selected_patch_name = None
+                        st.rerun()
+                        
+                    st.divider()
+                    
+                    active_id = st.session_state.selected_patch_id.lower()
+                    panel_runs = [log for log in history_logs if active_id in str(log).lower()]
+                            
+                    if not panel_runs:
+                        st.info("No matching individual activities found for this filter.")
+                    else:
+                        for run_idx, run in enumerate(panel_runs):
+                            r_date = run.get("Date", run.get("date", "N/A"))
+                            r_title = run.get("Name", run.get("Activity Type", run.get("title", f"Run #{run_idx + 1}")))
+                            r_dist = run.get("Distance (Miles)", run.get("Display_Distance", run.get("distance", 0.0)))
+                            r_time = run.get("Duration", run.get("duration", "--:--"))
+                            r_pace = run.get("Pace", run.get("pace", "—"))
+                            
+                            r_date_str = str(r_date).split(" ") if " " in str(r_date) else str(r_date)
+                            
+                            # CHUNK 1: OVERVIEW METRIC SUMMARY
+                            st.markdown(f"📅 **Date:** `{r_date_str}` | **Workout:** **{r_title}**")
+                            st.markdown(f"🏃 **Distance:** `{r_dist} {unit_abbr}` | ⏱️ **Duration:** `{r_time}` | ⏱️ **Pace:** `{r_pace}`")
+                            
+                            # CHUNK 2: NATIVE BREAKDOWN DROPDOWN
+                            with st.expander(f"📋 Activity Log Summary:"):
+                                if run:
+                                    show_run_lap_breakdown(run, unit_abbr=unit_abbr)
+                                    render_zone_octagon_display(run)
+                                        
+                            st.markdown('<div style="margin-bottom:24px; border-bottom:2px solid #2c313c; padding-top:12px;"></div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # =========================================================================
     # 🏆 VIEW PANEL: CUMULATIVE LIFELONG CAREER TROPHY CABINET

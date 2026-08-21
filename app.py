@@ -428,7 +428,7 @@ if st.session_state.active_tab_selection == "🏆 Showroom & PRs":
     
     # Forward the now roomier sb_col2 container layout to the renderer function
     #render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2)
-    render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2, widget_id="sidebar_view")
+    #render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2, widget_id="sidebar_view")
 
 
 elif st.session_state.active_tab_selection == 'Calendar':
