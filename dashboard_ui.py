@@ -896,6 +896,13 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
     for state_key in ["sidebar_nav", "main_menu", "app_tabs", "navigation_options", "page_selection"]:
         if state_key in st.session_state:
             st.session_state[state_key] = "📅 Training Data Perspectives" 
+            
+    # 🛰️ NEW: Intercept URL query parameters on reload to preserve user navigation context
+    if "select_date" in st.query_params:
+        st.session_state.selected_activity_date = st.query_params["select_date"]
+    if "view" in st.query_params and st.query_params["view"] == "spreadsheet":
+        st.session_state.calendar_display_view = "📊 Spreadsheet View"
+
     if "selected_activity_date" not in st.session_state:
         st.session_state.selected_activity_date = None
 
@@ -1556,55 +1563,120 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Spreadsheet View
+            # =========================================================================
+            # 📊 SPREADSHEET DISPLAY VIEW (IN-MEMORY BUTTON LEDGER + HOVER STYLING)
+            # =========================================================================
             elif st.session_state.calendar_display_view == "📊 Spreadsheet View":
+                
+                # Inject a custom stylesheet to completely strip out native button widget skins
+
+                st.markdown('<div class="spreadsheet-view-marker"></div>', unsafe_allow_html=True)
+
+                st.markdown("""
+                <style>
+/* 🔒 SCANNED CONTEXT LOCATOR: Ensures the widget block expands to the absolute container edges */
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] {
+    width: 100% !important;
+}
+
+/* 🏃 ACTIVE RUN ENTRIES: Targets the button and ALL inner text labels to stop column squishing */
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button,
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button * {
+    background-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;         /* Completely strips out native button gradient colors */
+    color: #E2E8F0 !important;                 
+    border: none !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    font-family: monospace !important;
+    font-size: 13px !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    outline: none !important;
+    white-space: pre !important;               /* 🔥 CRITICAL: Overrides inner span styles to honor all padding spaces */
+}
+
+/* 🛠️ WIDGET BASE PROPERTIES: Defines row boundary lines and vertical padding heights */
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button {
+    border-bottom: 1px solid #2D3748 !important;      
+    padding: 14px 16px !important;             /* Tall, clean premium row expansion height */
+    border-radius: 0px !important;
+    margin: 0px !important;
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+/* 🌟 INVERTED HOVER STATE: Semi-transparent overlay mask activates only on hover events */
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button:hover {
+    background-color: rgba(255, 255, 255, 0.12) !important; 
+    color: #00ffcc !important;                             
+    cursor: pointer !important;
+}
+
+/* 🛑 FOCUS & ACTIVE INSULATION: Stops clicked buttons from shifting back to solid white blocks */
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button:focus,
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button:active,
+div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid="stButton"] button:focus-visible {
+    background-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* 🧘 REST DAY & SUMMARY ENTRIES: Matches monospace alignment matrices while making the background lighter */
+.spreadsheet-text-block {
+    background-color: rgba(255, 255, 255, 0.07) !important;   /* Noticeably lighter transparent tracking tint */
+    border-bottom: 1px solid #2D3748 !important;
+    font-family: monospace !important;
+    font-size: 13px !important;
+    padding: 12px 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    white-space: pre !important;
+}
+
+                </style>
+                """, unsafe_allow_html=True)
+
+                # Render Table Header Layout Block using high-contrast text sizing scales
+
+                # Render Table Header Layout Block using high-contrast text sizing scales
+                st.markdown('<div style="font-family: monospace; font-size: 13px; font-weight: bold; color: #00ffcc; padding: 14px 16px; background-color: #1a1c23; border-bottom: 2px solid #00ffcc; display: block; width: 100%; box-sizing: border-box; white-space: pre;">DATE       | STATUS       | DISTANCE     | DURATION TIME     | OVERALL PACE         | CLIMBED ELEV</div>', unsafe_allow_html=True)
+
+
+
+
                 table_body_html = ""
                 months_to_loop = range(1, 13) if cal_month_name == "All Months" else [cal_month]
                 
                 for loop_m in months_to_loop:
                     if cal_month_name == "All Months":
-                        table_body_html += f"<tr><td colspan='6' style='background-color: #1a1c23; color: #00ffcc; font-weight: bold; padding: 10px; text-transform: uppercase;'>📅 {month_names[loop_m - 1].upper()} LOGS</td></tr>"
+                        st.markdown(f"<div style='font-family: monospace; font-size: 13px; font-weight: bold; color: #00ffcc; padding: 12px 16px; background-color: #1a1c23; text-transform: uppercase; border-bottom: 1px solid #2D3748;'>📅 {month_names[loop_m - 1].upper()} LOGS</div>", unsafe_allow_html=True)
+                        
                     cal_matrix = calendar.monthcalendar(cal_year, loop_m)
                     m_dist, m_seconds, m_elev = 0.0, 0, 0.0
 
                     for w_idx, week in enumerate(cal_matrix): 
                         week_has_days = False
                         week_dist, week_seconds, week_elev = 0.0, 0, 0.0
-                        week_rows_buffer = ""
                         
                         for day in week: 
                             if day == 0: continue
                             week_has_days = True
                             target_date_str = f"{cal_year}-{loop_m:02d}-{day:02d}"
                             
-                            # ✅ FIXED: Safely query the calendar master dataframe and remove the target_df overwrite bottleneck
+                            # Query your master dataframe array safely
                             day_runs = cal_df[cal_df['Formatted_Date'] == target_date_str] if cal_df is not None else pd.DataFrame()
                             
-                            # --- 🏃 WORKOUT DAY RUN CONTAINER BLOCK ---
+                            # --- 🏃 Workout Record Processing Path ---
                             if not day_runs.empty:
-                                # 🪵 LOG 1: Year View Spreadsheet Console Diagnostic Tracker
-                                # Active multi-run row iterator loop
                                 for loop_idx, (_, run_row) in enumerate(day_runs.iterrows()):
                                     run_dist = float(run_row['Display_Distance'])
                                     run_time = str(run_row.get('Duration', '--:--'))
                                     raw_p = run_row.get('pace', '—')
 
-                                    # 🧮 1. DURATION-TO-MINUTES CONVERTER FUNCTION
                                     def duration_str_to_minutes(d_str):
                                         try:
                                             parts = [int(p) for p in str(d_str).strip().split(':')]
@@ -1616,7 +1688,6 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                         except Exception:
                                             return 0.0
 
-                                    # 🧮 2. EVALUATE DIRECT RUN PACE DECIMAL SIZES SAFELY
                                     raw_p_str = str(raw_p).strip().lower()
                                     is_invalid_pace = pd.isna(raw_p) or raw_p_str in ["nan", "—", "-", ""]
 
@@ -1629,13 +1700,11 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                         except (ValueError, TypeError):
                                             pass
 
-                                    # 🧮 3. BACKUP TIME-DISTANCE RECALCULATOR IF VALUES ARE EMPTY
                                     if run_pace_decimal == 0.0 and run_dist > 0:
                                         total_minutes = duration_str_to_minutes(run_time)
                                         if total_minutes > 0:
                                             run_pace_decimal = total_minutes / run_dist
 
-                                    # 🧮 4. BUILD THE STANDARDIZED PACE TEXT FIELD STRING
                                     if run_pace_decimal > 0:
                                         m_part = int(run_pace_decimal)
                                         s_part = int(round((run_pace_decimal - m_part) * 60))
@@ -1645,9 +1714,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                         run_pace = f"{m_part}:{s_part:02d} min/{unit_abbr.lower()}"
                                     else:
                                         run_pace = f"— min/{unit_abbr.lower()}"
-                                    # =====================================================================
-                                    # 🎽 AMBIGUITY-SAFE: SPREADSHEET VIEW PATCH INJECTOR
-                                    # =====================================================================
+
                                     raw_p_cell = run_row.get("earned_patches", [])
                                     run_patches_list = []
                                     if isinstance(raw_p_cell, list):
@@ -1662,8 +1729,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                     if isinstance(run_patches_list, list) and len(run_patches_list) > 0:
                                         badge_emojis = " ".join([p.get("icon", "") for p in run_patches_list if isinstance(p, dict) and "icon" in p])
                                         if badge_emojis.strip():
-                                            run_pace = f"{run_pace}   {badge_emojis}"
-                                    # =====================================================================
+                                            run_pace = f"{run_pace}  {badge_emojis}"
 
                                     day_elevation = 0.0
                                     if elev_cols:
@@ -1672,13 +1738,11 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                         if cleaned_run_elev:
                                             day_elevation = float(cleaned_run_elev)
 
-                                    # Update your run metrics accumulators
                                     week_dist += run_dist
                                     m_dist += run_dist
                                     week_elev += day_elevation
                                     m_elev += day_elevation
 
-                                    # Parse your runtime strings into seconds counters
                                     if isinstance(run_time, str) and ':' in run_time:
                                         parts = run_time.split(':')
                                         try:
@@ -1691,7 +1755,6 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                         except ValueError:
                                             pass
 
-                                    # ─── 🛠️   REPOSITION PATCHES AFTER DURATION CELL LAYER ───
                                     raw_patches_array = run_row.get("earned_patches", run_row.get("patches", []))
                                     extracted_emojis = []
                                     if isinstance(run_patches_list, list):
@@ -1703,49 +1766,72 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
                                             elif isinstance(patch, str):
                                                 award_id = patch.lower().strip()
                                                 config_icon = "🏅"
-
                                                 if cfg and hasattr(cfg, "FINAL_METRIC_CONFIG"):
-                                                    award_rules = cfg.FINAL_METRIC_CONFIG.get(award_id, {})
-                                                    config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
-                                                elif cfg and hasattr(cfg, "METRIC_CONFIG"):
-                                                    award_rules = cfg.METRIC_CONFIG.get(award_id, {})
-                                                    config_icon = award_rules.get("icon", award_rules.get("emoji", "🏅"))
-
-                                                if config_icon == "🏅":
-                                                    fallback_map = {
-                                                        "deer": "🦌", "bighorn": "🐏", "overdrive": "💥",
-                                                        "endurance_laurel": "📜", "cardio_cyborg": "🫀",
-                                                        "medal_speed_demon": "⚡", "patch_altitude_titan": "🏔️  ",
-                                                        "patch_cold_warrior": "❄️"
-                                                    }
-                                                    config_icon = fallback_map.get(award_id, "🏅")
-
+                                                    config_icon = cfg.FINAL_METRIC_CONFIG.get(award_id, {}).get("icon", "🏅")
                                                 extracted_emojis.append(config_icon)
 
-                                    patch_emojis = "".join(extracted_emojis)
+                                    #patch_emojis = "".join(extracted_emojis)
+                                    #dur_display = f"{run_time}  {patch_emojis}".strip()
+                                    dur_display = run_time.strip()
 
-                                    # 📋 2. Append to your rich HTML string template cell structure (Inserts inside the row loop)
-                                    week_rows_buffer += f"<tr class='day-row'><td><b>{target_date_str}</b></td><td style='color: #00ffff; font-weight: bold;'>🏃 RUN</td><td>{run_dist:.2f} {unit_abbr}</td><td>{run_time} <span style='margin-left: 6px;'>{patch_emojis}</span></td><td>{run_pace}</td><td>{day_elevation:,.0f} ft</td></tr>"
 
-                            # --- 🧘 REST DAY CONTAINER BLOCK ---
+                                    # Compile padded character matrices to establish clear tracking headers alignment
+                                    d_col = f"{target_date_str:<10}"
+                                    s_col = f"{'🏃 RUN':<12}"
+                                    dist_col = f"{f'{run_dist:.2f} {unit_abbr.lower()}':<12}"
+                                    t_col = f"{dur_display:<17}"
+                                    p_col = f"{run_pace:<20}"
+                                    e_col = f"+{day_elevation:,.0f} ft"
+                                    
+                                    row_text = f"{d_col}  {s_col}  {dist_col}  {t_col}  {p_col}  {e_col}"
+                                    
+                                    # Render native in-memory click trackers
+                                    st.markdown(f'<div class="spreadsheet-row-container">', unsafe_allow_html=True)
+                                    if st.button(row_text, key=f"ledger_run_select_click_{target_date_str}_{loop_idx}", use_container_width=True):
+                                        st.session_state.selected_activity_date = target_date_str
+                                        st.rerun()
+                                    st.markdown('</div>', unsafe_allow_html=True)
+
+                            # --- 🧘 Rest Day Processing Path (Retains dark background styling perfectly) ---
                             else:
-                                week_rows_buffer += f"<tr class='day-row'><td>{target_date_str}</td><td style='color: #ffcc00; font-weight: bold;'>🧘 REST DAY</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td><td style='color: #7e8794;'>—</td></tr>"
+                                d_col = f"{target_date_str:<10}"
+                                s_col = f"{'🧘 REST DAY':<12}"
+                                dist_col = f"{'—':<12}"
+                                t_col = f"{'—':<17}"
+                                p_col = f"{'—':<20}"
+                                e_col = "—"
+                                
+                                rest_html = f"<div class='spreadsheet-text-block' style='color: #E2E8F0;'>{d_col}  <span style='color: #ffcc00; font-weight: bold;'>{s_col}</span>  <span style='color: #7e8794;'>{dist_col}</span>  <span style='color: #7e8794;'>{t_col}</span>  <span style='color: #7e8794;'>{p_col}</span>  <span style='color: #7e8794;'>{e_col}</span></div>"
+                                st.markdown(rest_html, unsafe_allow_html=True)
 
                         if week_has_days:
-                            table_body_html += week_rows_buffer
                             w_hours = week_seconds // 3600
                             w_mins = (week_seconds % 3600) // 60
                             w_time_str = f"{w_hours}h {w_mins}m" if w_hours > 0 else f"{w_mins}m"
-                            table_body_html += f"<tr class='weekly-total-row'><td>WEEK {w_idx + 1} TOTALS</td><td>📊 SUMMARY</td><td>{week_dist:.2f} {unit_abbr}</td><td>{w_time_str if week_seconds > 0 else '—'}</td><td>—</td><td>{week_elev:,.0f} ft</td></tr>"
-               
+                            
+                            d_col = f"{f'WEEK {w_idx + 1} TOTALS':<10}"
+                            s_col = f"{'📊 SUMMARY':<12}"
+                            dist_col = f"{f'{week_dist:.2f} {unit_abbr.lower()}':<12}"
+                            t_col = f"{w_time_str if week_seconds > 0 else '—':<17}"
+                            p_col = f"{'—':<20}"
+                            e_col = f"{week_elev:,.0f} ft"
+                            
+                            summary_html = f"<div class='spreadsheet-text-block' style='background-color: #1a1c23; font-weight: bold; border-color: #4A5568 !important; color: #E2E8F0;'>{d_col}  <span style='color: #00ffcc;'>{s_col}</span>  {dist_col}  {t_col}  <span style='color: #7e8794;'>{p_col}</span>  {e_col}</div>"
+                            st.markdown(summary_html, unsafe_allow_html=True)
+                            st.markdown("<div style='margin-bottom: 4px;'></div>", unsafe_allow_html=True)
 
 
 
-######## 
-                spreadsheet_html = f"<table class='spreadsheet-table'><thead><tr><th>Calendar Date</th><th>Activity Status</th><th>Distance</th><th>Duration Time</th><th>Overall Pace</th><th>Climbed Elev</th></tr></thead><tbody>{table_body_html}</tbody></table>"
 
 
-                st.markdown(spreadsheet_html, unsafe_allow_html=True)
+
+
+
+
+
+
+
+
 
 
             # Classic Grid View

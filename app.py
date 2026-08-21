@@ -23,7 +23,9 @@ from pantry_ui import render_pantry_interface
 
 FILE_PATH = 'save_file.json'
 
-st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎", layout="wide")
+# MUST remain the first Streamlit command executed
+st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎 ", layout="wide")
+
 
 # ==========================================
 # 2. LOCAL DATA PERSISTENCE ENGINE
@@ -497,5 +499,5 @@ elif st.session_state.active_tab_selection == "🏆 Showroom & PRs":
     # Forward the pre-allocated second column container layout to the renderer function
     render_trophy_showroom_tab(df_instances, defense_state, popout_container=sb_col2)
 
-elif st.session_state.active_tab_selection == 'Calendar':
-    show_cal(player)
+#elif st.session_state.active_tab_selection == 'Calendar':
+#    show_cal(player)
