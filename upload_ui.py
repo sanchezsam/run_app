@@ -786,7 +786,12 @@ def process_and_award_metrics(new_run_log: dict):
     import re
     
     total_calculated_miles = 0.0
-    for log in player.history_logs:
+    #for log in player.history_logs:
+    # 🎯 FIX: Pull logs from the global session profile dictionary container cleanly
+    active_logs = st.session_state.get("profile", {}).get("history_logs", [])
+
+    for log in active_logs:
+
         log_str = str(log)
         # Target standard mile integers or floating-point positions via regex
         d_match = re.search(r'(?:Run|run|ran|distance):?\s*([0-9.]+)', log_str, re.IGNORECASE)
@@ -813,38 +818,40 @@ def process_and_award_metrics(new_run_log: dict):
     #    if m_data["lifetime_odometer_miles"] >= trophy["threshold"] and trophy["id"] not in m_data["trophy_cabinet"]["shelf_a_mileage"]:
     #        m_data["trophy_cabinet"]["shelf_a_mileage"].append(trophy["id"])
 
+
     # =========================================================================
-    # 🎯 FIX: RECOMPUTE TRUE LIFETIME ODOMETER FROM ALL PAST HISTORICAL RUNS
+    # 🎯 FIX: RECOMPUTE TRUE LIFETIME ODOMETER FROM LOCAL DATA STRUCTURE
+    # Bypasses the 'player' variable handle to use your active 'm_data' stream!
     # =========================================================================
     import re
-    # =========================================================================
-    # 🎯 FIX: RECOMPUTE TRUE LIFETIME ODOMETER FROM JSON STRUCTURED HISTORY LOGS
-    # =========================================================================
+
     total_accumulated_miles = 0.0
-    for log_item in getattr(player, 'history_logs', []):
-        # 1. Handle case where log_item is already a dictionary object
+
+    # Extract your historical logs list directly out of the local m_data dictionary mapping state
+    # If it's missing there, fall back to inspecting your main structural session profile matrix
+    history_source = m_data.get("history_logs", st.session_state.get("profile", {}).get("history_logs", []))
+
+    for log_item in history_source:
+        # 1. Handle case where log_item is already a structured dictionary object
         if isinstance(log_item, dict):
-            # Target your exact structured key: "Distance (Miles)"
             total_accumulated_miles += float(log_item.get("Distance (Miles)", 0.0))
-            
+
         # 2. Fallback case if some logs are stored as plain-text strings or json strings
         elif isinstance(log_item, str):
             log_str = log_item.strip()
             if log_str.startswith("{") and log_str.endswith("}"):
                 try:
-                    import json
                     parsed_log = json.loads(log_str)
                     total_accumulated_miles += float(parsed_log.get("Distance (Miles)", 0.0))
                 except:
                     pass
             else:
-                import re
                 d_match = re.search(r'(?:Run|run|ran|distance):?\s*([0-9.]+)', log_str, re.IGNORECASE)
                 if not d_match:
                     d_match = re.search(r'([0-9.]+)\s*(?:miles|mi)', log_str, re.IGNORECASE)
                 if d_match:
                     total_accumulated_miles += float(d_match.group(1))
-            
+
     # Assign the true dynamic total to m_data so it unlocks your tracks and trophies
     m_data["lifetime_odometer_miles"] = round(total_accumulated_miles, 2)
 

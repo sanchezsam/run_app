@@ -14,5 +14,7 @@ python3 test_showroom_fix.py
 python3 -m streamlit run app.py
 
 
-import bulk load
-python3 builk_upload.py data/2026
+Last 10
+
+python3 -c "import json; data=json.load(open('save_file.json')); history=[log for log in data.get('history_logs', []) if isinstance(log, dict) and 'Date' in log]; sorted_history=sorted(history, key=lambda x: x['Date'], reverse=True); formatted_runs=[f\"📅 {run['Date'][:10]} | 🏃‍♂️ {run.get('Distance (Miles)', 0.0)} Mi | ⏱️ Duration: {run.get('Duration', 'N/A')} | ⚡ Pace: {run.get('pace', 'N/A')} min/mi\" for run in sorted_history[:10]]; print('\n'.join(formatted_runs))"
+
