@@ -21,7 +21,35 @@ from showroom_ui import generate_dashboard_motivation_alerts
 # 🥞 PANTRY ADAPTER INTERFACE IMPORTS
 from pantry_ui import render_pantry_interface
 
+#from garminconnect import Garmin
+#
+## Define a path to save your session tokens
+#TOKEN_STORE = "~/.garminconnect"
+#token_path = os.path.expanduser(TOKEN_STORE)
+#
+## Initialize the client
+#client = Garmin("samrsanchez@gmail.com", "S@n420chez")
+#
+#try:
+#    # Attempt to load a previously saved session
+#    print("Attempting to resume session from cache...")
+#    client.login(token_path)
+#except Exception:
+#    # If the token is missing or expired, perform a fresh login
+#    print("Session expired or missing. Attempting full login...")
+#    client.login()
+#    # Save the new token session for next time
+#    os.makedirs(os.path.dirname(token_path), exist_ok=True)
+#    # Note: Modern versions of the library manage token storage automatically 
+#    # when you pass the token path directly to client.login()
+
+
+
+
+# ⚙️ Master Configuration Path Variables
 FILE_PATH = 'save_file.json'
+IMPORT_FILE_PATH = 'data/sync'  # ✅ NEW: Stores synced Garmin .fit binaries safely on disk
+
 
 # MUST remain the first Streamlit command executed
 st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎 ", layout="wide")
@@ -281,7 +309,7 @@ if player is not None and os.path.exists(FILE_PATH):
     except Exception: 
         pass
 
-    hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6 = st.columns(6)
+    hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6,hud_col7 = st.columns(7)
     st.write("")
     active_trophies = getattr(player, 'pantry_single_trophies', [])
     if active_trophies:
@@ -307,6 +335,7 @@ if player is not None and os.path.exists(FILE_PATH):
     with hud_col4: st.metric('Fatigue Accumulation', f'{int(getattr(player, "fatigue", 0))}/100')
     with hud_col5: st.metric('🏁 Checkered Flags', f'{getattr(player, "boss_clears", 0)} Wins')
     with hud_col6: st.metric('Stat Tokens', f'{getattr(player, "stat_points", 0)} Available')
+    with hud_col7: st.metric('🔥 Calorie Bank', f'{int(getattr(player, "calorie_bank_balance", 0))} kcal')
 
 if "filtered_df" not in st.session_state or st.session_state.filtered_df.empty:
     import showroom_engine as showroom_eng
@@ -462,7 +491,377 @@ elif st.session_state.active_tab_selection == '👤 Athlete Profile':
         st.metric("⛰ Elevation", f"{dashboard_elev} / 9")
         st.pyplot(generate_single_metric_nonagon(dashboard_elev, 'Elevation'))
 elif st.session_state.active_tab_selection == 'Telemetry Sync':
-    render_upload_interface(player, FILE_PATH, FILE_PATH)
+    # Create two clear sub-tabs within the Telemetry Sync page view
+    cloud_tab, manual_tab = st.tabs(["☁️ Garmin Connect Cloud Sync", "📥 Manual FIT File Ingestion"])
+    
+                       
+
+
+
+
+
+
+
+
+
+
+
+
+
+    with cloud_tab:
+        st.markdown("### ☁️ Garmin Connect Direct Sync Gateway")
+        st.caption("Pull your latest activity directly from Garmin servers without downloading files.")
+
+        import os
+        import io
+        import re
+        import glob
+        import math
+        import json
+        import traceback
+        import zipfile
+        from datetime import datetime, timedelta
+        import streamlit as st
+        from garminconnect import Garmin
+        from services import parse_garmin_fit
+
+        # 1. Title/Header
+        st.subheader("🏃‍♂️ Garmin Connect Sync Engine")
+
+        # 2. Date Range Input Layout
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input("Start Date", value=datetime.today() - timedelta(days=7))
+        with col2:
+            end_date = st.date_input("End Date", value=datetime.today())
+
+        if start_date > end_date:
+            st.error("❌ Error: Start Date must be before or equal to End Date.")
+        # ======================================================================
+        # 🧪 DEV BYPASS SWITCH (DEFAULTED TO TRUE FOR DISK-BASED UPLOAD TESTING)
+        # ======================================================================
+        st.markdown("---")
+        st.caption("🛠️ Developer Testing Suite")
+        #bypass_download = st.checkbox("⚙️ Bypass Download Phase (Test Upload Mode)", value=True)
+        # ======================================================================
+
+        # 3. Render historical audit log messages if they exist in state memory
+        if "garmin_debug_history" in st.session_state:
+            with st.expander("📝 Persistent Telemetry Audit Logs", expanded=True):
+                for log_msg in st.session_state.garmin_debug_history:
+                    st.write(log_msg)
+                if "garmin_traceback" in st.session_state:
+                    st.error("🔍 System Traceback Error Details:")
+                    st.code(st.session_state.garmin_traceback, language="python")
+                if st.button("🗑️  Clear Logs & Reset Cache", use_container_width=True):
+                    del st.session_state.garmin_debug_history
+                    st.session_state.pop("garmin_traceback", None)
+                    st.rerun()
+        # 4. Action Button Trigger (Disabled if date range is invalid OR if test bypass mode is active)
+        #button_disabled = (start_date > end_date) or bypass_download
+        button_dispabled=False
+        saved_count = 0
+
+        #if not bypass_download and st.button("🔄 Sync Garmin Data Range", use_container_width=True, disabled=button_disabled):
+        if st.button("🔄 Sync Garmin Data Range", use_container_width=True):
+            start_str = start_date.strftime("%Y-%m-%d")
+            end_str = end_date.strftime("%Y-%m-%d")
+
+            with st.status("🛠️ Syncing with Garmin...", expanded=True) as status:
+                client = Garmin("samrsanchez@gmail.com", "S@n420chez")
+                try:
+                    client.login()
+                    activities = client.get_activities_by_date(start_str, end_str)
+                    
+                    for act in activities:
+                        if act.get("activityType", {}).get("typeKey") == "running":
+                            raw_bytes = client.download_activity(act["activityId"], dl_fmt=client.ActivityDownloadFormat.ORIGINAL)
+                            
+                            destination_file = os.path.join(IMPORT_FILE_PATH, f"garmin_{act['startTimeLocal'][:10]}_{act['activityId']}.fit")
+                            with open(destination_file, "wb") as f:
+                                f.write(raw_bytes)
+                            saved_count += 1
+                    
+                    if saved_count > 0:
+                        status.update(label=f"✅ Saved {saved_count} runs to staging folder.", state="complete")
+                    else:
+                        status.update(label="ℹ️ No new running tracks found.", state="complete")
+                except Exception as api_err:
+                    status.update(label="❌ Sync Failed", state="error")
+            #st.rerun()
+        # ======================================================================
+        # 🚀 IMMEDIATE DATA UPLOAD DIRECT CORE (FULLY INTEGRATED EXACT REPLICA)
+        # ======================================================================
+        automated_files = glob.glob("data/sync/*.fit")
+
+        if automated_files:
+            # Import your application's secondary evaluation calculators
+            from upload_ui import compute_current_ratings, check_single_run_patches, process_and_award_metrics
+            
+            st.success(f"📦 Found {len(automated_files)} Garmin files inside staging directory! Executing inline ingestion core...")
+            
+            with st.spinner("Processing file binaries and injecting telemetry rewards..."):
+                staged_sessions = []
+                total_batch_distance = 0.0
+                historical_logs = getattr(player, 'history_logs', [])
+                
+                # --- STEP A: INITIAL PARSING & PRE-STAGING LOOP ---
+                for file_path in automated_files:
+                    filename = os.path.basename(file_path)
+                    print("----------")
+                    print(filename)
+                    try:
+                        with open(file_path, "rb") as f:
+                            file_bytes = f.read()
+                        print("FDFDFD")
+                        if zipfile.is_zipfile(io.BytesIO(file_bytes)):
+                            print("zip")
+                            with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
+
+                                # Get the list of all files hidden inside this ZIP archive
+                                internal_filenames = z.namelist()
+                                
+                                if internal_filenames:
+                                    # Grab the very first file inside the ZIP archive
+                                    first_file = internal_filenames[0]
+                                    
+                                    # Extract its raw bytes into file_bytes
+                                    file_bytes = z.read(first_file)
+                                    #filename=first_file
+                                    filename = os.path.basename(first_file)
+                                    print(f"Successfully extracted internal file: {first_file}")
+                                else:
+                                    print("The ZIP file is empty!")
+
+
+
+                                #fit_filenames = [name for name in z.namelist() if name.lower().endswith('.fit')]
+                                #if fit_filenames:
+                                #    file_bytes = z.read(fit_filenames)
+                        
+                        print("*****")    
+                        fit_metrics_temp = parse_garmin_fit(file_bytes)
+                        print("temp here")
+                        calculated_distance_miles = fit_metrics_temp["distance_mi"]
+                        total_secs = int(fit_metrics_temp["duration_seconds"])
+                        chk_dur = str(timedelta(seconds=total_secs))
+                        chk_date = fit_metrics_temp["date"]
+                        chk_dist = round(calculated_distance_miles, 2)
+                        chk_dur_strip = chk_dur.strip()
+                        
+                        # --- DUPLICATE FILTER CHECKING ---
+                        is_file_duplicate = False
+                        for log_row in historical_logs:
+                            if isinstance(log_row, dict):
+                                h_date = str(log_row.get("Date", log_row.get("date", "")))[:10]
+                                h_date = log_row.get("Date", log_row.get("date", ""))
+                                if hasattr(h_date, "strftime"):
+                                    h_date = h_date.strftime("%Y-%m-%d %H:%M:%S") # Result: "2026-08-21 14:23:11"
+
+                                print("((()))(()(")
+                                print(chk_date)
+                                print(h_date)
+                                h_dist = round(float(log_row.get("Distance (Miles)", log_row.get("distance_mi", 0.0))), 2)
+                                h_dur = str(log_row.get("Duration", log_row.get("duration", ""))).strip()
+                                if h_date == chk_date and h_dist == chk_dist and h_dur == chk_dur_strip:
+                                    print("Duplicate")
+                                    is_file_duplicate = True
+                                    break
+                        print("here")
+                                    
+                        if is_file_duplicate:
+                            st.warning(f"⚠️ Filtered Out Duplicate: `{filename}` already exists in database record profile logs.")
+                            print("Remove")
+                            os.remove(file_path)
+                            continue
+                            
+                        staged_sessions.append({
+                            "name": filename, "date": fit_metrics_temp["date"],  
+                            "dist": round(calculated_distance_miles, 2), "duration": chk_dur,  
+                            "pace": fit_metrics_temp["pace"], "ele": fit_metrics_temp["elevation_gain_ft"], 
+                            "calories": fit_metrics_temp["calories"], "splits": fit_metrics_temp["splits"],
+                            "aerobic_decoupling_percent": fit_metrics_temp.get("aerobic_decoupling_percent", 0.0),
+                            "ambient_temp_f": fit_metrics_temp.get("ambient_temp_f", 72.0),
+                            "type": "FIT Activity", "file_disk_path": file_path
+                        })
+                        total_batch_distance += calculated_distance_miles
+                        
+                    except Exception as e:
+                        st.error(f"❌ Core parsing pipeline failure on item {filename}: {str(e)}")
+                        try: os.remove(file_path)
+                        except Exception: pass
+                # --- STEP B: THE NATIVE COMMIT PIPELINE REPLICA (BLOCK 5 CONTINUED) ---
+                if staged_sessions:
+                    try:
+                        if not hasattr(player, 'history_logs'): player.history_logs = []
+                        if not hasattr(player, 'unlocked_badges'): player.unlocked_badges = []
+                        if not hasattr(player, 'calorie_bank_balance'): player.calorie_bank_balance = 5000
+                        if not hasattr(player, 'calorie_bank_total_earned'): player.calorie_bank_total_earned = 5000
+                        if not hasattr(player, 'pantry_purchase_counts'): player.pantry_purchase_counts = {}
+                        if not hasattr(player, 'pantry_single_trophies'): player.pantry_single_trophies = []
+                        if not hasattr(player, 'pantry_cuisine_trophies'): player.pantry_cuisine_trophies = []
+
+                        pre_upload_badge_count = len(player.unlocked_badges)
+                        total_gold_rewarded, total_xp_gained = 0, 0
+                        total_calories_ingested = 0
+                        
+                        for s in staged_sessions:
+                            z1, z2, z3, z4, z5 = 15, 45, 20, 15, 5 
+                            gold = max(2, int(float(s['dist']) * 10))
+                            xp = max(5, int(float(s['dist']) * 50))
+                            total_gold_rewarded += gold
+                            total_xp_gained += xp
+                            
+                            try:
+                                raw_val = s.get('calories', 0)
+                                session_kcal = int(float(raw_val)) if raw_val is not None else 0
+                            except (ValueError, TypeError):
+                                session_kcal = 0
+                                
+                            if session_kcal <= 0 and float(s.get('dist', 0)) > 0:
+                                session_kcal = int(float(s['dist']) * 100)
+                                s['calories'] = session_kcal
+                                
+                            total_calories_ingested += session_kcal
+                            
+                            raw_s_pace = s.get('pace', 0.0)
+                            if raw_s_pace is None or raw_s_pace == "00:00" or (isinstance(raw_s_pace, float) and (math.isnan(raw_s_pace) or raw_s_pace <= 0)):
+                                clean_pace_val = "00:00"
+                                pace_text = "—"
+                            elif isinstance(raw_s_pace, str) and ":" in raw_s_pace:
+                                clean_pace_val = raw_s_pace
+                                pace_text = raw_s_pace
+                            else:
+                                try:
+                                    clean_pace_val = float(raw_s_pace)
+                                    pace_text = f"{clean_pace_val:.2f}"
+                                except (ValueError, TypeError):
+                                    clean_pace_val = "11:00"
+                                    pace_text = "11:00"
+
+                            text_sentence = f"[{s['date']}] Run: {s['dist']:.2f} miles | Pace: {pace_text} min/mi | Elevation Climbed: +{s.get('ele', 0)} ft | [REWARD] +{gold}g, +{xp} XP. | [CALORIE REWARDS] +{int(s.get('calories', 0))} kcal"
+                            
+                            structured_log = {
+                                "Date": s['date'], "Name": s.get('name', 'Run'), "Distance (Miles)": float(s['dist']),
+                                "Duration": s.get('duration', '00:00:00'), "pace": clean_pace_val,
+                                "Elevation (ft)": f"+{s.get('ele', 0)} ft", "splits": s.get('splits', []),
+                                "text_payload": text_sentence, "aerobic_decoupling_percent": float(s.get("aerobic_decoupling_percent", 0.0)),
+                                "ambient_temp_f": float(s.get("ambient_temp_f", 72.0)),
+                                "zone_1_2_duration_percent": round(((z1 + z2) / max(1, z1 + z2 + z3 + z4 + z5)) * 100.0, 2)
+                            }
+                            player.history_logs.append(structured_log)
+                            
+                            if os.path.exists(s["file_disk_path"]):
+                                os.remove(s["file_disk_path"])
+
+                        player.gold = getattr(player, 'gold', 50) + total_gold_rewarded
+                        player.total_xp = getattr(player, 'total_xp', 0) + total_xp_gained
+                        player.calorie_bank_balance += total_calories_ingested
+                        player.calorie_bank_total_earned += total_calories_ingested
+                        
+                        st_rating = getattr(player, 'stamina_rating', 100)
+                        ef_rating = getattr(player, 'efficiency_rating', 100)
+                        pw_rating = getattr(player, 'power_rating', 100)
+
+                        post_st, post_ef, post_pw, miles_added, new_st, new_ef, new_pw = compute_current_ratings(
+                            player.history_logs, st_rating, ef_rating, pw_rating
+                        )
+                        player.stamina_rating, player.efficiency_rating, player.power_rating = new_st, new_ef, new_pw
+                        player.stamina_level, player.efficiency_level, player.power_level = post_st, post_ef, post_pw
+
+                        if player.history_logs:
+                            for entry in player.history_logs[-len(staged_sessions):]:
+                                discovered_patches = check_single_run_patches(entry.copy())
+                                entry["earned_patches"] = list(discovered_patches) if isinstance(discovered_patches, list) else discovered_patches
+                                
+                                emoji_strip = "".join([p.get("icon", "") for p in discovered_patches if p.get("icon")])
+                                if emoji_strip and "🎖️ Rewards:" not in entry.get("text_payload", ""):
+                                    entry["text_payload"] = entry.get("text_payload", "").strip() + f" | 🎖️ Rewards: {emoji_strip}"
+
+                                for patch in discovered_patches:
+                                    if patch["id"] not in player.unlocked_badges:
+                                        player.unlocked_badges.append(patch["id"])
+
+                        # ─── 💾 THE ABSOLUTE DISK COMMIT (COPIED FROM upload_ui.py LINE 456) ───
+                        save_data = player.to_dict() if hasattr(player, 'to_dict') else dict(player.__dict__)
+                        save_data['calorie_bank_balance'] = player.calorie_bank_balance
+                        save_data['calorie_bank_total_earned'] = player.calorie_bank_total_earned
+                        save_data['pantry_purchase_counts'] = player.pantry_purchase_counts
+                        save_data['pantry_single_trophies'] = player.pantry_single_trophies
+                        save_data['pantry_cuisine_trophies'] = player.pantry_cuisine_trophies
+                        
+                        with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
+                            json.dump(save_data, db_file, default=str, indent=4)
+                        # ────────────────────────────────────────────────────────────────────────
+                        
+                        if player.history_logs:
+                            process_and_award_metrics(player.history_logs[-1])
+                            
+                        with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
+                            fresh_disk_data = json.load(db_file)
+                            
+                        player.history_logs = fresh_disk_data.get("history_logs", [])
+                        player.unlocked_badges = fresh_disk_data.get("unlocked_badges", [])
+                        if hasattr(player, 'final_metric_data'):
+                            player.final_metric_data = fresh_disk_data.get("final_metric_data", {})
+                        
+                        post_upload_badges = fresh_disk_data.get("unlocked_badges", [])
+                        st.session_state.last_sync_deltas = {
+                            "gold": total_gold_rewarded, "xp": total_xp_gained, "count": len(staged_sessions),
+                            "miles_added": sum(float(s['dist']) for s in staged_sessions),
+                            "batch_patches_earned": max(0, len(post_upload_badges) - pre_upload_badge_count)  
+                        }
+                        
+                        st.cache_data.clear()
+                        st.session_state.uploader_reset_token = st.session_state.get("uploader_reset_token", 0) + 1
+                        st.balloons()
+                        st.toast(f"🏃 Success! Direct upload complete: +{total_gold_rewarded}g | +{total_xp_gained} XP added directly to your profile.", icon="🔥")
+                        st.rerun()
+                        
+                    except Exception as commit_err:
+                        st.error(f"❌ Ingestion Commit Failure: {str(commit_err)}")
+        else:
+            st.info("ℹ️ Staging directory 'data/sync' is currently clear of tracks. Put files there or toggle off test mode to run a download pull.")
+
+    with manual_tab:
+        st.markdown("---")
+        render_upload_interface(player, FILE_PATH, FILE_PATH)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 elif st.session_state.active_tab_selection == 'Biometric Coliseum':
     render_coliseum(player, FILE_PATH)
 elif st.session_state.active_tab_selection == 'Pro Shop & Garage':
