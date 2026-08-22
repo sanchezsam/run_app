@@ -541,7 +541,7 @@ elif st.session_state.active_tab_selection == 'Telemetry Sync':
         # 🧪 DEV BYPASS SWITCH (DEFAULTED TO TRUE FOR DISK-BASED UPLOAD TESTING)
         # ======================================================================
         st.markdown("---")
-        st.caption("🛠️ Developer Testing Suite")
+        #st.caption("🛠️ Sync Data")
         #bypass_download = st.checkbox("⚙️ Bypass Download Phase (Test Upload Mode)", value=True)
         # ======================================================================
 
