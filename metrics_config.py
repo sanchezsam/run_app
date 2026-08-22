@@ -24,7 +24,7 @@ FINAL_METRIC_CONFIG = {
                     "icon": "🐇", 
                     "min_val": 446, 
                     "max_val": 495, 
-                    "desc": "7:26 to 8:15 min/mi",
+                    "desc": "6:26 to 7:45 min/mi",
                     "img_path": "images/showroom/patches/rabbit.png"
                 },
                 {
@@ -33,7 +33,7 @@ FINAL_METRIC_CONFIG = {
                     "icon": "🦌", 
                     "min_val": 346, 
                     "max_val": 445, 
-                    "desc": "5:46 to 7:25 min/mi",
+                    "desc": "5:46 to 6:25 min/mi",
                     "img_path": "images/showroom/patches/deer.png"
                 },
                 {
