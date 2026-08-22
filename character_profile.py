@@ -137,6 +137,8 @@ def compute_historical_snapshot(history_logs, target_date):
     return endurance_lvl, speed_lvl, climb_lvl
 
 def calculate_and_render_profile(player, FILE_PATH=None):
+    import datetime as dt_module
+    from datetime import datetime, timedelta
     now_date = datetime.now()
     
     # ⏱️ SPORTS SCIENCE LOOKBACKS
@@ -505,32 +507,86 @@ Your localized fatigue threshold has breached safety parameters. Stride performa
 To dissolve this condition card block, you must upload an intentional low-intensity recovery session containing an average heart rate strictly under 130 BPM, or log a full calendar rest day rest cycle.""")
 
     # =========================================================================
-    # TAB 3: CHRONOLOGICAL TRAIT GROWTH (HISTORICAL DATA PROGRESSION)
+    # TAB 3: LIFETIME CHRONOLOGICAL TRAIT EVOLUTION PROGRESSION
+    # Scales automatically across your entire multi-year log repository history.
+    # =========================================================================
+    # =========================================================================
+    # TAB 3: INTERACTIVE LIFETIME CHRONOLOGICAL TRAIT PROGRESSION (SLIDER CONFIG)
+    # Scales dynamically across your entire career ledger via timeline dual sliders.
     # =========================================================================
     with tab_trends:
         st.markdown("### 📈 Chronological Performance Evolution Tracker")
-        st.caption("Re-evaluates historical data vectors back in time to chart the growth or deconditioning of your traits.")
+        st.caption("Re-evaluates historical data vectors back in time across your chosen timeframe to isolate training milestones.")
         st.write("")
         
         if not discovered_dates or len(discovered_dates) < 2:
             st.info("ℹ️ Insufficient time-series coordinates discovered. Log multiple workouts over distinct dates to populate historical trend charts.")
         else:
-            max_log_date = max(discovered_dates)
-            snapshot_dates = [max_log_date - timedelta(days=d) for d in [35, 28, 21, 14, 7, 0]]
+            import datetime
+            import pandas as pd
+            
+            # 1. Isolate career absolute minimum and maximum parameters
+            absolute_start_date = min(discovered_dates)
+            absolute_end_date   = max(discovered_dates)
+            
+            # Force cleanup to pure datetime.date formats to prevent calculation crashes
+            career_min = absolute_start_date.date() if hasattr(absolute_start_date, 'date') else absolute_start_date
+            career_max = absolute_end_date.date() if hasattr(absolute_end_date, 'date') else absolute_end_date
+            
+            # Safety fallback loop if dates resolve identically
+            if career_min == career_max:
+                career_max = career_min + datetime.timedelta(days=1)
+
+            # 2. 🎛️ INJECT THE CHRONOLOGICAL DUAL SLIDER COMPONENT
+            st.markdown("#### 📅 Select Target Analysis Window")
+            timeline_window = st.slider(
+                label="Slide markers to adjust the start and end dates of your trend chart view:",
+                min_value=career_min,
+                max_value=career_max,
+                value=(career_min, career_max),  # Default positions encompass full lifetime history
+                format="YYYY-MM-DD"
+            )
+            
+            # Extract current target bounds chosen by user sliding selection actions
+            selected_start, selected_end = timeline_window
+            st.write(f"🔬 Currently analyzing from **{selected_start}** up to **{selected_end}**")
+            st.write("")
+
+            # 3. Calculate step distribution variables inside the selected bounds
+            total_selected_days = (selected_end - selected_start).days
+            intervals = 15  # Increased data nodes for finer timeline scaling details
+            step_days = max(1, total_selected_days // intervals)
+            
+            snapshot_dates = [selected_start + datetime.timedelta(days=i * step_days) for i in range(intervals)]
+            if selected_end not in snapshot_dates:
+                snapshot_dates.append(selected_end)
             
             trend_records = []
             for s_date in snapshot_dates:
-                hist_end, hist_speed, hist_climb = compute_historical_snapshot(raw_logs, s_date)
+                # Convert s_date to full midnight timestamps for line 105 calculations
+                try:
+                    s_datetime_target = dt_module.datetime.combine(s_date, dt_module.time.min)
+                except Exception:
+                    s_datetime_target = s_date
+
+                # Pull historical cumulative performance level capabilities
+                hist_end, hist_speed, hist_climb = compute_historical_snapshot(raw_logs, s_datetime_target)
+                
                 trend_records.append({
-                    "Timeline Checkpoint": s_date.strftime("%Y-%m-%d"),
-                    "Aerobic Stamina": hist_end,
-                    "Stride Efficiency": hist_speed,
-                    "Climbing Power": hist_climb
+                    "Timeline_Checkpoint": s_date.strftime("%Y-%m-%d"),
+                    "Stamina": max(1.0, float(hist_end)),
+                    "Speed": max(1.0, float(hist_speed)),
+                    "Climbing": max(1.0, float(hist_climb))
                 })
                 
+            # Compile variables into our chart DataFrame structures
             df_trends = pd.DataFrame(trend_records)
-            st.line_chart(df_trends.set_index("Timeline Checkpoint"), use_container_width=True)
-            with st.expander("👁️ View Granular Historical Level Logs"):
+            df_chart_data = df_trends.set_index("Timeline_Checkpoint")
+            
+            # 📊 Render the interactive chart mapping the user's specific slider choice window
+            st.line_chart(df_chart_data, y=["Stamina", "Speed", "Climbing"], use_container_width=True)
+            
+            with st.expander("👁️ View Granular Snapshot Level Data"):
                 st.dataframe(df_trends, use_container_width=True, hide_index=True)
 
     # =========================================================================

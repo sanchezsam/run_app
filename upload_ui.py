@@ -779,17 +779,92 @@ def process_and_award_metrics(new_run_log: dict):
     if not is_duplicate:
         profile["history_logs"].append(new_run_log)
     
-    m_data["lifetime_odometer_miles"] = round(m_data["lifetime_odometer_miles"] + run_distance, 2)
+    # --- CHANGE THIS BRITTLE INCREMENT BLOCK ---
+    # m_data["lifetime_odometer_miles"] = round(m_data["lifetime_odometer_miles"] + run_distance, 2)
+    
+    # --- REPLACE WITH A DYNAMIC HISTORICAL SUM LOOP ---
+    import re
+    
+    total_calculated_miles = 0.0
+    for log in player.history_logs:
+        log_str = str(log)
+        # Target standard mile integers or floating-point positions via regex
+        d_match = re.search(r'(?:Run|run|ran|distance):?\s*([0-9.]+)', log_str, re.IGNORECASE)
+        if not d_match:
+            d_match = re.search(r'([0-9.]+)\s*(?:miles|mi)', log_str, re.IGNORECASE)
+        
+        if d_match:
+            total_calculated_miles += float(d_match.group(1))
+    
+    # Write the true total back to the final dictionary state
+    m_data["lifetime_odometer_miles"] = round(total_calculated_miles, 2)
+
+
+
+
     
     run_calories = int(run_distance * 100) 
     m_data["lifetime_calories_burned"] += run_calories
     profile["lifetime_elevation_gain"] = float(profile.get("lifetime_elevation_gain", 0.0)) + run_elevation
     
+    ## Shelf A: Mileage
+    #mileage_config = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_a_mileage"]
+    #for trophy in mileage_config["trophies"]:
+    #    if m_data["lifetime_odometer_miles"] >= trophy["threshold"] and trophy["id"] not in m_data["trophy_cabinet"]["shelf_a_mileage"]:
+    #        m_data["trophy_cabinet"]["shelf_a_mileage"].append(trophy["id"])
+
+    # =========================================================================
+    # 🎯 FIX: RECOMPUTE TRUE LIFETIME ODOMETER FROM ALL PAST HISTORICAL RUNS
+    # =========================================================================
+    import re
+    # =========================================================================
+    # 🎯 FIX: RECOMPUTE TRUE LIFETIME ODOMETER FROM JSON STRUCTURED HISTORY LOGS
+    # =========================================================================
+    total_accumulated_miles = 0.0
+    for log_item in getattr(player, 'history_logs', []):
+        # 1. Handle case where log_item is already a dictionary object
+        if isinstance(log_item, dict):
+            # Target your exact structured key: "Distance (Miles)"
+            total_accumulated_miles += float(log_item.get("Distance (Miles)", 0.0))
+            
+        # 2. Fallback case if some logs are stored as plain-text strings or json strings
+        elif isinstance(log_item, str):
+            log_str = log_item.strip()
+            if log_str.startswith("{") and log_str.endswith("}"):
+                try:
+                    import json
+                    parsed_log = json.loads(log_str)
+                    total_accumulated_miles += float(parsed_log.get("Distance (Miles)", 0.0))
+                except:
+                    pass
+            else:
+                import re
+                d_match = re.search(r'(?:Run|run|ran|distance):?\s*([0-9.]+)', log_str, re.IGNORECASE)
+                if not d_match:
+                    d_match = re.search(r'([0-9.]+)\s*(?:miles|mi)', log_str, re.IGNORECASE)
+                if d_match:
+                    total_accumulated_miles += float(d_match.group(1))
+            
+    # Assign the true dynamic total to m_data so it unlocks your tracks and trophies
+    m_data["lifetime_odometer_miles"] = round(total_accumulated_miles, 2)
+
     # Shelf A: Mileage
     mileage_config = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_a_mileage"]
     for trophy in mileage_config["trophies"]:
         if m_data["lifetime_odometer_miles"] >= trophy["threshold"] and trophy["id"] not in m_data["trophy_cabinet"]["shelf_a_mileage"]:
             m_data["trophy_cabinet"]["shelf_a_mileage"].append(trophy["id"])
+
+    if m_data["lifetime_odometer_miles"] > 2000:
+        extra_miles = m_data["lifetime_odometer_miles"] - 2000
+        m_data["trophy_cabinet"]["prestige_loops"]["mileage_loops_count"] = int(extra_miles // mileage_config["loop_increment"])
+    
+
+
+
+
+
+
+
             
     # Shelf B: Elevation
     elev_config = FINAL_METRIC_CONFIG["trophy_cabinet"]["shelf_b_elevation"]
@@ -803,9 +878,6 @@ def process_and_award_metrics(new_run_log: dict):
         if m_data["lifetime_calories_burned"] >= trophy["threshold"] and trophy["id"] not in m_data["trophy_cabinet"]["shelf_c_calories"]:
             m_data["trophy_cabinet"]["shelf_c_calories"].append(trophy["id"])
 
-    if m_data["lifetime_odometer_miles"] > 2000:
-        extra_miles = m_data["lifetime_odometer_miles"] - 2000
-        m_data["trophy_cabinet"]["prestige_loops"]["mileage_loops_count"] = int(extra_miles // mileage_config["loop_increment"])
         
     if profile["lifetime_elevation_gain"] > 100000:
         extra_vert = profile["lifetime_elevation_gain"] - 100000

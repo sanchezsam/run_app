@@ -210,14 +210,140 @@ def render_coliseum(player, FILE_PATH):
     # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
 
     # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
-    raw_history = getattr(player, 'history_logs', [])
+    #raw_history = getattr(player, 'history_logs', [])
 
-    # 🎯 OVERRIDE SETTING: Pull levels straight from memory keys instead of services
-    p_fuel = int(st.session_state.get("global_endurance", 7))
-    p_nitro = int(st.session_state.get("global_speed", 8))
-    p_torque = int(st.session_state.get("global_elevation", 9))
+    ## 🎯 OVERRIDE SETTING: Pull levels straight from memory keys instead of services
+    #p_fuel = int(st.session_state.get("global_endurance", 7))
+    #p_nitro = int(st.session_state.get("global_speed", 8))
+    #p_torque = int(st.session_state.get("global_elevation", 9))
+    #active_fatigue = int(st.session_state.get("profile", {}).get("final_metric_data", {}).get("fatigue", 0))
+    #lifetime_miles = float(player.__dict__.get("final_metric_data", {}).get("lifetime_odometer_miles", 0.0))
+
+
+
+    # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
+    raw_history = getattr(player, 'history_logs', [])
+    # =========================================================================
+    # 🧬 STEP 1.1: COMPUTE REAL-WORLD INACTIVITY TIMELINE (CHRONOLOGICAL DATE SCAN)
+    # Checks every single log date to locate your absolute truest recent run.
+    # =========================================================================
+    # Change 'import datetime' to this:
+    from datetime import datetime
+    import datetime as dt_module
+
+
+    # =========================================================================
+    # 🧬 STEP 1.1: COMPUTE REAL-WORLD INACTIVITY TIMELINE (CHRONOLOGICAL DATE SCAN)
+    # Checks every single log date to locate your absolute truest recent run.
+    # =========================================================================
+    days_since_last_run = 999  # Default to cold decay if no logs exist
+    newest_run_date = None
+
+    if raw_history:
+        for log_item in raw_history:
+            if isinstance(log_item, dict) and "Date" in log_item:
+                try:
+                    # Cleanly isolate the date prefix (YYYY-MM-DD)
+                    date_str = log_item.get("Date", "")[:10]
+                    
+                    # 🎯 FIXED: Uses the direct datetime.strptime class method cleanly
+                    parsed_dt = datetime.strptime(date_str, '%Y-%m-%d')
+                    
+                    if newest_run_date is None or parsed_dt > newest_run_date:
+                        newest_run_date = parsed_dt
+                except Exception:
+                    pass
+
+    # Compute true calendar delta day difference from today's real execution clock
+    if newest_run_date is not None:
+        # 🎯 FIXED: Direct call to datetime.now() works perfectly with our top import!
+        days_since_last_run = (datetime.now() - newest_run_date).days
+        if days_since_last_run < 0:
+            days_since_last_run = 0  # Safe anchor for same-day tracking updates
+
+    # =========================================================================
+    # 🧬 STEP 1.2: COMPUTE TRI-AXIAL PHYSIOLOGICAL ATTRIBUTE DECAY RATES
+    # Neuromuscular Speed drops instantly. Strength/Elevation holds out stubbornly.
+    # =========================================================================
+    p_fuel_decay   = 0.0
+    p_nitro_decay  = 0.0
+    p_torque_decay = 0.0
+
+    if days_since_last_run <= 5:
+        p_fuel_decay, p_nitro_decay, p_torque_decay = 0.0, 0.0, 0.0
+    elif days_since_last_run <= 14:
+        p_fuel_decay   = 1.0  # Minor plasma drop-off
+        p_nitro_decay  = 2.0  # Neuromuscular coordination drop (Speed tanks early)
+        p_torque_decay = 0.0  # Strength holds steady
+    elif days_since_last_run <= 30:
+        p_fuel_decay   = 2.5
+        p_nitro_decay  = 4.0  # Loss of fast-twitch fiber recruitment
+        p_torque_decay = 1.0
+    elif days_since_last_run <= 90:
+        p_fuel_decay   = 4.0  # Capillaries begin shrinking
+        p_nitro_decay  = 6.0
+        p_torque_decay = 3.5  # Noticeable hill-driving reduction
+    else:
+        # 90 to 365+ Days: Full Chronic Deconditioning (Couch Baseline)
+        p_fuel_decay, p_nitro_decay, p_torque_decay = 8.0, 8.0, 8.0
+
+    # =========================================================================
+    # 🧬 STEP 1.3: DYNAMICALLY COMPUTE EFFECTIVE CONDITIONING RATINGS
+    # =========================================================================
+    p_fuel_max   = int(st.session_state.get("global_endurance", 7))
+    p_nitro_max  = int(st.session_state.get("global_speed", 8))
+    p_torque_max = int(st.session_state.get("global_elevation", 9))
+
+    # Apply your time-decay constraints (Floor-capped at Level 1)
+    p_fuel   = max(1, p_fuel_max - int(p_fuel_decay))
+    p_nitro  = max(1, p_nitro_max - int(p_nitro_decay))
+    p_torque = max(1, p_torque_max - int(p_torque_decay))
+
+    # Keep your original fatigue and lifetime miles tracking lines perfectly intact
     active_fatigue = int(st.session_state.get("profile", {}).get("final_metric_data", {}).get("fatigue", 0))
     lifetime_miles = float(player.__dict__.get("final_metric_data", {}).get("lifetime_odometer_miles", 0.0))
+
+    # =========================================================================
+    # 🧬 STEP 1.4: VISUAL BIOMETRIC RETENTION CORNER SIDEBAR
+    # Displays your real-time conditioning status and calendar tracking markers.
+    # =========================================================================
+    with st.sidebar:
+        st.markdown("### 🧬 BIOMETRIC RETENTION STATUS")
+        st.caption(f"Real-world gap since last run: **{days_since_last_run} days**")
+        
+        if days_since_last_run <= 5:
+            st.success("🟢 STATUS: PEAK CONDITIONING")
+        elif days_since_last_run <= 30:
+            st.warning("🟡 STATUS: ACTIVE ATHLETIC DECAY")
+        else:
+            st.error("🔴 STATUS: CHRONIC DECONDITIONING")
+
+        st.markdown("---")
+        st.markdown("**Effective Attributes vs. Maximum Potential:**")
+        
+        st.metric(
+            label="Aerobic Stamina (Fuel)", 
+            value=f"{p_fuel} / {p_fuel_max}", 
+            delta=None if p_fuel_decay == 0 else f"-{int(p_fuel_decay)} Detrained"
+        )
+        st.metric(
+            label="Stride Turn-over (Nitro)", 
+            value=f"{p_nitro} / {p_nitro_max}", 
+            delta=None if p_nitro_decay == 0 else f"-{int(p_nitro_decay)} Detrained"
+        )
+        st.metric(
+            label="Climbing Power (Torque)", 
+            value=f"{p_torque} / {p_torque_max}", 
+            delta=None if p_torque_decay == 0 else f"-{int(p_torque_decay)} Detrained"
+        )
+        
+        if days_since_last_run > 5:
+            st.info("💡 **Coach's Activation Note:** Upload a new workout file to reset your calendar clock to 0 days, wipe away your decay penalties, and instantly restore your peak physical potential!")
+        else:
+            st.info("🔥 **Coach's Peak Note:** Your conditioning is fully locked in. Your cardiovascular capillary paths are operating at 100% efficiency. Run hard out there!")
+
+    # ─── STEP 2: STAGE INTERACTIVE ARENA SELECTIONS ───
+
 
     # Re-initialize character_stats explicitly right here so check_is_unlocked can read it downstream!
     character_stats = {
@@ -449,22 +575,39 @@ def render_coliseum(player, FILE_PATH):
             if st.button(f"🏁🟢 START MATCH: Release Pacers vs {selected_boss}", use_container_width=True):
                 base_seconds_per_mile = 600.0
                 
-                # Formulate velocity shifts
+                # =========================================================================
+                # 🧬 PHYSIOLOGICAL DETRAINING & METABOLIC BONK CALCULATOR
+                # Uses your globally computed days_since_last_run timeline directly!
+                # =========================================================================
+                bonk_penalty_per_mile = 0.0
+                
+                # Check if you are past your 5-day peak window and tackling an endurance track
+                if days_since_last_run > 5 and course_specs['dist'] >= 10.0:
+                    # Penalty scales smoothly with distance and timeline severity up to a 30-day cap
+                    severity_multiplier = min(30.0, float(days_since_last_run)) / 30.0
+                    bonk_penalty_per_mile = (course_specs['dist'] * 1.5) * severity_multiplier
+                
+                # Formulate velocity shifts (Pulling your live effective attributes!)
                 p_speed_factor = (p_fuel * 0.1) + (p_nitro * 0.3) + (p_torque * 0.1) + (total_kit_physics_bonus * 0.5) + environment_bonus_points
                 r_speed_factor = (b_fuel * 0.1) + (b_nitro * 0.3) + (b_torque * 0.1)
                 
-                p_total_seconds = max(240.0, (base_seconds_per_mile - (p_speed_factor * 35.0)) / fatigue_pace_multiplier) * course_specs['dist'] + random.uniform(-4, 4)
-                r_total_seconds = max(240.0, base_seconds_per_mile - (r_speed_factor * 35.0)) * course_specs['dist'] + random.uniform(-4, 4)
+                # Incorporate your custom bonk penalty into the base mile calculation
+                player_seconds_per_mile = (base_seconds_per_mile + bonk_penalty_per_mile - (p_speed_factor * 35.0)) / fatigue_pace_multiplier
+                rival_seconds_per_mile = base_seconds_per_mile - (r_speed_factor * 35.0)
+                
+                p_total_seconds = max(240.0, player_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
+                r_total_seconds = max(240.0, rival_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
                 
                 p_time_str = format_finish_time(p_total_seconds)
                 r_time_str = format_finish_time(r_total_seconds)
-
+        
                 # Initialize Live Interface Progress Placeholders
                 distance_placeholder = st.empty()
                 commentary_placeholder = st.empty()
                 player_bar_placeholder = st.empty()
                 rival_bar_placeholder = st.empty()
                 total_dist = course_specs['dist']
+
 
                 # Animation Stage 1: The Start Line
                 distance_placeholder.markdown(f'### 📍 **Mile 0.00** / {total_dist:.2f} Mi')
