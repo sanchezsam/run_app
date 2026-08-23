@@ -21357,36 +21357,6 @@
             ]
         },
         {
-            "Date": "2023-07-03 13:44:23",
-            "Name": "11481164797_ACTIVITY.fit",
-            "Distance (Miles)": 0.35,
-            "Duration": "0:03:21",
-            "pace": "9:36",
-            "Elevation (ft)": "+9.8 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.35,
-                    "time": "03:22",
-                    "pace": "9:36",
-                    "avg_heart_rate": 133,
-                    "max_heart_rate": 152
-                }
-            ],
-            "text_payload": "[2023-07-03 13:44:23] Run: 0.35 miles | Pace: 9:36 min/mi | Elevation Climbed: +9.8 ft | [REWARD] +3g, +17 XP. | [CALORIE REWARDS] +31 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2022-02-14 15:01:29",
             "Name": "8298209307_ACTIVITY.fit",
             "Distance (Miles)": 9.18,
@@ -32251,42 +32221,6 @@
             ]
         },
         {
-            "Date": "2015-03-29 12:47:02",
-            "Name": "732481589_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:02",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.0,
-                    "time": "00:03",
-                    "pace": "569:59",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2015-03-29 12:47:02] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +1 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2025-09-01 08:49:08",
             "Name": "20246859732_ACTIVITY.fit",
             "Distance (Miles)": 6.08,
@@ -32735,42 +32669,6 @@
                     "id": "split_striker",
                     "name": "Split Striker Module",
                     "icon": "⏲️"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2019-06-09 07:06:52",
-            "Name": "3731047843_ACTIVITY.fit",
-            "Distance (Miles)": 0.03,
-            "Duration": "0:00:30",
-            "pace": "00:00",
-            "Elevation (ft)": "+65.6 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.03,
-                    "time": "00:31",
-                    "pace": "19:10",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2019-06-09 07:06:52] Run: 0.03 miles | Pace: — min/mi | Elevation Climbed: +65.6 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +2 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -108111,42 +108009,6 @@
             ]
         },
         {
-            "Date": "2016-10-08 07:19:37",
-            "Name": "1400221180_ACTIVITY.fit",
-            "Distance (Miles)": 0.01,
-            "Duration": "0:06:58",
-            "pace": "00:00",
-            "Elevation (ft)": "+19.7 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.01,
-                    "time": "00:01",
-                    "pace": "4:00",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2016-10-08 07:19:37] Run: 0.01 miles | Pace: — min/mi | Elevation Climbed: +19.7 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +1 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2015-09-27 15:00:10",
             "Name": "912065785_ACTIVITY.fit",
             "Distance (Miles)": 10.03,
@@ -112336,36 +112198,6 @@
                     "name": "Horizon Mapper Processor",
                     "icon": "🗺️"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2025-06-17 11:13:40",
-            "Name": "19465781616_ACTIVITY.fit",
-            "Distance (Miles)": 0.46,
-            "Duration": "0:03:59",
-            "pace": "8:44",
-            "Elevation (ft)": "+16.4 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.46,
-                    "time": "03:59",
-                    "pace": "8:44",
-                    "avg_heart_rate": 149,
-                    "max_heart_rate": 155
-                }
-            ],
-            "text_payload": "[2025-06-17 11:13:40] Run: 0.46 miles | Pace: 8:44 min/mi | Elevation Climbed: +16.4 ft | [REWARD] +4g, +23 XP. | [CALORIE REWARDS] +46 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -117493,42 +117325,6 @@
             ]
         },
         {
-            "Date": "2017-10-11 11:27:29",
-            "Name": "2107820180_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:03",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.0,
-                    "time": "00:04",
-                    "pace": "15:09",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2017-10-11 11:27:29] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2026-07-26 18:48:40",
             "Name": "23745249797_ACTIVITY.fit",
             "Distance (Miles)": 13.02,
@@ -117728,36 +117524,6 @@
                 }
             ],
             "text_payload": "[2019-05-03 06:35:49] Run: 3.02 miles | Pace: 9:54 min/mi | Elevation Climbed: +157.5 ft | [REWARD] +30g, +151 XP. | [CALORIE REWARDS] +322 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2014-12-15 08:56:35",
-            "Name": "664332804_ACTIVITY.fit",
-            "Distance (Miles)": 0.45,
-            "Duration": "0:04:27",
-            "pace": "9:49",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.45,
-                    "time": "04:27",
-                    "pace": "9:49",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2014-12-15 08:56:35] Run: 0.45 miles | Pace: 9:49 min/mi | Elevation Climbed: +0.0 ft | [REWARD] +4g, +22 XP. | [CALORIE REWARDS] +49 kcal | 🎖️ Rewards: 🫀",
             "aerobic_decoupling_percent": 0.0,
             "ambient_temp_f": 72.0,
             "zone_1_2_duration_percent": 60.0,
@@ -131661,33 +131427,6 @@
                     "id": "horizon_mapper",
                     "name": "Horizon Mapper Processor",
                     "icon": "🗺️"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2018-02-05 22:24:35",
-            "Name": "2480954036_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:16",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [],
-            "text_payload": "[2018-02-05 22:24:35] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -151064,36 +150803,6 @@
             ]
         },
         {
-            "Date": "2019-07-27 10:34:28",
-            "Name": "3888249883_ACTIVITY.fit",
-            "Distance (Miles)": 0.35,
-            "Duration": "0:03:21",
-            "pace": "9:45",
-            "Elevation (ft)": "+9.8 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.35,
-                    "time": "03:22",
-                    "pace": "9:45",
-                    "avg_heart_rate": 127,
-                    "max_heart_rate": 135
-                }
-            ],
-            "text_payload": "[2019-07-27 10:34:28] Run: 0.35 miles | Pace: 9:45 min/mi | Elevation Climbed: +9.8 ft | [REWARD] +3g, +17 XP. | [CALORIE REWARDS] +33 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2025-10-16 09:26:57",
             "Name": "20709590272_ACTIVITY.fit",
             "Distance (Miles)": 20.21,
@@ -156949,36 +156658,6 @@
                     "name": "Horizon Mapper Processor",
                     "icon": "🗺️"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2019-10-28 19:53:12",
-            "Name": "4201957377_ACTIVITY.fit",
-            "Distance (Miles)": 0.33,
-            "Duration": "0:02:56",
-            "pace": "9:02",
-            "Elevation (ft)": "+23.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.33,
-                    "time": "02:57",
-                    "pace": "9:02",
-                    "avg_heart_rate": 142,
-                    "max_heart_rate": 151
-                }
-            ],
-            "text_payload": "[2019-10-28 19:53:12] Run: 0.33 miles | Pace: 9:02 min/mi | Elevation Climbed: +23.0 ft | [REWARD] +3g, +16 XP. | [CALORIE REWARDS] +33 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -168500,42 +168179,6 @@
             ]
         },
         {
-            "Date": "2022-07-06 17:25:57",
-            "Name": "9154893582_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:00",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.0,
-                    "time": "00:01",
-                    "pace": "7:54",
-                    "avg_heart_rate": 77,
-                    "max_heart_rate": 79
-                }
-            ],
-            "text_payload": "[2022-07-06 17:25:57] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2016-12-31 14:01:38",
             "Name": "1504349813_ACTIVITY.fit",
             "Distance (Miles)": 8.04,
@@ -170935,36 +170578,6 @@
                     "name": "Stride Tracker Array",
                     "icon": "👣"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2022-04-05 12:01:44",
-            "Name": "8586703428_ACTIVITY.fit",
-            "Distance (Miles)": 0.42,
-            "Duration": "0:04:28",
-            "pace": "10:38",
-            "Elevation (ft)": "+39.4 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.42,
-                    "time": "04:28",
-                    "pace": "10:38",
-                    "avg_heart_rate": 120,
-                    "max_heart_rate": 134
-                }
-            ],
-            "text_payload": "[2022-04-05 12:01:44] Run: 0.42 miles | Pace: 10:38 min/mi | Elevation Climbed: +39.4 ft | [REWARD] +4g, +21 XP. | [CALORIE REWARDS] +36 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -185444,36 +185057,6 @@
             ]
         },
         {
-            "Date": "2019-03-31 08:57:51",
-            "Name": "3531650789_ACTIVITY.fit",
-            "Distance (Miles)": 0.08,
-            "Duration": "0:00:53",
-            "pace": "10:50",
-            "Elevation (ft)": "+6.6 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.08,
-                    "time": "00:54",
-                    "pace": "10:50",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2019-03-31 08:57:51] Run: 0.08 miles | Pace: 10:50 min/mi | Elevation Climbed: +6.6 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +6 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2020-03-09 05:13:37",
             "Name": "4636739724_ACTIVITY.fit",
             "Distance (Miles)": 5.02,
@@ -190377,36 +189960,6 @@
                 }
             ],
             "text_payload": "[2015-11-30 20:09:27] Run: 0.71 miles | Pace: 10:07 min/mi | Elevation Climbed: +19.7 ft | [REWARD] +7g, +35 XP. | [CALORIE REWARDS] +87 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2024-10-06 12:22:30",
-            "Name": "17220521739_ACTIVITY.fit",
-            "Distance (Miles)": 0.36,
-            "Duration": "0:03:04",
-            "pace": "8:37",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.36,
-                    "time": "03:05",
-                    "pace": "8:37",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2024-10-06 12:22:30] Run: 0.36 miles | Pace: 8:37 min/mi | Elevation Climbed: +0.0 ft | [REWARD] +3g, +18 XP. | [CALORIE REWARDS] +37 kcal | 🎖️ Rewards: 🫀",
             "aerobic_decoupling_percent": 0.0,
             "ambient_temp_f": 72.0,
             "zone_1_2_duration_percent": 60.0,
@@ -199640,36 +199193,6 @@
             ]
         },
         {
-            "Date": "2023-05-21 04:07:25",
-            "Name": "11163190930_ACTIVITY.fit",
-            "Distance (Miles)": 0.29,
-            "Duration": "0:03:40",
-            "pace": "12:39",
-            "Elevation (ft)": "+9.8 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.29,
-                    "time": "03:40",
-                    "pace": "12:39",
-                    "avg_heart_rate": 133,
-                    "max_heart_rate": 143
-                }
-            ],
-            "text_payload": "[2023-05-21 04:07:25] Run: 0.29 miles | Pace: 12:39 min/mi | Elevation Climbed: +9.8 ft | [REWARD] +2g, +14 XP. | [CALORIE REWARDS] +33 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2022-02-18 13:13:38",
             "Name": "8319920959_ACTIVITY.fit",
             "Distance (Miles)": 8.18,
@@ -204304,42 +203827,6 @@
                     "id": "split_striker",
                     "name": "Split Striker Module",
                     "icon": "⏲️"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2021-02-25 23:42:04",
-            "Name": "6335368220_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:01:03",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.0,
-                    "time": "01:03",
-                    "pace": "253:47",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2021-02-25 23:42:04] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -229258,33 +228745,6 @@
             ]
         },
         {
-            "Date": "2018-06-18 00:32:09",
-            "Name": "2825821369_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:18",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [],
-            "text_payload": "[2018-06-18 00:32:09] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2020-01-19 06:36:06",
             "Name": "4454747537_ACTIVITY.fit",
             "Distance (Miles)": 1.37,
@@ -229395,42 +228855,6 @@
                     "id": "overdrive",
                     "name": "Overdrive Finisher Core",
                     "icon": "💥"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2026-02-02 19:47:16",
-            "Name": "21746640049_ACTIVITY.fit",
-            "Distance (Miles)": 0.01,
-            "Duration": "0:01:10",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.01,
-                    "time": "01:11",
-                    "pace": "109:05",
-                    "avg_heart_rate": 53,
-                    "max_heart_rate": 53
-                }
-            ],
-            "text_payload": "[2026-02-02 19:47:16] Run: 0.01 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +2 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -240013,42 +239437,6 @@
             ]
         },
         {
-            "Date": "2019-10-11 14:13:04",
-            "Name": "4150229392_ACTIVITY.fit",
-            "Distance (Miles)": 0.43,
-            "Duration": "0:03:32",
-            "pace": "8:15",
-            "Elevation (ft)": "+13.1 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.43,
-                    "time": "03:32",
-                    "pace": "8:15",
-                    "avg_heart_rate": 122,
-                    "max_heart_rate": 131
-                }
-            ],
-            "text_payload": "[2019-10-11 14:13:04] Run: 0.43 miles | Pace: 8:15 min/mi | Elevation Climbed: +13.1 ft | [REWARD] +4g, +21 XP. | [CALORIE REWARDS] +32 kcal | 🎖️ Rewards: 🐇🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "rabbit",
-                    "name": "Rabbit Cruise Node",
-                    "icon": "🐇"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2020-03-25 17:47:51",
             "Name": "4697364872_ACTIVITY.fit",
             "Distance (Miles)": 3.03,
@@ -242110,36 +241498,6 @@
                     "name": "Stride Tracker Array",
                     "icon": "👣"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2021-08-15 10:08:57",
-            "Name": "7310178183_ACTIVITY.fit",
-            "Distance (Miles)": 0.15,
-            "Duration": "0:01:32",
-            "pace": "10:05",
-            "Elevation (ft)": "+6.6 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.15,
-                    "time": "01:33",
-                    "pace": "10:05",
-                    "avg_heart_rate": 156,
-                    "max_heart_rate": 167
-                }
-            ],
-            "text_payload": "[2021-08-15 10:08:57] Run: 0.15 miles | Pace: 10:05 min/mi | Elevation Climbed: +6.6 ft | [REWARD] +2g, +7 XP. | [CALORIE REWARDS] +17 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -246910,36 +246268,6 @@
                     "name": "Horizon Mapper Processor",
                     "icon": "🗺️"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2024-10-30 12:20:22",
-            "Name": "17417500394_ACTIVITY.fit",
-            "Distance (Miles)": 0.43,
-            "Duration": "0:04:35",
-            "pace": "10:43",
-            "Elevation (ft)": "+29.5 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.43,
-                    "time": "04:35",
-                    "pace": "10:43",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2024-10-30 12:20:22] Run: 0.43 miles | Pace: 10:43 min/mi | Elevation Climbed: +29.5 ft | [REWARD] +4g, +21 XP. | [CALORIE REWARDS] +45 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -254715,36 +254043,6 @@
             ]
         },
         {
-            "Date": "2018-08-24 09:32:47",
-            "Name": "2959788264_ACTIVITY.fit",
-            "Distance (Miles)": 0.25,
-            "Duration": "0:04:35",
-            "pace": "18:22",
-            "Elevation (ft)": "+13.1 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.25,
-                    "time": "04:36",
-                    "pace": "18:22",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2018-08-24 09:32:47] Run: 0.25 miles | Pace: 18:22 min/mi | Elevation Climbed: +13.1 ft | [REWARD] +2g, +12 XP. | [CALORIE REWARDS] +32 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2016-02-07 10:17:51",
             "Name": "1047641257_ACTIVITY.fit",
             "Distance (Miles)": 8.03,
@@ -259473,42 +258771,6 @@
                     "id": "horizon_mapper",
                     "name": "Horizon Mapper Processor",
                     "icon": "🗺️"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2014-03-04 15:47:55",
-            "Name": "458262155_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:00",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.0,
-                    "time": "00:01",
-                    "pace": "6:22",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2014-03-04 15:47:55] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -268730,52 +267992,6 @@
                     "name": "Endurance Laurel Shield",
                     "icon": "📜"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2021-05-29 16:57:10",
-            "Name": "6875180121_ACTIVITY.fit",
-            "Distance (Miles)": 0.38,
-            "Duration": "0:04:25",
-            "pace": "11:44",
-            "Elevation (ft)": "+29.5 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.35,
-                    "time": "04:00",
-                    "pace": "11:29",
-                    "avg_heart_rate": 122,
-                    "max_heart_rate": 132
-                },
-                {
-                    "split_num": 2,
-                    "distance_mi": 0.02,
-                    "time": "00:16",
-                    "pace": "14:47",
-                    "avg_heart_rate": 113,
-                    "max_heart_rate": 117
-                },
-                {
-                    "split_num": 3,
-                    "distance_mi": 0.01,
-                    "time": "00:09",
-                    "pace": "14:48",
-                    "avg_heart_rate": 119,
-                    "max_heart_rate": 122
-                }
-            ],
-            "text_payload": "[2021-05-29 16:57:10] Run: 0.38 miles | Pace: 11:44 min/mi | Elevation Climbed: +29.5 ft | [REWARD] +3g, +19 XP. | [CALORIE REWARDS] +35 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -282797,36 +282013,6 @@
             ]
         },
         {
-            "Date": "2022-06-23 05:19:08",
-            "Name": "9136619826_ACTIVITY.fit",
-            "Distance (Miles)": 0.39,
-            "Duration": "0:03:53",
-            "pace": "10:01",
-            "Elevation (ft)": "+9.8 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.39,
-                    "time": "03:54",
-                    "pace": "10:01",
-                    "avg_heart_rate": 109,
-                    "max_heart_rate": 123
-                }
-            ],
-            "text_payload": "[2022-06-23 05:19:08] Run: 0.39 miles | Pace: 10:01 min/mi | Elevation Climbed: +9.8 ft | [REWARD] +3g, +19 XP. | [CALORIE REWARDS] +23 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2023-10-10 12:20:18",
             "Name": "12271299349_ACTIVITY.fit",
             "Distance (Miles)": 7.17,
@@ -285331,42 +284517,6 @@
                     "id": "horizon_mapper",
                     "name": "Horizon Mapper Processor",
                     "icon": "🗺️"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2023-05-15 12:47:50",
-            "Name": "11123690647_ACTIVITY.fit",
-            "Distance (Miles)": 0.01,
-            "Duration": "0:00:23",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.01,
-                    "time": "00:24",
-                    "pace": "39:41",
-                    "avg_heart_rate": 92,
-                    "max_heart_rate": 96
-                }
-            ],
-            "text_payload": "[2023-05-15 12:47:50] Run: 0.01 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +1 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -292321,42 +291471,6 @@
                     "id": "endurance_laurel",
                     "name": "Endurance Laurel Shield",
                     "icon": "📜"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2013-10-12 13:25:00",
-            "Name": "390734680_UNKNOWN.fit",
-            "Distance (Miles)": 0.3,
-            "Duration": "0:02:12",
-            "pace": "7:18",
-            "Elevation (ft)": "+9.8 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.3,
-                    "time": "02:12",
-                    "pace": "7:18",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2013-10-12 13:25:00] Run: 0.30 miles | Pace: 7:18 min/mi | Elevation Climbed: +9.8 ft | [REWARD] +3g, +15 XP. | [CALORIE REWARDS] +15 kcal | 🎖️ Rewards: 🦌🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "deer",
-                    "name": "Deer Sprint Node",
-                    "icon": "🦌"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -303109,36 +302223,6 @@
             ]
         },
         {
-            "Date": "2024-04-11 13:04:46",
-            "Name": "14853371473_ACTIVITY.fit",
-            "Distance (Miles)": 0.41,
-            "Duration": "0:04:30",
-            "pace": "11:00",
-            "Elevation (ft)": "+39.4 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.41,
-                    "time": "04:31",
-                    "pace": "11:00",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2024-04-11 13:04:46] Run: 0.41 miles | Pace: 11:00 min/mi | Elevation Climbed: +39.4 ft | [REWARD] +4g, +20 XP. | [CALORIE REWARDS] +44 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2015-06-30 12:05:59",
             "Name": "821596205_ACTIVITY.fit",
             "Distance (Miles)": 10.04,
@@ -305654,36 +304738,6 @@
                     "name": "Marmot Traction Unit",
                     "icon": "🐿️"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2018-08-18 18:31:59",
-            "Name": "2945614993_ACTIVITY.fit",
-            "Distance (Miles)": 0.27,
-            "Duration": "0:02:20",
-            "pace": "8:46",
-            "Elevation (ft)": "+13.1 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.27,
-                    "time": "02:20",
-                    "pace": "8:46",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2018-08-18 18:31:59] Run: 0.27 miles | Pace: 8:46 min/mi | Elevation Climbed: +13.1 ft | [REWARD] +2g, +13 XP. | [CALORIE REWARDS] +27 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -308919,36 +307973,6 @@
             ]
         },
         {
-            "Date": "2014-01-22 19:29:46",
-            "Name": "438132143_UNKNOWN.fit",
-            "Distance (Miles)": 0.19,
-            "Duration": "0:03:04",
-            "pace": "16:01",
-            "Elevation (ft)": "+23.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.19,
-                    "time": "03:04",
-                    "pace": "16:01",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2014-01-22 19:29:46] Run: 0.19 miles | Pace: 16:01 min/mi | Elevation Climbed: +23.0 ft | [REWARD] +2g, +9 XP. | [CALORIE REWARDS] +19 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2022-08-03 13:45:22",
             "Name": "9332578490_ACTIVITY.fit",
             "Distance (Miles)": 9.03,
@@ -311690,36 +310714,6 @@
                     "name": "Stride Tracker Array",
                     "icon": "👣"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2021-12-27 09:44:26",
-            "Name": "8017272698_ACTIVITY.fit",
-            "Distance (Miles)": 0.44,
-            "Duration": "0:04:58",
-            "pace": "11:21",
-            "Elevation (ft)": "+3.3 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.44,
-                    "time": "04:59",
-                    "pace": "11:21",
-                    "avg_heart_rate": 166,
-                    "max_heart_rate": 186
-                }
-            ],
-            "text_payload": "[2021-12-27 09:44:26] Run: 0.44 miles | Pace: 11:21 min/mi | Elevation Climbed: +3.3 ft | [REWARD] +4g, +22 XP. | [CALORIE REWARDS] +59 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
@@ -318879,33 +317873,6 @@
                     "id": "overdrive",
                     "name": "Overdrive Finisher Core",
                     "icon": "💥"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2018-06-14 09:49:46",
-            "Name": "2825821197_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:02",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [],
-            "text_payload": "[2018-06-14 09:49:46] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -326672,42 +325639,6 @@
                     "id": "overdrive",
                     "name": "Overdrive Finisher Core",
                     "icon": "💥"
-                },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2021-03-07 10:59:57",
-            "Name": "6391259011_ACTIVITY.fit",
-            "Distance (Miles)": 0.0,
-            "Duration": "0:00:01",
-            "pace": "00:00",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.0,
-                    "time": "00:01",
-                    "pace": "31:04",
-                    "avg_heart_rate": 98,
-                    "max_heart_rate": 98
-                }
-            ],
-            "text_payload": "[2021-03-07 10:59:57] Run: 0.00 miles | Pace: — min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +0 kcal | 🎖️ Rewards: 🐆🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "stride_velocity",
-                    "id": "cheetah",
-                    "name": "Cheetah Overdrive Core",
-                    "icon": "🐆"
                 },
                 {
                     "pillar": "cardiac_efficiency",
@@ -335170,36 +334101,6 @@
             ]
         },
         {
-            "Date": "2022-07-30 08:23:56",
-            "Name": "9319670921_ACTIVITY.fit",
-            "Distance (Miles)": 0.1,
-            "Duration": "0:00:59",
-            "pace": "9:40",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.1,
-                    "time": "00:59",
-                    "pace": "9:40",
-                    "avg_heart_rate": 132,
-                    "max_heart_rate": 137
-                }
-            ],
-            "text_payload": "[2022-07-30 08:23:56] Run: 0.10 miles | Pace: 9:40 min/mi | Elevation Climbed: +0.0 ft | [REWARD] +2g, +5 XP. | [CALORIE REWARDS] +8 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
             "Date": "2020-09-16 18:41:27",
             "Name": "5548467519_ACTIVITY.fit",
             "Distance (Miles)": 1.37,
@@ -335511,36 +334412,6 @@
                 }
             ],
             "text_payload": "[2020-11-05 17:43:33] Run: 6.01 miles | Pace: 8:44 min/mi | Elevation Climbed: +200.1 ft | [REWARD] +60g, +300 XP. | [CALORIE REWARDS] +456 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2026-01-19 11:21:40",
-            "Name": "21599691554_ACTIVITY.fit",
-            "Distance (Miles)": 0.43,
-            "Duration": "0:05:01",
-            "pace": "11:37",
-            "Elevation (ft)": "+0.0 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.43,
-                    "time": "05:02",
-                    "pace": "11:37",
-                    "avg_heart_rate": 118,
-                    "max_heart_rate": 128
-                }
-            ],
-            "text_payload": "[2026-01-19 11:21:40] Run: 0.43 miles | Pace: 11:37 min/mi | Elevation Climbed: +0.0 ft | [REWARD] +4g, +21 XP. | [CALORIE REWARDS] +45 kcal | 🎖️ Rewards: 🫀",
             "aerobic_decoupling_percent": 0.0,
             "ambient_temp_f": 72.0,
             "zone_1_2_duration_percent": 60.0,
@@ -336561,36 +335432,6 @@
                     "name": "Rabbit Cruise Node",
                     "icon": "🐇"
                 },
-                {
-                    "pillar": "cardiac_efficiency",
-                    "id": "cardio_cyborg",
-                    "name": "Cardio Cyborg Patch",
-                    "icon": "🫀"
-                }
-            ]
-        },
-        {
-            "Date": "2024-05-07 14:20:34",
-            "Name": "15277881914_ACTIVITY.fit",
-            "Distance (Miles)": 0.24,
-            "Duration": "0:02:10",
-            "pace": "9:06",
-            "Elevation (ft)": "+3.3 ft",
-            "splits": [
-                {
-                    "split_num": 1,
-                    "distance_mi": 0.24,
-                    "time": "02:10",
-                    "pace": "9:06",
-                    "avg_heart_rate": null,
-                    "max_heart_rate": null
-                }
-            ],
-            "text_payload": "[2024-05-07 14:20:34] Run: 0.24 miles | Pace: 9:06 min/mi | Elevation Climbed: +3.3 ft | [REWARD] +2g, +12 XP. | [CALORIE REWARDS] +25 kcal | 🎖️ Rewards: 🫀",
-            "aerobic_decoupling_percent": 0.0,
-            "ambient_temp_f": 72.0,
-            "zone_1_2_duration_percent": 60.0,
-            "earned_patches": [
                 {
                     "pillar": "cardiac_efficiency",
                     "id": "cardio_cyborg",
