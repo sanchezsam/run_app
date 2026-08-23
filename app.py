@@ -586,7 +586,11 @@ if "active_tab_selection" not in st.session_state:
 
 with st.sidebar:
     st.markdown("### 🏎️ Cardio Training Hub")
-    st.caption(f"Logged in as: **{getattr(player, 'name', 'Racer 1')}**")
+    #st.caption(f"Logged in as: **{getattr(player, 'name', 'Racer 1')}**")
+    # 🟢 Pulls the true profile string name out of your loaded state dictionary
+    active_username = st.session_state.get("profile", {}).get("name", "Racer 1")
+    st.sidebar.markdown(f"**Logged in as:** {active_username}")
+
     st.markdown("---")
     
     # 🎯 STEP 1: Check if the Showroom is selected.

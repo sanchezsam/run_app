@@ -423,16 +423,18 @@ def render_coliseum(player, FILE_PATH):
             
             stat_col1, stat_col2, stat_col3, stat_col4, stat_col5 = st.columns(5)
             
+
             with stat_col1:
                 st.metric(label="🏅 Character Level", value=f"Level {character_stats.get('level', 1)}")
             with stat_col2:
-                st.metric(label="🏃 Runner Level", value=f"Lvl {st.session_state.profile.get('running_level', 0)}")
+                # 🟢 FIXED: Changed st.session_state.profile.get to pull from your safe local variable
+                st.metric(label="🏃 Runner Level", value=f"Lvl {profile_dict.get('running_level', 0)}")
             with stat_col3:
                 st.metric(label="🔋 Baseline Endurance", value=f"{int(player.get('endurance_level', 1) if isinstance(player, dict) else getattr(player, 'stamina_level', 1))}.0")
             with stat_col4:
                 st.metric(label="⚡ Baseline Pace Tempo", value=f"{int(player.get('pace_level', 1) if isinstance(player, dict) else getattr(player, 'efficiency_level', 1))}.0")
             with stat_col5:
-                st.metric(label="⛰️ Baseline Climbing", value=f"{int(player.get('hill_climbing_level', 1) if isinstance(player, dict) else getattr(player, 'power_level', 1))}.0")
+                st.metric(label="⛰️  Baseline Climbing", value=f"{int(player.get('hill_climbing_level', 1) if isinstance(player, dict) else getattr(player, 'power_level', 1))}.0")
 
         st.markdown(" ")
 
