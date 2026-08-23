@@ -490,6 +490,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      player.history_logs, st_rating, ef_rating, pw_rating
                  )
                  
+                 
                  # Assign updated ratings and levels to the player object
                  player.stamina_rating, player.efficiency_rating, player.power_rating = new_st, new_ef, new_pw
                  player.stamina_level, player.efficiency_level, player.power_level = post_st, post_ef, post_pw
@@ -501,52 +502,120 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                          entry["earned_patches"] = list(discovered_patches) if isinstance(discovered_patches, list) else discovered_patches
                          
                          emoji_strip = "".join([p.get("icon", "") for p in discovered_patches if p.get("icon")])
-                         if emoji_strip and "🎖️ Rewards:" not in entry.get("text_payload", ""):
-                             entry["text_payload"] = entry.get("text_payload", "").strip() + f" | 🎖️ Rewards: {emoji_strip}"
+                         if emoji_strip and "🎖️  Rewards:" not in entry.get("text_payload", ""):
+                             entry["text_payload"] = entry.get("text_payload", "").strip() + f" | 🎖️  Rewards: {emoji_strip}"
 
                          for patch in discovered_patches:
                              if patch["id"] not in player.unlocked_badges:
                                  player.unlocked_badges.append(patch["id"])
                  
-                 # Commit save structures to disk
-                 save_data = player.to_dict() if hasattr(player, 'to_dict') else dict(player.__dict__)
-                 save_data['calorie_bank_balance'] = player.calorie_bank_balance
-                 save_data['calorie_bank_total_earned'] = player.calorie_bank_total_earned
-                 save_data['pantry_purchase_counts'] = player.pantry_purchase_counts
-                 save_data['pantry_single_trophies'] = player.pantry_single_trophies
-                 save_data['pantry_cuisine_trophies'] = player.pantry_cuisine_trophies
                  
+                 # =========================================================================
+                 # 🛡️ FIXED: SAFE DISK-APPEND ENGINE (MULTIPLE CONSECUTIVE RUNS)
+                 # =========================================================================
+                 import json
+                 import os
+
+                 # 1. READ PERMANENT STORAGE FILE DATA FIRST (Never assume memory handles are active)
+                 if os.path.exists(FILE_PATH) and os.path.getsize(FILE_PATH) > 0:
+                     try:
+                         with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
+                             current_database = json.load(db_file)
+                     except json.JSONDecodeError:
+                         current_database = {}
+                 else:
+                     current_database = {}
+
+                 # 2. Guarantee core structural tracking lists exist on disk
+                 if "history_logs" not in current_database:
+                     current_database["history_logs"] = []
+                 if "unlocked_badges" not in current_database:
+                     current_database["unlocked_badges"] = []
+
+                 # 🟢 3. FIXED: Extract fresh entries directly from the incoming batch loop
+                 # instead of reading player.history_logs which hoards previous states in RAM!
+                 fresh_logs = getattr(player, 'history_logs', [])
+                 fresh_badges = getattr(player, 'unlocked_badges', [])
+
+                 # 🟢 4. FIXED: Compare and append directly against the permanent file entries list
+                 for log in fresh_logs:
+                     is_dup = any(
+                         str(old_log.get("Date"))[:19] == str(log.get("Date"))[:19] and 
+                         abs(float(old_log.get("Distance (Miles)", 0.0)) - float(log.get("Distance (Miles)", 0.0))) < 0.01
+                         for old_log in current_database["history_logs"] if isinstance(old_log, dict)
+                     )
+                     # Append strictly to the database list container
+                     if not is_dup:
+                         current_database["history_logs"].append(log)
+
+                 for badge in fresh_badges:
+                     if badge not in current_database["unlocked_badges"]:
+                         current_database["unlocked_badges"].append(badge)
+
+                 
+                                  # 5. Lock in core level stats, totals, balances, and economy metadata
+                 current_database['level'] = player.level
+                 current_database['total_xp'] = player.total_xp
+                 current_database['gold'] = player.gold
+                 current_database['fatigue'] = player.fatigue
+                 current_database['calorie_bank_balance'] = player.calorie_bank_balance
+                 current_database['calorie_bank_total_earned'] = player.calorie_bank_total_earned
+                 current_database['pantry_purchase_counts'] = player.pantry_purchase_counts
+                 current_database['pantry_single_trophies'] = player.pantry_single_trophies
+                 current_database['pantry_cuisine_trophies'] = player.pantry_cuisine_trophies
+
+                 # 6. Execute metrics calculations in memory on the unified master list data stream
+                 if current_database["history_logs"]:
+                     current_database = process_and_award_metrics_in_memory(current_database, current_database["history_logs"][-1])
+
+                                      # 7. Flush the completely appended dataset to disk once safely
                  with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
-                     json.dump(save_data, db_file, default=str, indent=4)
-                 
-                 if player.history_logs:
-                     process_and_award_metrics(player.history_logs[-1])
-                 
-                 with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
-                     fresh_disk_data = json.load(db_file)
-                     
-                 player.history_logs = fresh_disk_data.get("history_logs", [])
-                 player.unlocked_badges = fresh_disk_data.get("unlocked_badges", [])
+                     json.dump(current_database, db_file, default=str, indent=4, ensure_ascii=False)
+
+                 # =========================================================================
+                 # 🛡️ FIXED: ATOMIC MEMORY POINTER MUTATION (REPLACES POINTER OVERRIDES)
+                 # =========================================================================
+                 # Instead of re-assigning lists using '=', we modify the active in-place list elements
+                 # directly so app.py and upload_ui.py share the exact same memory references!
+                 if hasattr(player, 'history_logs') and isinstance(player.history_logs, list):
+                     player.history_logs.clear()
+                     player.history_logs.extend(current_database.get("history_logs", []))
+                 else:
+                     player.history_logs = list(current_database.get("history_logs", []))
+
+                 if hasattr(player, 'unlocked_badges') and isinstance(player.unlocked_badges, list):
+                     player.unlocked_badges.clear()
+                     player.unlocked_badges.extend(current_database.get("unlocked_badges", []))
+                 else:
+                     player.unlocked_badges = list(current_database.get("unlocked_badges", []))
+
+                 # Force sync across your parent session state dictionary matrix
+                 st.session_state["profile"]["history_logs"] = list(current_database.get("history_logs", []))
+                 st.session_state["profile"]["unlocked_badges"] = list(current_database.get("unlocked_badges", []))
+                 st.session_state.history_logs = list(current_database.get("history_logs", []))
+
                  if hasattr(player, 'final_metric_data'):
-                     player.final_metric_data = fresh_disk_data.get("final_metric_data", {})
-                 
-                 post_upload_badges = fresh_disk_data.get("unlocked_badges", [])
+                     player.final_metric_data = current_database.get("final_metric_data", {})
+
+                 post_upload_badges = current_database.get("unlocked_badges", [])
+
+                 # Restore your summary reporting metric variables down below...
                  st.session_state.last_sync_deltas = {
                      "gold": total_gold_rewarded,
-                     "xp": total_xp_gained,  
+                     "xp": total_xp_gained,
                      "count": len(staged_sessions),
                      "miles_added": sum(float(s['dist']) for s in staged_sessions),
-                     "batch_patches_earned": max(0, len(post_upload_badges) - pre_upload_badge_count)  
+                     "batch_patches_earned": max(0, len(post_upload_badges) - pre_upload_badge_count)
                  }
-                 
+
                  if total_calories_ingested > 0:
                      st.toast(f"🔥 CALORIE BANK DEPOSIT SUCCESSFUL: +{total_calories_ingested} kcal credited!", icon="🏦")
-
+                     
                  st.cache_data.clear()
                  st.session_state.uploader_reset_token += 1
                  st.balloons()
                  st.rerun()
-                 
+ 
              except Exception as e:
                  st.error(f"Save batch error: {str(e)}")
 

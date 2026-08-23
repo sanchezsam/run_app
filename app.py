@@ -30,6 +30,74 @@ FILE_PATH = 'save_file.json'
 IMPORT_FILE_PATH = 'data/sync'  # Stores synced Garmin .fit binaries safely on disk
 
 
+
+def process_and_award_metrics_in_memory(profile: dict, new_run_log: dict) -> dict:
+    """
+    Main evaluation pipeline processed completely in-memory inside app.py. 
+    Processes incoming run payloads, updates profile statistics counters, 
+    and returns the fully modified profile dictionary container.
+    """
+    import re
+    import math
+    import json
+
+    if "final_metric_data" not in profile:
+        return profile
+        
+    m_data = profile["final_metric_data"]
+    run_distance = float(new_run_log.get("Distance (Miles)", 0.0))
+    
+    raw_pace = new_run_log.get("pace", 0.0)
+    if isinstance(raw_pace, str) and ":" in raw_pace:
+        try:
+            parts = raw_pace.strip().split(":")
+            run_pace_seconds = (int(parts[0]) * 60) + int(parts[1])
+        except (ValueError, IndexError):
+            run_pace_seconds = 660
+    else:
+        try:
+            # Fallback inline calculator to bypass name errors
+            run_pace_seconds = int(float(raw_pace) * 60)
+        except:
+            run_pace_seconds = 660
+            
+    try:
+        raw_vert = new_run_log.get('elevation_gain', new_run_log.get('elevation', new_run_log.get('Elevation (ft)', 0.0)))
+        run_elevation = float(str(raw_vert).replace("+","").replace("ft","").replace(",","").strip())
+    except:
+        run_elevation = 0.0
+    
+    if "unlocked_badges" not in profile:
+        profile["unlocked_badges"] = []
+
+    if "history_logs" not in profile:
+        profile["history_logs"] = []
+        
+    is_duplicate = any(
+        str(run.get("Date"))[:19] == str(new_run_log.get("Date"))[:19] and 
+        abs(float(run.get("Distance (Miles)", 0.0)) - run_distance) < 0.01
+        for run in profile["history_logs"] if isinstance(run, dict)
+    )
+    
+    if not is_duplicate:
+        profile["history_logs"].append(new_run_log)
+    
+    run_calories = int(run_distance * 100) 
+    m_data["lifetime_calories_burned"] = int(m_data.get("lifetime_calories_burned", 0)) + run_calories
+    profile["lifetime_elevation_gain"] = float(profile.get("lifetime_elevation_gain", 0.0)) + run_elevation
+
+    total_accumulated_miles = 0.0
+    history_source = profile.get("history_logs", [])
+
+    for log_item in history_source:
+        if isinstance(log_item, dict):
+            total_accumulated_miles += float(log_item.get("Distance (Miles)", 0.0))
+
+    m_data["lifetime_odometer_miles"] = round(total_accumulated_miles, 2)
+    return profile
+
+
+
 # ==========================================
 # 2. LOCAL DATA PERSISTENCE ENGINE
 # ==========================================
@@ -112,14 +180,49 @@ def load_profile_state():
 
 # ==============================================================================
 # ⚡ THE SOURCE OF TRUTH OVERRIDE (MAXIMUM BYPASS BLANKET)
+# 🛡️ RESILIENT SESSION MEMORY GUARD: Prevents app re-runs from overriding 
+# active browser memory and clearing your consecutive data imports!
 # ==============================================================================
-st.session_state.profile = load_profile_state()
+
+# ==============================================================================
+# ⚡ THE RESILIENT SOURCE OF TRUTH INITIALIZATION OVERRIDE (app.py)
+# 🛡️ Bulletproof state initialization sequence using safe dictionary getters.
+# ==============================================================================
+if "profile" not in st.session_state:
+    # 🌟 Absolute First Boot: Fetch clean data dictionary layout straight from disk
+    st.session_state["profile"] = load_profile_state()
+else:
+    # 🔄 Subsequent Page Refreshes: Pull disk metrics and merge into active memory
+    disk_data = load_profile_state()
+    active_profile = st.session_state.get("profile")
+
+    if isinstance(disk_data, dict) and isinstance(active_profile, dict):
+        for k, v in disk_data.items():
+            if k == "history_logs" and isinstance(v, list):
+                if "history_logs" not in active_profile:
+                    active_profile["history_logs"] = []
+                for log_item in v:
+                    if log_item not in active_profile["history_logs"]:
+                        active_profile["history_logs"].append(log_item)
+            elif k == "unlocked_badges" and isinstance(v, list):
+                if "unlocked_badges" not in active_profile:
+                    active_profile["unlocked_badges"] = []
+                for badge in v:
+                    if badge not in active_profile["unlocked_badges"]:
+                        active_profile["unlocked_badges"].append(badge)
+            else:
+                # Retain the highest available metrics counters
+                if isinstance(v, (int, float)) and k in active_profile:
+                    active_profile[k] = max(active_profile[k], v)
+
+# Enforce explicit layout state markers across the active session runtime context
 st.session_state.initialized = True
 st.session_state.profile_created = True
 st.session_state.profile_setup = True
 st.session_state.user_initialized = True
 st.session_state.account_created = True
 st.session_state.setup_complete = True
+
 
 # ==============================================================================
 # ⚡ THE ROOT INITIALIZATION HOOKS (Fixed to Eliminate NameErrors)
@@ -131,25 +234,51 @@ if "selected_track_id" not in st.session_state:
 if "selected_boss_id" not in st.session_state:
     st.session_state.selected_boss_id = ""
 
-if isinstance(st.session_state.profile, dict):
-    st.session_state.player_level = st.session_state.profile.get("level", 0)
-    st.session_state.player_gold = st.session_state.profile.get("gold", 0)
-    st.session_state.player_xp = st.session_state.profile.get("total_xp", 0)
-    st.session_state.calorie_bank_balance = st.session_state.profile.get("calorie_bank_balance", 0)
-    st.session_state.pantry_purchase_counts = st.session_state.profile.get("pantry_purchase_counts", {})
-    st.session_state.pantry_single_trophies = st.session_state.profile.get("pantry_single_trophies", [])
-    st.session_state.pantry_cuisine_trophies = st.session_state.profile.get("pantry_cuisine_trophies", [])
-    st.session_state.history_logs = st.session_state.profile.get("history_logs", [])
+
+# ==============================================================================
+# 🎯 FIXED: TARGETED ROOT INITIALIZATION VALUES WITH BRACKET NOTATION
+# Replaces old dot notation at line 169 to eliminate final AttributeError crashes!
+# ==============================================================================
+if "profile" in st.session_state and isinstance(st.session_state["profile"], dict):
+    st.session_state.player_level = st.session_state["profile"].get("level", 0)
+    st.session_state.player_gold = st.session_state["profile"].get("gold", 0)
+    st.session_state.player_xp = st.session_state["profile"].get("total_xp", 0)
+    st.session_state.calorie_bank_balance = st.session_state["profile"].get("calorie_bank_balance", 0)
+    st.session_state.pantry_purchase_counts = st.session_state["profile"].get("pantry_purchase_counts", {})
+    st.session_state.pantry_single_trophies = st.session_state["profile"].get("pantry_single_trophies", [])
+    st.session_state.pantry_cuisine_trophies = st.session_state["profile"].get("pantry_cuisine_trophies", [])
+    st.session_state.history_logs = st.session_state["profile"].get("history_logs", [])
 
 import showroom_engine as showroom_eng
-logs_array = st.session_state.profile.get("history_logs", [])
+# Fixed the logs array pointer right below to read the safe memory block
+logs_array = st.session_state["profile"].get("history_logs", []) if "profile" in st.session_state else []
 if logs_array:
     st.session_state.filtered_df = showroom_eng.sanitize_json_history_logs(logs_array)
 else:
     st.session_state.filtered_df = pd.DataFrame()
 
-current_profile = st.session_state.profile
+
 # ==============================================================================
+# 🎯 FIXED: TRACK HISTORICAL LOG ARRAYS SAFELY WITH BRACKET STRING KEY FORMAT
+# Replaces old dot notation at line 194 to clear out the final AttributeError!
+# ==============================================================================
+import showroom_engine as showroom_eng
+
+# Using the dictionary lookup string pattern keeps Streamlit completely happy on boot passes
+logs_array = st.session_state["profile"].get("history_logs", []) if "profile" in st.session_state else []
+
+if logs_array:
+    st.session_state.filtered_df = showroom_eng.sanitize_json_history_logs(logs_array)
+else:
+    st.session_state.filtered_df = pd.DataFrame()
+
+# 🎯 FIXED: Replaced old dot notation with safe dictionary binding checks
+if "profile" in st.session_state:
+    current_profile = st.session_state["profile"]
+else:
+    current_profile = load_profile_state()
+# ===============================================
+
 # 🧬 GLOBAL BIOMETRIC CONDITIONING INITIALIZATION (app.py Sync)
 # ==============================================================================
 from character_economy_config import CHARACTER_XP_CONFIG
@@ -629,11 +758,30 @@ elif st.session_state.active_tab_selection == 'Telemetry Sync':
         st.subheader("🏃‍♂️ Garmin Connect Sync Engine")
 
         # 2. Date Range Input Layout
+        #col1, col2 = st.columns(2)
+        #with col1:
+        #    start_date = st.date_input("Start Date", value=datetime.today() - timedelta(days=7))
+        #with col2:
+        #    end_date = st.date_input("End Date", value=datetime.today())
+
+
+        # Open app.py and change lines 545-550 to this clean configuration:
         col1, col2 = st.columns(2)
         with col1:
-            start_date = st.date_input("Start Date", value=datetime.today() - timedelta(days=7))
+            start_date = st.date_input(
+                "Start Date", 
+                value=datetime.today() - timedelta(days=7),
+                min_value=datetime(2000, 1, 1), # 🟢 Removed the '.date' segment
+                max_value=datetime.today()
+            )
         with col2:
-            end_date = st.date_input("End Date", value=datetime.today())
+            end_date = st.date_input(
+                "End Date", 
+                value=datetime.today(),
+                min_value=datetime(2000, 1, 1), # 🟢 Removed the '.date' segment
+                max_value=datetime.today()
+            )
+
 
         if start_date > end_date:
             st.error("❌ Error: Start Date must be before or equal to End Date.")
@@ -882,24 +1030,84 @@ elif st.session_state.active_tab_selection == 'Telemetry Sync':
                                     if patch["id"] not in player.unlocked_badges:
                                         player.unlocked_badges.append(patch["id"])
 
-                        # ─── 💾 THE ABSOLUTE DISK COMMIT (COPIED FROM upload_ui.py LINE 456) ───
-                        save_data = player.to_dict() if hasattr(player, 'to_dict') else dict(player.__dict__)
-                        save_data['calorie_bank_balance'] = player.calorie_bank_balance
-                        save_data['calorie_bank_total_earned'] = player.calorie_bank_total_earned
-                        save_data['pantry_purchase_counts'] = player.pantry_purchase_counts
-                        save_data['pantry_single_trophies'] = player.pantry_single_trophies
-                        save_data['pantry_cuisine_trophies'] = player.pantry_cuisine_trophies
-                        
+                            
+                            
+
+
+                                                # =========================================================================
+                        # 🛡️ FIXED: TRANSACT-SAFE APPEND CORE FOR GARMIN DIRECT CLOUD SYNC
+                        # =========================================================================
+                        import json
+                        import os
+
+                        if os.path.exists(FILE_PATH) and os.path.getsize(FILE_PATH) > 0:
+                            try:
+                                with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
+                                    fresh_disk_data = json.load(db_file)
+                            except json.JSONDecodeError:
+                                fresh_disk_data = {}
+                        else:
+                            fresh_disk_data = {}
+
+                        if "history_logs" not in fresh_disk_data:
+                            fresh_disk_data["history_logs"] = []
+                        if "unlocked_badges" not in fresh_disk_data:
+                            fresh_disk_data["unlocked_badges"] = []
+
+                        fresh_logs = getattr(player, 'history_logs', [])
+                        fresh_badges = getattr(player, 'unlocked_badges', [])
+
+                        for log in fresh_logs:
+                            is_dup = any(
+                                str(old_log.get("Date"))[:19] == str(log.get("Date"))[:19] and 
+                                abs(float(old_log.get("Distance (Miles)", 0.0)) - float(log.get("Distance (Miles)", 0.0))) < 0.01
+                                for old_log in fresh_disk_data["history_logs"] if isinstance(old_log, dict)
+                            )
+                            if not is_dup:
+                                fresh_disk_data["history_logs"].append(log)
+
+                        for badge in fresh_badges:
+                            if badge not in fresh_disk_data["unlocked_badges"]:
+                                fresh_disk_data["unlocked_badges"].append(badge)
+
+                        fresh_disk_data['level'] = player.level
+                        fresh_disk_data['total_xp'] = player.total_xp
+                        fresh_disk_data['gold'] = player.gold
+                        fresh_disk_data['fatigue'] = player.fatigue
+                        fresh_disk_data['calorie_bank_balance'] = player.calorie_bank_balance
+                        fresh_disk_data['calorie_bank_total_earned'] = player.calorie_bank_total_earned
+                        fresh_disk_data['pantry_purchase_counts'] = player.pantry_purchase_counts
+                        fresh_disk_data['pantry_single_trophies'] = player.pantry_single_trophies
+                        fresh_disk_data['pantry_cuisine_trophies'] = player.pantry_cuisine_trophies
+
+                        if fresh_disk_data["history_logs"]:
+                            fresh_disk_data = process_and_award_metrics_in_memory(fresh_disk_data, fresh_disk_data["history_logs"][-1])
+
+                        # 7. Write to disk exactly ONCE to guarantee structural integrity
                         with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
-                            json.dump(save_data, db_file, default=str, indent=4)
-                        # ────────────────────────────────────────────────────────────────────────
-                        
-                        if player.history_logs:
-                            process_and_award_metrics(player.history_logs[-1])
-                            
-                        with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
-                            fresh_disk_data = json.load(db_file)
-                            
+                            json.dump(fresh_disk_data, db_file, default=str, indent=4, ensure_ascii=False)
+
+                        # =========================================================================
+                        # 🟢 FIXED: SAFE BRACKET INITIALIZATION CHECKS TO ELIMINATE THE KEYERROR
+                        # =========================================================================
+                        if "profile" in st.session_state and isinstance(st.session_state["profile"], dict):
+                            st.session_state["profile"]["history_logs"] = list(fresh_disk_data.get("history_logs", []))
+                            st.session_state["profile"]["unlocked_badges"] = list(fresh_disk_data.get("unlocked_badges", []))
+                        else:
+                            # If profile is missing from session state on reload, initialize it safely right here
+                            st.session_state["profile"] = dict(fresh_disk_data)
+
+
+
+
+
+                        if hasattr(player, 'final_metric_data'):
+                            player.final_metric_data = current_database.get("final_metric_data", {})
+
+
+
+
+
                         player.history_logs = fresh_disk_data.get("history_logs", [])
                         player.unlocked_badges = fresh_disk_data.get("unlocked_badges", [])
                         if hasattr(player, 'final_metric_data'):
