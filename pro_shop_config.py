@@ -5,15 +5,55 @@ Centrally manages unlockable user interface skins, performance gear attributes,
 and custom colorway mystery box rewards. All automotive phrasing completely removed.
 """
 
-# ==============================================================================
-# 🏪 PRO SHOP & AVATAR LOCKER CONFIGURATION MATRICES
-# ==============================================================================
-# Add or modify unlockable themes, user interface aesthetics, and badge perks.
-# The rendering pipeline hooks into this registry dynamically based on your athlete level.
+# =========================================================================
+# ⚙️ PRO SHOP GLOBAL ECONOMY MASTER BALANCING CONTROL PANEL
+# Adjust any value here to instantly re-scale shop pricing and requirements structures.
+# =========================================================================
+SHOP_ECONOMY_CONFIG = {
+    # 🏃‍♂️ XP Progression Anchors
+    "xp_per_mile": 0.8,
+    "xp_per_100ft_climb": 0.5,
+    
+    # ❤️ Heart Rate Intensity Multipliers
+    "hr_zone_1_2_multiplier": 1.00,  
+    "hr_zone_3_multiplier":   1.15,  
+    "hr_zone_4_5_multiplier": 1.30,  
+    
+    # 🪙 Currency Scaling Factors
+    "gold_per_xp_ratio": 1.60,       
+    
+    # ❄️🔥 Weather Grit Environment Gates
+    "weather_grit_bonus_gold": 15,
+    "weather_freezing_threshold_f": 32.0,
+    "weather_heatwave_threshold_f": 90.0,
 
+    # 🏋️‍♂️ GLOBAL GEAR OPTIMIZATION COST SCALARS (RANK 1 TO 10 PROGRESSION)
+    "gear_rank_progression_scalar": 0.5, 
+    
+    # 🎨 Cosmetic Color Palette Shop Costs
+    "color_tier_costs": {
+        "Common": 15,       
+        "Rare": 125,        
+        "Epic": 250,        
+        "Legendary": 500    
+    },
+
+    # 🎭 RE-BALANCED ACCENT THEME SKIN UNLOCK THRESHOLDS
+    # Keeps rewards perfectly achievable within your new exponential leveling scales.
+    "skin_milestones": {
+        "Common_Tier": 1,      # Unlocked right at character initialization
+        "Division_Tier": 4,    # Unlocked midway through your training progression
+        "Prestige_Tier": 9     # Max Level 9 Endgame achievement milestone reward
+    }
+}
+
+# ==============================================================================
+# 🏪 PRO SHOP & AVATAR LOCKER CONFIGURATION MATRICES (DYNAMIC SYNCHRONIZED)
+# ==============================================================================
+# The rendering pipeline hooks into this registry dynamically based on your athlete level.
 PRO_SHOP_SKINS_REGISTRY = [
     {
-        "unlock_level": 1,
+        "unlock_level": SHOP_ECONOMY_CONFIG["skin_milestones"]["Common_Tier"],
         "skin_id": "theme_pacer_green",
         "title": "🔰 Standard Pacer Green",
         "badge": "🟢 JUNIOR_PACER",
@@ -22,7 +62,7 @@ PRO_SHOP_SKINS_REGISTRY = [
         "perk_desc": "Default UI skin issued to all tier contenders upon log creation."
     },
     {
-        "unlock_level": 5,
+        "unlock_level": SHOP_ECONOMY_CONFIG["skin_milestones"]["Division_Tier"],
         "skin_id": "theme_collegiate_blue",
         "title": "⚡ Collegiate Division Blue",
         "badge": "🦅 ALL_AMERICAN",
@@ -31,7 +71,7 @@ PRO_SHOP_SKINS_REGISTRY = [
         "perk_desc": "Unlocks custom collegiate profile trims and sleek performance cards."
     },
     {
-        "unlock_level": 10,
+        "unlock_level": SHOP_ECONOMY_CONFIG["skin_milestones"]["Prestige_Tier"],
         "skin_id": "theme_prestige_gold",
         "title": "🏆 Premium Olympian Gold",
         "badge": "👑 ELITE_OLYMPIAN",

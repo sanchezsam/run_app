@@ -18,6 +18,8 @@ from services import parse_garmin_fit
 import pandas as pd
 from typing import List
 from metrics_config import FINAL_METRIC_CONFIG
+from character_economy_config import CHARACTER_XP_CONFIG
+
 
 # ==============================================================================
 # 📊 PART 1: ACUTE MOMENTUM PROFILE RATINGS & PROGRESSION LOGIC
@@ -372,8 +374,58 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                  
                  for s in staged_sessions:
                      z1, z2, z3, z4, z5 = 15, 45, 20, 15, 5 
-                     gold = max(2, int(float(s['dist']) * 10))
-                     xp = max(5, int(float(s['dist']) * 50))
+                     
+                     # =========================================================================
+                     # 🧬 CHARACTER_XP_CONFIG DRIVEN BIOMETRIC REWARD ENGINE
+                     # Hooks straight into character_economy_config.py to evaluate active data!
+                     # =========================================================================
+                     cfg = CHARACTER_XP_CONFIG
+                     run_distance = float(s.get('dist', 0.0))
+                     
+                     # 1. Parse raw vertical climbing gain safely from the current session dictionary
+                     try:
+                         # Checks both common key mappings ('elevation_gain', 'elevation', or 'Elevation (ft)')
+                         raw_vert = s.get('elevation_gain', s.get('elevation', s.get('Elevation (ft)', 0.0)))
+                         clean_vert = float(str(raw_vert).replace("+","").replace("ft","").replace(",","").strip())
+                     except Exception:
+                         clean_vert = 0.0
+                         
+                     # 2. Extract heart rate parameters from split loops or check for an average session flag
+                     try:
+                         avg_run_hr = float(s.get('avg_heart_rate', s.get('heart_rate', 135.0)))
+                     except Exception:
+                         avg_run_hr = 135.0
+                         
+                     # 3. Formulate the Cardiovascular Intensity Factor from your standalone Config file
+                     if avg_run_hr < 140.0:
+                         hr_multiplier = cfg["hr_zone_1_2_multiplier"]
+                     elif avg_run_hr <= 155.0:
+                         hr_multiplier = cfg["hr_zone_3_multiplier"]
+                     else:
+                         hr_multiplier = cfg["hr_zone_4_5_multiplier"]
+                         
+                     # 4. Compute Config-Weighted Volume + Gravitational Lift Points
+                     base_distance_xp = run_distance * cfg["xp_per_mile"]
+                     elevation_bonus_xp = (clean_vert / 100.0) * cfg["xp_per_100ft_climb"]
+                     
+                     # 5. Compile final points reward (Floor-capped at a base safety threshold of 5 XP)
+                     xp = max(5, int((base_distance_xp + elevation_bonus_xp) * hr_multiplier))
+                     
+                     # 6. Apply your 160% Config Gold conversion ratio
+                     gold = int(xp * cfg["gold_per_xp_ratio"])
+                     
+                     # 7. Evaluate the Environmental Weather Grit Bonus
+                     weather_bonus_gold = 0
+                     try:
+                         ambient_temp = float(s.get('ambient_temp_f', s.get('temperature', 70.0)))
+                         if ambient_temp <= cfg["weather_freezing_threshold_f"] or ambient_temp >= cfg["weather_heatwave_threshold_f"]:
+                             weather_bonus_gold = cfg["weather_grit_bonus_gold"]
+                     except Exception:
+                         pass
+                         
+                     gold += weather_bonus_gold
+                     
+                     # Accumulate session counts safely into the master profile counters
                      total_gold_rewarded += gold
                      total_xp_gained += xp
                      

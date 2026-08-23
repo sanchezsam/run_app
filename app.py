@@ -2,6 +2,7 @@
 # PART 1 OF 2: CORE LIBRARIES, STREAMLIT NAVIGATION AND RE-BOUND COCKPIT ROUTING
 import json
 import os
+import datetime
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -21,38 +22,12 @@ from showroom_ui import generate_dashboard_motivation_alerts
 # 🥞 PANTRY ADAPTER INTERFACE IMPORTS
 from pantry_ui import render_pantry_interface
 
-#from garminconnect import Garmin
-#
-## Define a path to save your session tokens
-#TOKEN_STORE = "~/.garminconnect"
-#token_path = os.path.expanduser(TOKEN_STORE)
-#
-## Initialize the client
-#client = Garmin("samrsanchez@gmail.com", "S@n420chez")
-#
-#try:
-#    # Attempt to load a previously saved session
-#    print("Attempting to resume session from cache...")
-#    client.login(token_path)
-#except Exception:
-#    # If the token is missing or expired, perform a fresh login
-#    print("Session expired or missing. Attempting full login...")
-#    client.login()
-#    # Save the new token session for next time
-#    os.makedirs(os.path.dirname(token_path), exist_ok=True)
-#    # Note: Modern versions of the library manage token storage automatically 
-#    # when you pass the token path directly to client.login()
-
-
-
+# 🚨 MUST BE THE FIRST STREAMLIT EXECUTED ACTION TO PREVENT CRASHES
+st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎 ", layout="wide")
 
 # ⚙️ Master Configuration Path Variables
 FILE_PATH = 'save_file.json'
-IMPORT_FILE_PATH = 'data/sync'  # ✅ NEW: Stores synced Garmin .fit binaries safely on disk
-
-
-# MUST remain the first Streamlit command executed
-st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎 ", layout="wide")
+IMPORT_FILE_PATH = 'data/sync'  # Stores synced Garmin .fit binaries safely on disk
 
 
 # ==========================================
@@ -63,56 +38,50 @@ def load_profile_state():
     Safely retrieves player progression stats and history metrics from the disk save file.
     Guarantees no data overwrites by automatically healing missing keys on boot.
     """
-    # 🎯 ABSOLUTE ZERO STARTER STATE MATRIX FIXED
-    # All baseline metrics, training logs, inventory indexes, and profile structures 
-    # have been set strictly to zero or blank parameters for a total database wipe!
     default_state = {
         "name": "Racer 1", 
-        "level": 0,                     # 🏅 Zeroed
-        "total_xp": 0,                  # ✨ Zeroed
-        "running_level": 0,             # 🏃 Zeroed
-        "vo2_max": 0.0,                 # 🫁 Zeroed
+        "level": 0,                     
+        "total_xp": 0,                  
+        "running_level": 0,             
+        "vo2_max": 0.0,                 
         "avg_heart_rate": 0, 
-        "resting_heart_rate": 0,        # 💓 Zeroed
-        "lifetime_elevation_gain": 0,   # ⛰️ Zeroed
+        "resting_heart_rate": 0,        
+        "lifetime_elevation_gain": 0,   
         "cadence_history": [],
         "elevation_milestone_history": [], 
         "deep_rem_streak": 0, 
         "stat_points": 0, 
-        "gold": 0,                      # 💰 Zeroed
-        "endurance_level": 0,           # 🔋 Zeroed
-        "pace_level": 0,                # ⚡ Zeroed
-        "hill_climbing_level": 0,       # ⛰️ Zeroed
-        "gold_balance": 0,              # 💰 Zeroed
+        "gold": 0,                      
+        "endurance_level": 0,           
+        "pace_level": 0,                
+        "hill_climbing_level": 0,       
+        "gold_balance": 0,              
         "inventory": [],                
         "equipped_gear": {},
         "registered_races": [],
-        "boss_wins": 0,                 # 🏁 Zeroed
+        "boss_wins": 0,                 
         "fatigue": 0, 
         "days_tracked": 0, 
         "synced_garmin_activities": [],
-        "daily_miles": 0.0,             # 📏 Zeroed
-        "base_xp": 0,                   # ✨ Zeroed
-        "exponent": 0.0,                # 📐 Zeroed
+        "daily_miles": 0.0,             
+        "base_xp": 0,                   
+        "exponent": 0.0,                
         "last_distance": 0.0,
         "last_pace": 0.0, 
         "final_metric_data": {}, 
         "stamina_xp": 0, 
         "agility_xp": 0,
         "power_xp": 0, 
-        "boss_clears": 0,               # 🏁 Zeroed
+        "boss_clears": 0,               
         "boss_levels": {}, 
         "history_logs": [],
-        
-        # 🥞 Pantry Core Ledger persistent properties
-        "calorie_bank_balance": 0,      # 🍪 Zeroed
-        "calorie_bank_total_earned": 0, # 🍪 Zeroed
+        "calorie_bank_balance": 0,      
+        "calorie_bank_total_earned": 0, 
         "pantry_purchase_counts": {}, 
         "pantry_single_trophies": [], 
         "pantry_cuisine_trophies": [] 
     }
-    # 🧼 HARD REBOOT OVERRIDE:
-    # Detects and destroys sticky cached entries inside your active browser session tab
+    
     sticky_keys_to_wipe = ["profile", "global_endurance", "global_speed", "global_elevation"]
     for state_key in sticky_keys_to_wipe:
         if state_key in st.session_state:
@@ -140,6 +109,7 @@ def load_profile_state():
     except (json.JSONDecodeError, Exception):
         return default_state
 
+
 # ==============================================================================
 # ⚡ THE SOURCE OF TRUTH OVERRIDE (MAXIMUM BYPASS BLANKET)
 # ==============================================================================
@@ -150,6 +120,16 @@ st.session_state.profile_setup = True
 st.session_state.user_initialized = True
 st.session_state.account_created = True
 st.session_state.setup_complete = True
+
+# ==============================================================================
+# ⚡ THE ROOT INITIALIZATION HOOKS (Fixed to Eliminate NameErrors)
+# Standard safe string keys initialize cleanly without looking for un-imported catalogs!
+# ==============================================================================
+if "selected_track_id" not in st.session_state:
+    st.session_state.selected_track_id = ""
+
+if "selected_boss_id" not in st.session_state:
+    st.session_state.selected_boss_id = ""
 
 if isinstance(st.session_state.profile, dict):
     st.session_state.player_level = st.session_state.profile.get("level", 0)
@@ -169,6 +149,127 @@ else:
     st.session_state.filtered_df = pd.DataFrame()
 
 current_profile = st.session_state.profile
+# ==============================================================================
+# 🧬 GLOBAL BIOMETRIC CONDITIONING INITIALIZATION (app.py Sync)
+# ==============================================================================
+from character_economy_config import CHARACTER_XP_CONFIG
+
+days_since_last_run = 999  # Couch baseline fallback
+if isinstance(logs_array, list) and len(logs_array) > 0:
+    try:
+        last_log_date = logs_array[-1].get("Date", "")[:10]
+        last_run_dt = datetime.datetime.strptime(last_log_date, '%Y-%m-%d').date()
+        days_since_last_run = max(0, (datetime.date.today() - last_run_dt).days)
+    except Exception:
+        pass
+
+cfg_dec = CHARACTER_XP_CONFIG["decay_tiers"]
+cfg_taper = CHARACTER_XP_CONFIG["continuous_workload_taper"]
+
+p_fuel_decay, p_nitro_decay, p_torque_decay = 0.0, 0.0, 0.0
+status_indicator_text = "🟢 STATUS: PEAK CONDITIONING"
+status_alert_type = "success"
+
+if days_since_last_run <= cfg_dec["peak_window_days"]:
+    p_fuel_decay, p_nitro_decay, p_torque_decay = cfg_dec["tier_1_penalties"]
+    status_indicator_text = "🟢 STATUS: PEAK CONDITIONING"
+    status_alert_type = "success"
+elif days_since_last_run <= cfg_dec["minor_decay_days"]:
+    p_fuel_decay, p_nitro_decay, p_torque_decay = cfg_dec["tier_2_penalties"]
+    status_indicator_text = "🟡 STATUS: MINOR NEUROMUSCULAR SLOWDOWN"
+    status_alert_type = "warning"
+elif days_since_last_run <= cfg_dec["medium_decay_days"]:
+    p_fuel_decay, p_nitro_decay, p_torque_decay = cfg_dec["tier_3_penalties"]
+    status_indicator_text = "🟠 STATUS: ACTIVE ATHLETIC DECAY"
+    status_alert_type = "warning"
+elif days_since_last_run <= cfg_dec["severe_decay_days"]:
+    p_fuel_decay, p_nitro_decay, p_torque_decay = cfg_dec["tier_4_penalties"]
+    status_indicator_text = "🔴 STATUS: SYSTEMIC MITOCHONDRIAL ATROPHY"
+    status_alert_type = "error"
+else:
+    p_fuel_decay, p_nitro_decay, p_torque_decay = cfg_dec["tier_5_penalties"]
+    status_indicator_text = "🔴 STATUS: CHRONIC DECONDITIONING"
+    status_alert_type = "error"
+
+today_dt = datetime.date.today()
+cutoff_14d = today_dt - datetime.timedelta(days=14)
+cutoff_28d = today_dt - datetime.timedelta(days=28)
+
+miles_recent_14_days = 0.0
+miles_previous_14_days = 0.0
+
+if isinstance(logs_array, list):
+    for log_item in logs_array:
+        if isinstance(log_item, dict) and "Date" in log_item:
+            try:
+                log_date_str = log_item.get("Date", "")[:10]
+                log_dt = datetime.datetime.strptime(log_date_str, '%Y-%m-%d').date()
+                if today_dt >= log_dt >= cutoff_14d:
+                    miles_recent_14_days += float(log_item.get("Distance (Miles)", log_item.get("Distance", 0.0)))
+                elif cutoff_14d > log_dt >= cutoff_28d:
+                    miles_previous_14_days += float(log_item.get("Distance (Miles)", log_item.get("Distance", 0.0)))
+            except Exception:
+                pass
+
+miles_last_28_days = miles_recent_14_days + miles_previous_14_days
+peak_target = float(cfg_taper["peak_monthly_target_miles"])
+is_building_volume = miles_recent_14_days > miles_previous_14_days
+
+if miles_last_28_days < peak_target:
+    if is_building_volume and days_since_last_run <= cfg_dec["peak_window_days"]:
+        p_fuel_decay = 0.0
+        p_nitro_decay = 0.0
+        status_indicator_text = "🚀 STATUS: POSITIVE TRAINING ACCELERATION (BUILD PHASE)"
+        status_alert_type = "success"
+    else:
+        volume_deficit_ratio = (peak_target - miles_last_28_days) / peak_target
+        chronic_stamina_penalty = round(volume_deficit_ratio * cfg_taper["max_atrophy_penalty_cap"], 1)
+        chronic_speed_penalty   = round(chronic_stamina_penalty * cfg_taper["speed_decay_sensitivity"], 1)
+        
+        p_fuel_decay  = max(p_fuel_decay, chronic_stamina_penalty)
+        p_nitro_decay = max(p_nitro_decay, chronic_speed_penalty)
+        
+        retention_pct = int((miles_last_28_days / peak_target) * 100)
+        if retention_pct >= 60:
+            status_indicator_text = f"📉 STATUS: STABLE REGULATED TAPER ({retention_pct}% Volume Retained)"
+            status_alert_type = "warning"
+        else:
+            status_indicator_text = f"⚠️ STATUS: MODERATE VOLUME DEFICIT ({retention_pct}% Volume Retained)"
+            status_alert_type = "error"
+
+p_fuel_max   = int(current_profile.get("endurance_level", 1) if isinstance(current_profile, dict) else 1)
+p_nitro_max  = int(current_profile.get("pace_level", 1) if isinstance(current_profile, dict) else 1)
+p_torque_max = int(current_profile.get("hill_climbing_level", 1) if isinstance(current_profile, dict) else 1)
+
+st.session_state.global_days_gap = days_since_last_run
+st.session_state.global_miles_28d = miles_last_28_days
+st.session_state.global_peak_target = peak_target
+st.session_state.global_status_text = status_indicator_text
+st.session_state.global_alert_type = status_alert_type
+st.session_state.global_is_building = is_building_volume
+
+st.session_state.p_fuel   = max(1.0, round(p_fuel_max - p_fuel_decay, 1))
+st.session_state.p_nitro  = max(1.0, round(p_nitro_max - p_nitro_decay, 1))
+st.session_state.p_torque = max(1.0, round(p_torque_max - p_torque_decay, 1))
+st.session_state.p_fuel_decay   = p_fuel_decay
+st.session_state.p_nitro_decay  = p_nitro_decay
+st.session_state.p_torque_decay = p_torque_decay
+
+try:
+    player = Character(FILE_PATH)
+    player.p_fuel = st.session_state.p_fuel
+    player.p_nitro = st.session_state.p_nitro
+    player.p_torque = st.session_state.p_torque
+    player.calorie_bank_balance = st.session_state.get("calorie_bank_balance", 0)
+    player.level = st.session_state.get("player_level", 1)
+    player.gold = st.session_state.get("player_gold", 0)
+    player.total_xp = st.session_state.get("player_xp", 0)
+except Exception:
+    player = current_profile
+
+
+
+
 
 # ==========================================
 # 3. INTERACTIVE RENDERING: NONAGON CHART
@@ -275,7 +376,6 @@ def load_player():
     except Exception:
         return None
 
-player = load_player()
 
 if player is None:
     st.title('Character Profile Initialization')
