@@ -178,16 +178,6 @@ def load_profile_state():
         return default_state
 
 
-# ==============================================================================
-# ⚡ THE SOURCE OF TRUTH OVERRIDE (MAXIMUM BYPASS BLANKET)
-# 🛡️ RESILIENT SESSION MEMORY GUARD: Prevents app re-runs from overriding 
-# active browser memory and clearing your consecutive data imports!
-# ==============================================================================
-
-# ==============================================================================
-# ⚡ THE RESILIENT SOURCE OF TRUTH INITIALIZATION OVERRIDE (app.py)
-# 🛡️ Bulletproof state initialization sequence using safe dictionary getters.
-# ==============================================================================
 if "profile" not in st.session_state:
     # 🌟 Absolute First Boot: Fetch clean data dictionary layout straight from disk
     st.session_state["profile"] = load_profile_state()
@@ -214,6 +204,15 @@ else:
                 # Retain the highest available metrics counters
                 if isinstance(v, (int, float)) and k in active_profile:
                     active_profile[k] = max(active_profile[k], v)
+
+# ==============================================================================
+# 🛡️  THE GLOBAL DOT-NOTATION PROXY PATCH (app.py Alignment)
+# Maps st.session_state.profile straight to st.session_state["profile"] globally.
+# This instantly fixes coliseum_ui.py and all other tabs with zero extra code editing!
+# ==============================================================================
+if "profile" in st.session_state:
+    # Binds a direct reference link so that both syntax methods update the exact same RAM block
+    st.session_state.profile = st.session_state["profile"]
 
 # Enforce explicit layout state markers across the active session runtime context
 st.session_state.initialized = True
