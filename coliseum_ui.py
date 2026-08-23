@@ -196,127 +196,84 @@ def evaluate_signature_tokens(player, boss_name, course_name):
 # =========================================================================
 # 🏟️ MAIN COLISEUM WORKSPACE VIEW TERMINAL
 # =========================================================================
+    
 def render_coliseum(player, FILE_PATH):
-    st.markdown('## 🏟️ THE BIOMETRIC COLISEUM: HIGH-STAKES CHAMPIONSHIPS')
+    # =========================================================================
+    # 🎯 PERSISTENT SESSION STATE INITIALIZATION GATES
+    # Must run first to prevent uninitialized AttributeError crashes across tabs!
+    # =========================================================================
+
+    st.markdown('## 🏟️  THE BIOMETRIC COLISEUM: HIGH-STAKES CHAMPIONSHIPS')
     st.markdown('Select your Pacer Rival, inspect global circuit tracks, and launch physics-based athletic duels driven entirely by your real-world log history!')
     st.markdown('---')
-    
-    # Safeguard initialization parameters
+
+    # Safeguard profile initialization parameters securely on screen draw
     if not hasattr(player, 'boss_clears') or player.boss_clears is None: 
         player.boss_clears = 0
     if not hasattr(player, 'boss_levels') or not isinstance(player.boss_levels, dict): 
         player.boss_levels = {}
         
-    # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
-
-    # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
-    #raw_history = getattr(player, 'history_logs', [])
-
-    ## 🎯 OVERRIDE SETTING: Pull levels straight from memory keys instead of services
-    #p_fuel = int(st.session_state.get("global_endurance", 7))
-    #p_nitro = int(st.session_state.get("global_speed", 8))
-    #p_torque = int(st.session_state.get("global_elevation", 9))
-    #active_fatigue = int(st.session_state.get("profile", {}).get("final_metric_data", {}).get("fatigue", 0))
-    #lifetime_miles = float(player.__dict__.get("final_metric_data", {}).get("lifetime_odometer_miles", 0.0))
-
-
-
-    # ─── STEP 1: LOAD LIVE RUNNER CHARACTER ATTRIBUTES ───
-    raw_history = getattr(player, 'history_logs', [])
     # =========================================================================
-    # 🧬 STEP 1.1: COMPUTE REAL-WORLD INACTIVITY TIMELINE (CHRONOLOGICAL DATE SCAN)
-    # Checks every single log date to locate your absolute truest recent run.
+    # 🧬 GLOBAL BIOMETRIC RETENTION ROUTING HOOKS
+    # Reads pre-computed calculation tokens directly out of st.session_state!
+    # Removes all duplicate date-scans, 400-mile ceilings, and local loops.
     # =========================================================================
-    # Change 'import datetime' to this:
-    from datetime import datetime
-    import datetime as dt_module
+    days_since_last_run   = st.session_state.global_days_gap
+    miles_last_28_days     = st.session_state.global_miles_28d
+    peak_target           = st.session_state.global_peak_target
+    status_indicator_text = st.session_state.global_status_text
+    status_alert_type     = st.session_state.global_alert_type
+    is_building_volume    = st.session_state.global_is_building
 
+    # 🎯 FIX: Fallback automatically to the first valid catalog keys if empty on page load!
+    if not st.session_state.get("selected_boss_id") and boss_catalog:
+        st.session_state.selected_boss_id = list(boss_catalog.keys())[0]
 
+    if not st.session_state.get("selected_track_id") and course_catalog:
+        st.session_state.selected_track_id = list(course_catalog.keys())[0]
+
+    # Re-link the local variable targets to ensure perfect downstream alignment
+    selected_boss     = st.session_state.selected_boss_id
+    parsed_course_key = st.session_state.selected_track_id
+
+    p_fuel          = st.session_state.p_fuel
+    p_nitro         = st.session_state.p_nitro
+    p_torque        = st.session_state.p_torque
+    p_fuel_decay    = st.session_state.p_fuel_decay
+    p_nitro_decay   = st.session_state.p_nitro_decay
+    p_torque_decay  = st.session_state.p_torque_decay
+    raw_history     = st.session_state.get("history_logs", [])
+    
+    p_fuel_max      = int(player.get("endurance_level", 1) if isinstance(player, dict) else getattr(player, 'stamina_level', 1))
+    p_nitro_max     = int(player.get("pace_level", 1) if isinstance(player, dict) else getattr(player, 'efficiency_level', 1))
+    p_torque_max    = int(player.get("hill_climbing_level", 1) if isinstance(player, dict) else getattr(player, 'power_level', 1))
+    
+    # Extract fatigue indices cleanly from session state dictionary profiles
+    # Extract fatigue indices cleanly from session state dictionary profiles
+    active_fatigue  = int(st.session_state.get("profile", {}).get("final_metric_data", {}).get("fatigue", 0))
+    
     # =========================================================================
-    # 🧬 STEP 1.1: COMPUTE REAL-WORLD INACTIVITY TIMELINE (CHRONOLOGICAL DATE SCAN)
-    # Checks every single log date to locate your absolute truest recent run.
+    # 🎯 THE LIFETIME ODOMETER COMPATIBILITY BRIDGE
+    # Safely extracts your real career distance from your data persistence layer 
+    # so your downstream championship boss track unlock gates pass seamlessly!
     # =========================================================================
-    days_since_last_run = 999  # Default to cold decay if no logs exist
-    newest_run_date = None
-
-    if raw_history:
-        for log_item in raw_history:
-            if isinstance(log_item, dict) and "Date" in log_item:
-                try:
-                    # Cleanly isolate the date prefix (YYYY-MM-DD)
-                    date_str = log_item.get("Date", "")[:10]
-                    
-                    # 🎯 FIXED: Uses the direct datetime.strptime class method cleanly
-                    parsed_dt = datetime.strptime(date_str, '%Y-%m-%d')
-                    
-                    if newest_run_date is None or parsed_dt > newest_run_date:
-                        newest_run_date = parsed_dt
-                except Exception:
-                    pass
-
-    # Compute true calendar delta day difference from today's real execution clock
-    if newest_run_date is not None:
-        # 🎯 FIXED: Direct call to datetime.now() works perfectly with our top import!
-        days_since_last_run = (datetime.now() - newest_run_date).days
-        if days_since_last_run < 0:
-            days_since_last_run = 0  # Safe anchor for same-day tracking updates
+    profile_data    = st.session_state.get("profile", {})
+    lifetime_miles  = float(profile_data.get("final_metric_data", {}).get("lifetime_odometer_miles", 0.0))
 
     # =========================================================================
-    # 🧬 STEP 1.2: COMPUTE TRI-AXIAL PHYSIOLOGICAL ATTRIBUTE DECAY RATES
-    # Neuromuscular Speed drops instantly. Strength/Elevation holds out stubbornly.
-    # =========================================================================
-    p_fuel_decay   = 0.0
-    p_nitro_decay  = 0.0
-    p_torque_decay = 0.0
-
-    if days_since_last_run <= 5:
-        p_fuel_decay, p_nitro_decay, p_torque_decay = 0.0, 0.0, 0.0
-    elif days_since_last_run <= 14:
-        p_fuel_decay   = 1.0  # Minor plasma drop-off
-        p_nitro_decay  = 2.0  # Neuromuscular coordination drop (Speed tanks early)
-        p_torque_decay = 0.0  # Strength holds steady
-    elif days_since_last_run <= 30:
-        p_fuel_decay   = 2.5
-        p_nitro_decay  = 4.0  # Loss of fast-twitch fiber recruitment
-        p_torque_decay = 1.0
-    elif days_since_last_run <= 90:
-        p_fuel_decay   = 4.0  # Capillaries begin shrinking
-        p_nitro_decay  = 6.0
-        p_torque_decay = 3.5  # Noticeable hill-driving reduction
-    else:
-        # 90 to 365+ Days: Full Chronic Deconditioning (Couch Baseline)
-        p_fuel_decay, p_nitro_decay, p_torque_decay = 8.0, 8.0, 8.0
-
-    # =========================================================================
-    # 🧬 STEP 1.3: DYNAMICALLY COMPUTE EFFECTIVE CONDITIONING RATINGS
-    # =========================================================================
-    p_fuel_max   = int(st.session_state.get("global_endurance", 7))
-    p_nitro_max  = int(st.session_state.get("global_speed", 8))
-    p_torque_max = int(st.session_state.get("global_elevation", 9))
-
-    # Apply your time-decay constraints (Floor-capped at Level 1)
-    p_fuel   = max(1, p_fuel_max - int(p_fuel_decay))
-    p_nitro  = max(1, p_nitro_max - int(p_nitro_decay))
-    p_torque = max(1, p_torque_max - int(p_torque_decay))
-
-    # Keep your original fatigue and lifetime miles tracking lines perfectly intact
-    active_fatigue = int(st.session_state.get("profile", {}).get("final_metric_data", {}).get("fatigue", 0))
-    lifetime_miles = float(player.__dict__.get("final_metric_data", {}).get("lifetime_odometer_miles", 0.0))
-
-    # =========================================================================
-    # 🧬 STEP 1.4: VISUAL BIOMETRIC RETENTION CORNER SIDEBAR
-    # Displays your real-time conditioning status and calendar tracking markers.
+    # RENDER INTERACTIVE SIDEBAR UI CARDS (COMMUNICATING STATE TO PLAYER)
     # =========================================================================
     with st.sidebar:
         st.markdown("### 🧬 BIOMETRIC RETENTION STATUS")
         st.caption(f"Real-world gap since last run: **{days_since_last_run} days**")
         
-        if days_since_last_run <= 5:
-            st.success("🟢 STATUS: PEAK CONDITIONING")
-        elif days_since_last_run <= 30:
-            st.warning("🟡 STATUS: ACTIVE ATHLETIC DECAY")
+        # Display our clean custom text status panels dynamically
+        if status_alert_type == "success":
+            st.success(status_indicator_text)
+        elif status_alert_type == "warning":
+            st.warning(status_indicator_text)
         else:
-            st.error("🔴 STATUS: CHRONIC DECONDITIONING")
+            st.error(status_indicator_text)
 
         st.markdown("---")
         st.markdown("**Effective Attributes vs. Maximum Potential:**")
@@ -324,30 +281,38 @@ def render_coliseum(player, FILE_PATH):
         st.metric(
             label="Aerobic Stamina (Fuel)", 
             value=f"{p_fuel} / {p_fuel_max}", 
-            delta=None if p_fuel_decay == 0 else f"-{int(p_fuel_decay)} Detrained"
+            delta=None if p_fuel_decay == 0.0 else f"-{p_fuel_decay} Detrained"
         )
         st.metric(
             label="Stride Turn-over (Nitro)", 
             value=f"{p_nitro} / {p_nitro_max}", 
-            delta=None if p_nitro_decay == 0 else f"-{int(p_nitro_decay)} Detrained"
+            delta=None if p_nitro_decay == 0.0 else f"-{p_nitro_decay} Detrained"
         )
         st.metric(
             label="Climbing Power (Torque)", 
             value=f"{p_torque} / {p_torque_max}", 
-            delta=None if p_torque_decay == 0 else f"-{int(p_torque_decay)} Detrained"
+            delta=None if p_torque_decay == 0.0 else f"-{p_torque_decay} Detrained"
         )
         
-        if days_since_last_run > 5:
-            st.info("💡 **Coach's Activation Note:** Upload a new workout file to reset your calendar clock to 0 days, wipe away your decay penalties, and instantly restore your peak physical potential!")
+        st.markdown("---")
+        st.progress(min(1.0, max(0.0, miles_last_28_days / peak_target)), 
+                    text=f"📊 Chronic Loading: {miles_last_28_days:.1f} / {peak_target} Mi")
+        
+        if is_building_volume:
+            st.info("🚀 **Acceleration Active:** Weekly volume is expanding! All volume penalties are completely bypassed.")
+        elif days_since_last_run > 5:
+            st.info("💡 **Coach's Note:** Upload a new training log file to reset your timeline clock and restore your peak potential!")
         else:
-            st.info("🔥 **Coach's Peak Note:** Your conditioning is fully locked in. Your cardiovascular capillary paths are operating at 100% efficiency. Run hard out there!")
+            st.info("🔥 **Coach's Peak Note:** Your conditioning is fully optimized. Your cardiovascular capillary paths are operating at 100% efficiency. Run hard out there!")
 
     # ─── STEP 2: STAGE INTERACTIVE ARENA SELECTIONS ───
 
-
-    # Re-initialize character_stats explicitly right here so check_is_unlocked can read it downstream!
+    # =========================================================================
+    # 📊 CHARACTER STATS MATRICES MAP (UPDATED PROGRESSION SYNC)
+    # Uses round() to ensure floating-point conditioning maps cleanly to track locks!
+    # =========================================================================
     character_stats = {
-        "level": max(1, min(9, int((p_fuel + p_nitro + p_torque) / 3))),
+        "level": max(1, min(9, round((p_fuel + p_nitro + p_torque) / 3))),
         "endurance_level": p_fuel,
         "speed_level": p_nitro,
         "strength_level": p_torque,
@@ -358,6 +323,22 @@ def render_coliseum(player, FILE_PATH):
     # Compile deep match history records
     boss_stats, course_stats, climate_exposure = compile_coliseum_stats(player)
     
+    # =========================================================================
+    # 🎯 LOCAL SCOPE ROUTING ANCHOR FIX
+    # Re-extracts raw history text logs directly inside this calculation block
+    # so your downstream regex loop can read it flawlessly without scoping errors!
+    # =========================================================================
+    profile_dict = st.session_state.get("profile", {})
+    dict_history = profile_dict.get("history_logs", [])
+    
+    raw_history = []
+    if isinstance(dict_history, list):
+        for log_item in dict_history:
+            if isinstance(log_item, dict):
+                raw_history.append(log_item.get("text_payload", str(log_item)))
+            else:
+                raw_history.append(str(log_item))
+
     # Calculate acute active training form over the past 21 days
     now_date = datetime.now()
     three_weeks_ago = now_date - timedelta(days=21)
@@ -365,6 +346,7 @@ def render_coliseum(player, FILE_PATH):
     
     for log in raw_history:
         log_str = str(log)
+
         if 'miles' in log_str.lower() and 'slept' not in log_str.lower():
             try:
                 date_match = re.search(r'\[([0-9-]+)\]', log_str)
@@ -402,17 +384,219 @@ def render_coliseum(player, FILE_PATH):
         st.caption("Select your target challenge components to calculate win forecasts and calibrate execution vectors.")
         st.write("")
 
-        col_sel1, col_sel2 = st.columns(2)
-        with col_sel1:
-            selected_boss = st.selectbox("👿 Select Target Pacer Challenger:", options=list(boss_catalog.keys()))
-        with col_sel2:
-            # Append distance helper labels cleanly into selection menus
-            course_options = [f"{k} [{v['dist']:.2f} Mi]" for k, v in course_catalog.items()]
-            selected_course_raw = st.selectbox("🗺️  Select Competition Circuit Track:", options=course_options)
-            parsed_course_key = selected_course_raw.split(" [")[0]
 
+
+
+        # =========================================================================
+        # 🎨 INJECT CUSTOM ARCADE STYLING (CSS Blanket Override)
+        # Adds subtle backgrounds, smooth corner curves, and distinct borders!
+        # =========================================================================
+        st.html("""
+            <style>
+            /* Light background tint for the top telemetry cockpit deck card */
+            div[data-testid="stVBlock"] > div:has(div.telemetry-card) {
+                background-color: rgba(30, 41, 59, 0.4) !important;
+                border: 1px solid rgba(148, 163, 184, 0.2) !important;
+                border-radius: 12px !important;
+                padding: 16px !important;
+            }
+            /* Style rule helpers for images to keep them bounded inside cards uniformly */
+            .card-img-frame {
+                border-radius: 8px;
+                margin-bottom: 8px;
+                object-fit: cover;
+                width: 100%;
+                height: 110px;
+            }
+            </style>
+        """)
+
+        # =========================================================================
+        # 📊 PERMANENT BIOMETRIC BASELINES TELEMETRY CARD
+        # Displays your actual un-decayed career stats directly at the top of the cockpit!
+        # =========================================================================
+        # Markdown element forces our custom CSS rule selector to apply to this specific container box block
+        st.markdown('<div class="telemetry-card"></div>', unsafe_allow_html=True)
+        with st.container():
+            st.markdown("##### 🫁 CURRENT PERMANENT ATHLETIC POTENTIALS")
+            st.caption("Your un-decayed baseline skill levels stored permanently inside your local data save file.")
+            
+            stat_col1, stat_col2, stat_col3, stat_col4, stat_col5 = st.columns(5)
+            
+            with stat_col1:
+                st.metric(label="🏅 Character Level", value=f"Level {character_stats.get('level', 1)}")
+            with stat_col2:
+                st.metric(label="🏃 Runner Level", value=f"Lvl {st.session_state.profile.get('running_level', 0)}")
+            with stat_col3:
+                st.metric(label="🔋 Baseline Endurance", value=f"{int(player.get('endurance_level', 1) if isinstance(player, dict) else getattr(player, 'stamina_level', 1))}.0")
+            with stat_col4:
+                st.metric(label="⚡ Baseline Pace Tempo", value=f"{int(player.get('pace_level', 1) if isinstance(player, dict) else getattr(player, 'efficiency_level', 1))}.0")
+            with stat_col5:
+                st.metric(label="⛰️ Baseline Climbing", value=f"{int(player.get('hill_climbing_level', 1) if isinstance(player, dict) else getattr(player, 'power_level', 1))}.0")
+
+        st.markdown(" ")
+
+        # =========================================================================
+        # 🏎️ SEGMENT A: INTERACTIVE VISUAL TRACK CARD DOCKS (5-COLUMN GRID)
+        # =========================================================================
+        st.markdown("#### 📍 Select Competition Circuit Track (Sorted by Distance):")
+        
+        sorted_track_keys = sorted(course_catalog.keys(), key=lambda k: course_catalog[k].get('dist', 0.0))
+        track_cols = st.columns(5)
+
+        # =========================================================================
+        # Centralized visual metadata registry for catalog keys matching indices
+        # =========================================================================
+        track_metadata = {
+            "london": {"name": "London Grid", "icon": "🏁"},
+            "tokyo": {"name": "Tokyo Loop", "icon": "⚡"},
+            "chamonix": {"name": "Chamonix", "icon": "⛰️"}
+        }
+
+        boss_metadata = {
+            "Kilian [GAZELLE]": {"icon": "🐐"},
+            "The Autonomous Pacer Drone": {"icon": "🤖"},
+            "Coach 'Iron Legs' Sterling": {"icon": "🏃‍♂️"},
+            "The Sub-7 Kinetic Prototype": {"icon": "🦿"}
+        }
+
+        # =========================================================================
+        # 🏎️ SEGMENT A: INTERACTIVE VISUAL TRACK CARD DOCKS (5-COLUMN GRID)
+        # =========================================================================
+        st.markdown("#### 📍 Select Competition Circuit Track (Sorted by Distance):")
+        
+        sorted_track_keys = sorted(course_catalog.keys(), key=lambda k: course_catalog[k].get('dist', 0.0))
+        track_cols = st.columns(5)
+
+        for idx, trk_key in enumerate(sorted_track_keys):
+            col_target = idx % 5
+            with track_cols[col_target]:
+                specs = course_catalog[trk_key]
+                meta = track_metadata.get(trk_key, {"name": str(trk_key).title(), "icon": "🗺️"})
+                display_name = specs.get("name", meta["name"])
+                
+                is_active_track = (st.session_state.selected_track_id == trk_key)
+                
+                # 🎯 FIX: Force border=True to wrap an outline frame around EVERY course box!
+                with st.container(border=True):
+                    track_unlocked, track_errs = check_is_unlocked(specs.get("unlock_criteria"), character_stats, lifetime_miles)
+                    track_is_locked = not track_unlocked
+                    
+                    # ─── 1. CARD TOP: TEXT NAMES AND LOCK HEADERS FIRST ───
+                    if track_is_locked:
+                        st.markdown(f"🔒 **{display_name}**")
+                    else:
+                        if is_active_track:
+                            st.markdown(f"🟢 **{display_name}**")
+                        else:
+                            st.markdown(f"⬜ **{display_name}**")
+                    
+                    # ─── 2. CARD MIDDLE: TRACK GRAPHICS GRAPH VERTICALLY ───
+                    # Uses your native course graphic loader logic to match portraits style
+                    display_course_image(course_specs=specs, height=110)
+                    
+                    # ─── 3. CARD BOTTOM: REQUIREMENT CAPTIONS AND ACTION BUTTONS ───
+                    if track_is_locked:
+                        if isinstance(track_errs, dict) and len(track_errs) > 0:
+                            err_msg = ", ".join([str(v) for v in track_errs.values()])
+                        elif isinstance(track_errs, list) and len(track_errs) > 0:
+                            err_msg = ", ".join([str(e) for e in track_errs])
+                        else:
+                            err_msg = str(track_errs) if (track_errs and str(track_errs).strip() and track_errs != "[]" and track_errs != "{}") else "Locked Stage"
+                            
+                        st.caption(f"⚠️ {err_msg}")
+                        st.button("🔒 LOCKED", key=f"lock_card_trk_{trk_key}_grid_lock", disabled=True, use_container_width=True)
+                    else:
+                        st.caption(f"📏 `{specs['dist']:.1f} Mi` | `+{specs.get('elev', 0)}ft`")
+                        if is_active_track:
+                            st.button("DEPLOYED", key=f"active_card_trk_{trk_key}_grid_active", disabled=True, use_container_width=True)
+                        else:
+                            if st.button("Deploy", key=f"click_card_trk_{trk_key}_grid_btn", use_container_width=True):
+                                st.session_state.selected_track_id = trk_key
+                                st.rerun()
+
+        st.markdown(" ")
+
+        # =========================================================================
+        # 👹 SEGMENT B: INTERACTIVE PACER RIVAL DOCK CARDS (5-COLUMN GRID)
+        # =========================================================================
+        st.markdown("#### 👹 Select Target Pacer Challenger:")
+        boss_cols = st.columns(5)
+
+        for idx, bss_key in enumerate(boss_catalog.keys()):
+            col_target = idx % 5
+            with boss_cols[col_target]:
+                specs = boss_catalog[bss_key]
+                meta = boss_metadata.get(bss_key, {"icon": "👿"})
+                display_name = specs.get("name", str(bss_key))
+                
+                is_active_boss = (st.session_state.selected_boss_id == bss_key)
+                
+                # 🎯 FIX: Force border=True to wrap an outline frame around EVERY pacer box!
+                with st.container(border=True):
+                    boss_unlocked, boss_errs = check_is_unlocked(specs.get("unlock_criteria"), character_stats, lifetime_miles)
+                    boss_is_locked = not boss_unlocked
+                    
+                    # ─── 1. CARD TOP: PROFILE CHARACTER HEADERS FIRST ───
+                    if boss_is_locked:
+                        st.markdown(f"🔒 **{display_name}**")
+                    else:
+                        if is_active_boss:
+                            st.markdown(f"🔴 **{display_name}**")
+                        else:
+                            st.markdown(f"⬜ **{display_name}**")
+                    
+                    # ─── 2. CARD MIDDLE: NATIVE PORTRAIT CALLS DIRECTLY VERTICAL ───
+                    display_boss_portrait(boss_name=bss_key, specs=specs, size=110)
+                    
+                    # ─── 3. CARD BOTTOM: BOUNTY DATA AND LOCKED STATE BUTTONS ───
+                    if boss_is_locked:
+                        if isinstance(boss_errs, dict) and len(boss_errs) > 0:
+                            err_msg = ", ".join([str(v) for v in boss_errs.values()])
+                        elif isinstance(boss_errs, list) and len(boss_errs) > 0:
+                            err_msg = ", ".join([str(e) for e in boss_errs])
+                        else:
+                            err_msg = str(boss_errs) if (boss_errs and str(boss_errs).strip() and boss_errs != "[]" and boss_errs != "{}") else "Chamber Gated"
+                            
+                        st.markdown(f"<p style='font-size:14px; margin-bottom:0;'>⚠️ {err_msg}</p>", unsafe_allow_html=True)
+                        st.button("🔒 LOCKED", key=f"lock_card_bss_{bss_key}_grid_lock", disabled=True, use_container_width=True)
+                    else:
+                        st.caption(f"🎯 `{specs.get('fuel', 1)}/{specs.get('nitro', 1)}` | `+{specs.get('gold_reward', 150)}g`")
+                        if is_active_boss:
+                            st.button("LOCKED IN", key=f"active_card_bss_{bss_key}_grid_active", disabled=True, use_container_width=True)
+                        else:
+                            if st.button("Select", key=f"click_card_bss_{bss_key}_grid_btn", use_container_width=True):
+                                st.session_state.selected_boss_id = bss_key
+                                st.rerun()
+
+        st.markdown("---")
+
+        # =========================================================================
+        # 🎯 LINK DOCK KEYS STRAIGHT BACK TO YOUR DOWNSTREAM DUEL CALCULATORS
+        # =========================================================================
+        selected_boss = st.session_state.selected_boss_id
+        parsed_course_key = st.session_state.selected_track_id
+
+
+
+
+
+
+        # =========================================================================
+        # 🎯 COCKPIT DICTIONARY LOOKUP SAFETY GUARD
+        # If either key accidentally becomes a list, unwrap it to a clean string
+        # to guarantee a flawless dictionary index lookup!
+        # =========================================================================
+        if isinstance(selected_boss, list):
+            selected_boss = selected_boss[0] if len(selected_boss) > 0 else "drone"
+            
+        if isinstance(parsed_course_key, list):
+            parsed_course_key = parsed_course_key[0] if len(parsed_course_key) > 0 else "london"
+    
+        # Lines 507 & 508 (Your existing logic now running completely safe!):
         boss_specs = boss_catalog[selected_boss]
         course_specs = course_catalog[parsed_course_key]
+
         curr_level = int(player.boss_levels.get(selected_boss, 1))
 
         # Scale boss attributes dynamically based on their current clear difficulty level
@@ -752,35 +936,66 @@ def render_coliseum(player, FILE_PATH):
 * 📉 Performance Score Earned: `{res['score']:,} PTS`
 * 💸 High-Stakes Entry Entry Lost: **-{res['gold']}g**""")
 
+
     # =========================================================================
-    # TAB 2: PACER STANDINGS & PROFILES
+    # TAB 2: PACER STANDINGS & PROFILES (HORIZONTAL 3-COLUMN GRID)
     # =========================================================================
     with tab_pacers:
         st.markdown("### 👥 Historical Standings & Scouting dossiers")
         st.caption("Inspect unlock benchmarks, attribute points allocations, and your lifetime win/loss statistics against each legendary opponent.")
         st.write("")
         
-        for b_name, b_specs in boss_catalog.items():
-            b_lvl = int(player.boss_levels.get(b_name, 1))
-            st_data = boss_stats.get(b_name, {"wins": 0, "losses": 0, "total": 0})
-            w_rate = (st_data["wins"] / max(1, st_data["total"])) * 100.0
+        # 🎯 FIX: Instantiate a 3-column horizontal grid split layer
+        pacer_cols = st.columns(3)
+        
+        for idx, (b_name, b_specs) in enumerate(boss_catalog.items()):
+            # Calculate column index target modulo 3 to group cards side-by-side smoothly
+            col_target = idx % 3
             
-            b_unlocked, _ = check_is_unlocked(b_specs.get("unlock_criteria"), character_stats, lifetime_miles)
-            lock_label = "🔓 ACTIVE CHALLENGER" if b_unlocked else "🔒 GATED CHALLENGER"
-            
-            with st.container(border=True):
-                # Split row into Portrait column and Profile Data column
-                bc1, bc2 = st.columns([1, 4])
-                with bc1:
-                    display_boss_portrait(b_name, b_specs, size=110)
-                with bc2:
-                    st.markdown(f"#### {b_name} — `Difficulty Rank {b_lvl}`")
-                    st.markdown(f"*{b_specs['desc']}*")
-                    st.markdown(f"🏅 **Status Status:** `{lock_label}` | 🔋 Stamina: `{b_specs['fuel']}` | ⚡ Stride Efficiency: `{b_specs['nitro']}` | ⛰️ Climbing Power: `{b_specs['torque']}`")
-                    st.markdown(f"📊 **Career Standings vs Them:** Encounters: `{st_data['total']}` | Wins: `{st_data['wins']}` | Defeats: `{st_data['losses']}` (Win Rate: `{w_rate:.1f}%`)")
+            with pacer_cols[col_target]:
+                b_lvl = int(player.boss_levels.get(b_name, 1))
+                st_data = boss_stats.get(b_name, {"wins": 0, "losses": 0, "total": 0})
+                w_rate = (st_data["wins"] / max(1, st_data["total"])) * 100.0
+                
+                b_unlocked, b_errs = check_is_unlocked(b_specs.get("unlock_criteria"), character_stats, lifetime_miles)
+                lock_label = "🔓 ACTIVE" if b_unlocked else "🔒 GATED"
+                
+                # Render a uniform bounded container frame around EVERY pacer profile box card
+                with st.container(border=True):
+                    # ─── 1. PROFILE TOP: INITIAL IDENTITY FLAGS ───
+                    if b_unlocked:
+                        st.markdown(f"#### 🟢 {b_name}")
+                    else:
+                        st.markdown(f"#### 🔒 {b_name}")
+                        
+                    st.caption(f"🏆 **Difficulty Level:** `Rank {b_lvl}` | **Status:** `{lock_label}`")
                     
+                    # ─── 2. PROFILE MIDDLE: PORTRAITS AND ATTRIBUTES STACKED VERTICALLY ───
+                    display_boss_portrait(b_name, b_specs, size=110)
+                    
+                    st.markdown("**🔋 Performance Scaling Baselines:**")
+                    st.markdown(f"⛽ `Fuel: {b_specs['fuel']}` | ⚡ `Nitro: {b_specs['nitro']}` | ⛰️ `Torque: {b_specs['torque']}`")
+                    
+                    st.markdown(f"_*Description:*_ \n{b_specs['desc']}")
+                    st.write("")
+                    
+                    # ─── 3. PROFILE BOTTOM: CAREER STATISTICS MATRIX AND SAFETY ENTRY STANDARDS ───
+                    st.markdown("**🏁 Career Standings Ledger:**")
+                    st.markdown(f"📊 **Encounters:** `{st_data['total']}` | **Wins:** `{st_data['wins']}` | **Defeats:** `{st_data['losses']}`")
+                    st.markdown(f"🏆 **Historical Win Rate:** `{w_rate:.1f}%`")
+                    
+                    # Safely translate criteria dictionaries into a clean text caption statement
                     if b_specs.get("unlock_criteria"):
-                        st.caption(f"⚙️ Entry Standard: {b_specs['unlock_criteria']}")
+                        if isinstance(b_errs, dict) and len(b_errs) > 0:
+                            err_msg = ", ".join([str(v) for v in b_errs.values()])
+                        elif isinstance(b_errs, list) and len(b_errs) > 0:
+                            err_msg = ", ".join([str(e) for e in b_errs])
+                        else:
+                            err_msg = str(b_errs) if b_errs else "Chamber Entry Gated"
+                            
+                        st.caption(f"⚙️ **Unlock Standard:** `{err_msg}`")
+
+
 
     # =========================================================================
     # TAB 3: TRACK SELECTION MANUAL

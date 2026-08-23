@@ -2,6 +2,7 @@ python3 -c "
 import json
 with open('save_file.json', 'r', encoding='utf-8') as f: 
     data = json.load(f)
+data['active_level'] = 0
 data['gold'] = 0
 data['calorie_bank_balance'] = 0
 data['calorie_bank_total_earned'] = 0
