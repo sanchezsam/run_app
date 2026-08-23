@@ -21,6 +21,75 @@ from metrics_config import FINAL_METRIC_CONFIG
 from character_economy_config import CHARACTER_XP_CONFIG
 
 
+
+def process_and_award_metrics_in_memory(profile: dict, new_run_log: dict) -> dict:
+    """
+    Main evaluation pipeline processed completely in-memory inside upload_ui.py. 
+    Processes incoming run payloads, updates profile statistics counters, 
+    and returns the fully modified profile dictionary container.
+    """
+    import re
+    import math
+    import json
+
+    if "final_metric_data" not in profile:
+        return profile
+        
+    m_data = profile["final_metric_data"]
+    run_distance = float(new_run_log.get("Distance (Miles)", 0.0))
+    
+    raw_pace = new_run_log.get("pace", 0.0)
+    if isinstance(raw_pace, str) and ":" in raw_pace:
+        try:
+            parts = raw_pace.strip().split(":")
+            run_pace_seconds = (int(parts[0]) * 60) + int(parts[1])
+        except (ValueError, IndexError):
+            run_pace_seconds = 660
+    else:
+        try:
+            run_pace_seconds = int(float(raw_pace) * 60)
+        except:
+            run_pace_seconds = 660
+            
+    try:
+        raw_vert = new_run_log.get('elevation_gain', new_run_log.get('elevation', new_run_log.get('Elevation (ft)', 0.0)))
+        run_elevation = float(str(raw_vert).replace("+","").replace("ft","").replace(",","").strip())
+    except:
+        run_elevation = 0.0
+    
+    if "unlocked_badges" not in profile:
+        profile["unlocked_badges"] = []
+
+    if "history_logs" not in profile:
+        profile["history_logs"] = []
+        
+    is_duplicate = any(
+        str(run.get("Date"))[:19] == str(new_run_log.get("Date"))[:19] and 
+        abs(float(run.get("Distance (Miles)", 0.0)) - run_distance) < 0.01
+        for run in profile["history_logs"] if isinstance(run, dict)
+    )
+    
+    if not is_duplicate:
+        profile["history_logs"].append(new_run_log)
+    
+    run_calories = int(run_distance * 100) 
+    m_data["lifetime_calories_burned"] = int(m_data.get("lifetime_calories_burned", 0)) + run_calories
+    profile["lifetime_elevation_gain"] = float(profile.get("lifetime_elevation_gain", 0.0)) + run_elevation
+
+    total_accumulated_miles = 0.0
+    history_source = profile.get("history_logs", [])
+
+    for log_item in history_source:
+        if isinstance(log_item, dict):
+            total_accumulated_miles += float(log_item.get("Distance (Miles)", 0.0))
+
+    m_data["lifetime_odometer_miles"] = round(total_accumulated_miles, 2)
+    return profile
+
+
+
+
+
 # ==============================================================================
 # 📊 PART 1: ACUTE MOMENTUM PROFILE RATINGS & PROGRESSION LOGIC
 # ==============================================================================
