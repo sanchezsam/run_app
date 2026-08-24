@@ -139,6 +139,25 @@ def compute_historical_snapshot(history_logs, target_date):
 def calculate_and_render_profile(player, FILE_PATH=None):
     import datetime as dt_module
     from datetime import datetime, timedelta
+
+    # TEMPORARY TEST BLOCK: Place at the top of your function
+    #import json
+    #with open("save_file.json", "r", encoding="utf-8") as f:
+    #    sample_data = json.load(f)
+    #st.json(sample_data[:1] if isinstance(sample_data, list) else list(sample_data.items())[:2])
+    ## Place this right inside the top of calculate_and_render_profile:
+    # Check if your file loader looks like this:
+    with open("save_file.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+    
+    # Ensure it is assigning the logs array directly to player.history_logs:
+    player.history_logs = data.get("history_logs", [])
+
+    #st.write("📋 Real keys inside your history_logs:", list(player.history_logs[0].keys()) if hasattr(player, 'history_logs') and player.history_logs else "No logs found")
+ 
+
+
+
     now_date = datetime.now()
     
     # ⏱️ SPORTS SCIENCE LOOKBACKS

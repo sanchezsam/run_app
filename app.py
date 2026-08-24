@@ -646,9 +646,9 @@ with st.sidebar:
         if st.button("🏟️ Biometric Coliseum", key="nav_sidebar_coli", type="primary" if st.session_state.active_tab_selection == "Biometric Coliseum" else "secondary", use_container_width=True):
             st.session_state.active_tab_selection = "Biometric Coliseum"
             st.rerun()
-        if st.button("📊 Performance Analytics", key="nav_sidebar_anly", type="primary" if st.session_state.active_tab_selection == "Performance Analytics" else "secondary", use_container_width=True):
-            st.session_state.active_tab_selection = "Performance Analytics"
-            st.rerun()
+        #if st.button("📊 Performance Analytics", key="nav_sidebar_anly", type="primary" if st.session_state.active_tab_selection == "Performance Analytics" else "secondary", use_container_width=True):
+        #    st.session_state.active_tab_selection = "Performance Analytics"
+        #    st.rerun()
         if st.button("🏆 Showroom & PRs", key="nav_sidebar_show", type="primary" if st.session_state.active_tab_selection == "🏆 Showroom & PRs" else "secondary", use_container_width=True):
             st.session_state.active_tab_selection = "🏆 Showroom & PRs"
             st.rerun()
@@ -1190,33 +1190,33 @@ elif st.session_state.active_tab_selection == 'Pro Shop & Garage':
     #            st.info(f"🚘 **{car}**\n\n`Tuning Rank: +{car_rank}`")
 elif st.session_state.active_tab_selection == '🏪 Calorie Pantry Market':
     render_pantry_interface(player, FILE_PATH)
-elif st.session_state.active_tab_selection == 'Performance Analytics':
-    st.markdown('## 📊 Performance Analytics Dashboard')
-    chart_runs = st.session_state.profile.get("history_logs", [])
-    
-    if chart_runs and len(chart_runs) > 0:
-        df_analytics_view = pd.DataFrame(chart_runs)
-        
-        # 🛡 FIX: Map inconsistent json log history keys to columns BEFORE sorting
-        if "Calendar Date" not in df_analytics_view.columns and "date" in df_analytics_view.columns:
-            df_analytics_view["Calendar Date"] = df_analytics_view["date"]
-        if "Distance (Miles)" not in df_analytics_view.columns and "dist" in df_analytics_view.columns:
-            df_analytics_view["Distance (Miles)"] = df_analytics_view["dist"]
-            
-        if "Calendar Date" not in df_analytics_view.columns:
-            df_analytics_view["Calendar Date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
-        if "Distance (Miles)" not in df_analytics_view.columns:
-            df_analytics_view["Distance (Miles)"] = 0.0
-
-        df_analytics_view = df_analytics_view.sort_values(by='Calendar Date')
-        
-        base_chart = alt.Chart(df_analytics_view).encode(x='Calendar Date:T')
-        bars_distance = base_chart.mark_bar(color='#3b82f6', opacity=0.6).encode(
-            y=alt.Y('Distance (Miles):Q', title='Distance (mi)')
-        )
-        st.altair_chart(bars_distance, use_container_width=True)
-    else:
-        st.info('Gather activity logs to map telemetry parameters.')
+#elif st.session_state.active_tab_selection == 'Performance Analytics':
+#    st.markdown('## 📊 Performance Analytics Dashboard')
+#    chart_runs = st.session_state.profile.get("history_logs", [])
+#    
+#    if chart_runs and len(chart_runs) > 0:
+#        df_analytics_view = pd.DataFrame(chart_runs)
+#        
+#        # 🛡 FIX: Map inconsistent json log history keys to columns BEFORE sorting
+#        if "Calendar Date" not in df_analytics_view.columns and "date" in df_analytics_view.columns:
+#            df_analytics_view["Calendar Date"] = df_analytics_view["date"]
+#        if "Distance (Miles)" not in df_analytics_view.columns and "dist" in df_analytics_view.columns:
+#            df_analytics_view["Distance (Miles)"] = df_analytics_view["dist"]
+#            
+#        if "Calendar Date" not in df_analytics_view.columns:
+#            df_analytics_view["Calendar Date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
+#        if "Distance (Miles)" not in df_analytics_view.columns:
+#            df_analytics_view["Distance (Miles)"] = 0.0
+#
+#        df_analytics_view = df_analytics_view.sort_values(by='Calendar Date')
+#        
+#        base_chart = alt.Chart(df_analytics_view).encode(x='Calendar Date:T')
+#        bars_distance = base_chart.mark_bar(color='#3b82f6', opacity=0.6).encode(
+#            y=alt.Y('Distance (Miles):Q', title='Distance (mi)')
+#        )
+#        st.altair_chart(bars_distance, use_container_width=True)
+#    else:
+#        st.info('Gather activity logs to map telemetry parameters.')
 elif st.session_state.active_tab_selection == 'Training Ledger':
     render_training_ledger(player)
 elif st.session_state.active_tab_selection == "🏆 Showroom & PRs":
