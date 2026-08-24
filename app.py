@@ -365,36 +365,108 @@ if miles_last_28_days < peak_target:
             status_indicator_text = f"⚠️ STATUS: MODERATE VOLUME DEFICIT ({retention_pct}% Volume Retained)"
             status_alert_type = "error"
 
-p_fuel_max   = int(current_profile.get("endurance_level", 1) if isinstance(current_profile, dict) else 1)
-p_nitro_max  = int(current_profile.get("pace_level", 1) if isinstance(current_profile, dict) else 1)
-p_torque_max = int(current_profile.get("hill_climbing_level", 1) if isinstance(current_profile, dict) else 1)
-
-st.session_state.global_days_gap = days_since_last_run
-st.session_state.global_miles_28d = miles_last_28_days
-st.session_state.global_peak_target = peak_target
-st.session_state.global_status_text = status_indicator_text
-st.session_state.global_alert_type = status_alert_type
-st.session_state.global_is_building = is_building_volume
-
-st.session_state.p_fuel   = max(1.0, round(p_fuel_max - p_fuel_decay, 1))
-st.session_state.p_nitro  = max(1.0, round(p_nitro_max - p_nitro_decay, 1))
-st.session_state.p_torque = max(1.0, round(p_torque_max - p_torque_decay, 1))
-st.session_state.p_fuel_decay   = p_fuel_decay
-st.session_state.p_nitro_decay  = p_nitro_decay
-st.session_state.p_torque_decay = p_torque_decay
-
+# ==========================================
+# 🛡️ UNIFIED CORE CHARACTER & PROGRESS RECONCILER (app.py)
+# ==========================================
+# ==========================================
+# 🛡️ UNIFIED CORE CHARACTER & PROGRESS RECONCILER (app.py)
+# ==========================================
 try:
+    # 1. Instantiate structural elements from data file
     player = Character(FILE_PATH)
+    
+    # 2. FILE INTERCEPT SHIELD: Read and lock database keys onto your active instance
+    import os, json
+    if os.path.exists(FILE_PATH):
+        try:
+            with open(FILE_PATH, 'r', encoding='utf-8') as f:
+                disk_snapshot = json.load(f)
+            
+            # --- 🏪 PANTRY MARKET HUB STORAGE LOCKS ---
+            player.pantry_purchase_counts = disk_snapshot.get("pantry_purchase_counts", {})
+            player.pantry_single_trophies = disk_snapshot.get("pantry_single_trophies", [])
+            player.pantry_cuisine_trophies = disk_snapshot.get("pantry_cuisine_trophies", [])
+            
+            # --- ⚔️ RPG ITEM SHOP CORES (THE SHOP_UI PERSISTENCE LOCK) ---
+            # Explicitly force the raw inventory lists and gear data onto your memory model
+                
+
+
+
+            # --- ⚔️ RPG ITEM SHOP CORES (THE SHOP_UI PERSISTENCE LOCK) ---
+            if "inventory" in disk_snapshot:
+                player.inventory = disk_snapshot["inventory"]
+            if "equipped_gear" in disk_snapshot:
+                player.equipped_gear = disk_snapshot["equipped_gear"]
+                st.session_state["p_equipped_gear"] = disk_snapshot["equipped_gear"]
+                
+            # 🛡️ THE OUTFIT LOADOUT GUARD: Intercept and bind your actively worn gear types
+            # from your save file snapshot so app.py can pass them down into your shop layouts!
+            gear_slots = [
+                'equipped_shoe_name', 'equipped_sunglasses_name', 'equipped_headgear_name',
+                'equipped_singlet_name', 'equipped_jacket_name', 'equipped_shorts_name',
+                'equipped_pants_name', 'equipped_watch_name'
+            ]
+            for slot_attr in gear_slots:
+                if slot_attr in disk_snapshot:
+                    setattr(player, slot_attr, disk_snapshot[slot_attr])
+
+            # Map dynamic wallet and score configurations safely
+            if "gold" in disk_snapshot:
+                player.gold = disk_snapshot["gold"]
+                st.session_state["player_gold"] = disk_snapshot["gold"]
+            if "gold_balance" in disk_snapshot:
+                player.gold_balance = disk_snapshot["gold_balance"]
+                
+            if "calorie_bank_balance" in disk_snapshot:
+                player.calorie_bank_balance = disk_snapshot["calorie_bank_balance"]
+                st.session_state["calorie_bank_balance"] = disk_snapshot["calorie_bank_balance"]
+            if "calorie_bank_total_earned" in disk_snapshot:
+                player.calorie_bank_total_earned = disk_snapshot["calorie_bank_total_earned"]
+                st.session_state["calorie_bank_total_earned"] = disk_snapshot["calorie_bank_total_earned"]
+                
+            # --- 🏃‍♂️ RUNNING LOGS & GARMIN PROTECTION LAYER ---
+            if "synced_garmin_activities" in disk_snapshot:
+                player.synced_garmin_activities = disk_snapshot["synced_garmin_activities"]
+            if "history_logs" in disk_snapshot:
+                player.history_logs = disk_snapshot["history_logs"]
+            if "daily_miles" in disk_snapshot:
+                player.daily_miles = disk_snapshot["daily_miles"]
+            if "cadence_history" in disk_snapshot:
+                player.cadence_history = disk_snapshot["cadence_history"]
+            if "elevation_milestone_history" in disk_snapshot:
+                player.elevation_milestone_history = disk_snapshot["elevation_milestone_history"]
+                
+        except Exception:
+            pass
+
+    # 3. Synchronize file balance updates back into global app keys if present
+    if not isinstance(player, dict):
+        if hasattr(player, "level") and player.level is not None:
+            st.session_state["player_level"] = player.level
+        if hasattr(player, "gold") and player.gold is not None:
+            st.session_state["player_gold"] = player.gold
+        if hasattr(player, "total_xp") and player.total_xp is not None:
+            st.session_state["player_xp"] = player.total_xp
+
+    # 4. Process original engine attributes and vehicle decays safely
     player.p_fuel = st.session_state.p_fuel
     player.p_nitro = st.session_state.p_nitro
     player.p_torque = st.session_state.p_torque
-    player.calorie_bank_balance = st.session_state.get("calorie_bank_balance", 0)
-    player.level = st.session_state.get("player_level", 1)
-    player.gold = st.session_state.get("player_gold", 0)
-    player.total_xp = st.session_state.get("player_xp", 0)
+
+    # Use existing attributes first; only default to session fallbacks if empty
+    player.calorie_bank_balance = getattr(player, "calorie_bank_balance", st.session_state.get("calorie_bank_balance", 0))
+    player.level = getattr(player, "level", st.session_state.get("player_level", 1))
+    player.gold = getattr(player, "gold", st.session_state.get("player_gold", 0))
+    player.total_xp = getattr(player, "total_xp", st.session_state.get("player_xp", 0))
+
 except Exception:
     player = current_profile
-
+    if isinstance(player, dict):
+        class DictToObject:
+            def __init__(self, d): self.__dict__.update(d)
+            def get(self, k, df=None): return self.__dict__.get(k, df)
+        player = DictToObject(player)
 
 
 
@@ -1105,7 +1177,9 @@ elif st.session_state.active_tab_selection == 'Telemetry Sync':
 
 
                         if hasattr(player, 'final_metric_data'):
-                            player.final_metric_data = current_database.get("final_metric_data", {})
+                            #  FIXED: Changed current_database to fresh_disk_data
+                            player.final_metric_data = fresh_disk_data.get("final_metric_data", {})
+
 
 
 

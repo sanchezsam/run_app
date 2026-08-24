@@ -585,12 +585,18 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                  import json
                  import os
 
-                 # 1. READ PERMANENT STORAGE FILE DATA FIRST (Never assume memory handles are active)
+
+
+                 # 🛡️ THE GLOBAL PATH SHIELD: Force definition at the baseline layer
+                 # to guarantee this variable exists even if a filesystem read fails.
+                 current_database = {}
+
+                 # 1. READ PERMANENT STORAGE FILE DATA FIRST
                  if os.path.exists(FILE_PATH) and os.path.getsize(FILE_PATH) > 0:
                      try:
                          with open(FILE_PATH, 'r', encoding='utf-8') as db_file:
                              current_database = json.load(db_file)
-                     except json.JSONDecodeError:
+                     except Exception:  # 💡 Catch ALL errors (locks, decode issues, permissions)
                          current_database = {}
                  else:
                      current_database = {}
@@ -600,6 +606,8 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                      current_database["history_logs"] = []
                  if "unlocked_badges" not in current_database:
                      current_database["unlocked_badges"] = []
+
+
 
                  # 🟢 3. FIXED: Extract fresh entries directly from the incoming batch loop
                  # instead of reading player.history_logs which hoards previous states in RAM!
@@ -633,11 +641,11 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                  current_database['pantry_single_trophies'] = player.pantry_single_trophies
                  current_database['pantry_cuisine_trophies'] = player.pantry_cuisine_trophies
 
-                 # 6. Execute metrics calculations in memory on the unified master list data stream
+                                  # 6. Execute metrics calculations in memory on the unified master list data stream
                  if current_database["history_logs"]:
                      current_database = process_and_award_metrics_in_memory(current_database, current_database["history_logs"][-1])
 
-                                      # 7. Flush the completely appended dataset to disk once safely
+                 # 7. Flush the completely appended dataset to disk once safely
                  with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
                      json.dump(current_database, db_file, default=str, indent=4, ensure_ascii=False)
 
@@ -662,6 +670,7 @@ def render_upload_interface(player, FILE_PATH, database_file_path=None):
                  st.session_state["profile"]["history_logs"] = list(current_database.get("history_logs", []))
                  st.session_state["profile"]["unlocked_badges"] = list(current_database.get("unlocked_badges", []))
                  st.session_state.history_logs = list(current_database.get("history_logs", []))
+
 
                  if hasattr(player, 'final_metric_data'):
                      player.final_metric_data = current_database.get("final_metric_data", {})

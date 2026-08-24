@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 """
 PRO SHOP & PERFORMANCE EQUIPMENT FORGE (shop_ui.py)
 Manages apparel procurement, gear unboxing mechanics, custom colorway styling, 

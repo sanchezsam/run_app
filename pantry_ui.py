@@ -70,19 +70,35 @@ def render_pantry_interface(player, FILE_PATH):
     # =========================================================================
     # 🛡️ ENGINE INITIALIZATION LAYER: SCHEMA INTEGRITY CHECKERS
     # =========================================================================
-    if not hasattr(player, 'pantry_purchase_counts') or getattr(player, 'pantry_purchase_counts') is None:
+    #if not hasattr(player, 'pantry_purchase_counts') or getattr(player, 'pantry_purchase_counts') is None:
+    #    player.pantry_purchase_counts = {}
+
+
+    if not hasattr(player, 'pantry_purchase_counts') or player.pantry_purchase_counts is None:
         player.pantry_purchase_counts = {}
-    if not hasattr(player, 'pantry_single_trophies') or getattr(player, 'pantry_single_trophies') is None:
+    if not hasattr(player, 'pantry_single_trophies') or player.pantry_single_trophies is None:
         player.pantry_single_trophies = []
-    if not hasattr(player, 'pantry_cuisine_trophies') or getattr(player, 'pantry_cuisine_trophies') is None:
+    if not hasattr(player, 'pantry_cuisine_trophies') or player.pantry_cuisine_trophies is None:
         player.pantry_cuisine_trophies = []
 
-    purchase_counts = getattr(player, 'pantry_purchase_counts')
-    single_trophies = getattr(player, 'pantry_single_trophies')
-    cuisine_trophies = getattr(player, 'pantry_cuisine_trophies')
+
+    purchase_counts = player.pantry_purchase_counts
+    single_trophies = player.pantry_single_trophies
+    cuisine_trophies = player.pantry_cuisine_trophies
+
 
     balance = getattr(player, 'calorie_bank_balance', 0)
     total_earned = getattr(player, 'calorie_bank_total_earned', 0)
+
+    #  GLOBAL CACHE RECONCILER:
+    # Overwrites the stale app.py session caches with your fresh, live player stats
+    # to protect your data from getting zeroed out during Streamlit's script reruns.
+    st.session_state["player_gold"] = getattr(player, "gold", 0)
+    st.session_state["player_xp"] = getattr(player, "total_xp", 0)
+    st.session_state["p_fuel"] = getattr(player, "p_fuel", 0)
+    st.session_state["p_nitro"] = getattr(player, "p_nitro", 0)
+    st.session_state["p_torque"] = getattr(player, "p_torque", 0)
+
 
     with st.container(border=True):
         col_hud_1, col_hud_2 = st.columns(2)
@@ -215,14 +231,17 @@ def render_pantry_interface(player, FILE_PATH):
                 st.rerun()
 
         st.markdown("---")
+
         with st.expander("📦 View Lifetime Career Inventory Stock Ledger Balance", expanded=False):
             has_purchased_anything = False
             inv_cols = st.columns(4)
             col_selector = 0
             for c_group, c_data in PANTRY_MENU.items():
                 for item in c_data["items"]:
-                    active_pool = purchase_counts.get(item["id"], 0)
-                    previous_unlocked_sums = sum(item["thresholds"][t_idx] for t_idx in range(5) if f"{item['id']}:{t_idx}" in single_trophies)
+                    #  FIXED LINES: Read directly from persistent player properties
+                    active_pool = player.pantry_purchase_counts.get(item["id"], 0)
+                    previous_unlocked_sums = sum(item["thresholds"][t_idx] for t_idx in range(5) if f"{item['id']}:{t_idx}" in player.pantry_single_trophies)
+
                     lifetime_total = active_pool + previous_unlocked_sums
                     if lifetime_total > 0:
                         has_purchased_anything = True
@@ -270,8 +289,9 @@ def render_pantry_interface(player, FILE_PATH):
                         
                     for food in sorted_items:
                         f_id, name, cost, emoji, thresholds = food["id"], food["name"], food["cost"], food["emoji"], food["thresholds"]
-                        owned_count = purchase_counts.get(f_id, 0)
-                        current_item_tier = next((t for t in range(5) if f"{f_id}:{t}" not in single_trophies), 5)
+                        owned_count = player.pantry_purchase_counts.get(f_id, 0)  #
+                        current_item_tier = next((t for t in range(5) if f"{f_id}:{t}" not in player.pantry_single_trophies), 5)
+
                         is_progression_locked = current_item_tier > min_unfinished_tier
                         
                         item_row_col, btn_row_col = st.columns([1.9, 2.1])
@@ -309,26 +329,28 @@ def render_pantry_interface(player, FILE_PATH):
                             else: btn_lbl = "Buy"
                             
                             if st.button(btn_lbl, key=f"p_buy_{cuisine_group}_{f_id}_{current_item_tier}", disabled=is_funds_low or is_progression_locked, use_container_width=True):
+
                                 player.calorie_bank_balance -= cost
                                 st.session_state.pantry_last_bought = (cuisine_group, food)
                                 st.session_state.discount_frenzy_cost = 500
-                                purchase_counts[f_id] = owned_count + 1
-                                player.pantry_purchase_counts = purchase_counts
+                                player.pantry_purchase_counts[f_id] = player.pantry_purchase_counts.get(f_id, 0) + 1  #
 
                                 for t_idx in range(5):
-                                    if f"{f_id}:{t_idx}" not in single_trophies and purchase_counts[f_id] >= thresholds[t_idx]:
+                                    if f"{f_id}:{t_idx}" not in single_trophies and player.pantry_purchase_counts.get(f_id, 0) >= thresholds[t_idx]: #
                                         single_trophies.append(f"{f_id}:{t_idx}")
                                         player.pantry_single_trophies = single_trophies
                                         st.session_state.pantry_toast = {"text": f"🏆 LEVEL UP: Unlocked {emoji} {name} {TROPHY_TIERS[t_idx]['name']}!", "icon": "🔥"}
-                                        purchase_counts[f_id] = 0
+                                        player.pantry_purchase_counts[f_id] = 0 #
                                         break
+
                                 for t_idx in range(5):
                                     if f"{cuisine_group}:{t_idx}" not in cuisine_trophies and all(f"{it['id']}:{t_idx}" in single_trophies for it in cuisine_data["items"]):
                                         cuisine_trophies.append(f"{cuisine_group}:{t_idx}")
                                         player.pantry_cuisine_trophies = cuisine_trophies
                                         st.session_state.pantry_toast = {"text": f"🎉 SECTOR COMPLETE: Unlocked {cuisine_data['flag']} {cuisine_group} Flag!", "icon": "👑"}
-                                        for it in cuisine_data["items"]: purchase_counts[it["id"]] = 0
+                                        for it in cuisine_data["items"]: player.pantry_purchase_counts[it["id"]] = 0 #
                                         break
+
                                 with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
                                 if "pantry_toast" not in st.session_state: st.session_state.pantry_toast = {"text": f"🎉 Purchased {name}!", "icon": "✅"}
                                 st.rerun()
@@ -352,21 +374,32 @@ def render_pantry_interface(player, FILE_PATH):
                 else:
                     pool_cheat_display.append(ientry)
 
+
         def execute_box_award(c_g, c_d, c_it, points=1):
             f_id, name, emoji, val = c_it["id"], c_it["name"], c_it["emoji"], c_it.get("cost", 0)
-            purchase_counts[f_id] = purchase_counts.get(f_id, 0) + points
-            player.pantry_purchase_counts = purchase_counts
+
+            # Direct persistent mutation on the player object attribute
+            player.pantry_purchase_counts[f_id] = player.pantry_purchase_counts.get(f_id, 0) + points
+
+            # Check individual item trophy thresholds
             for t_idx in range(5):
-                if f"{f_id}:{t_idx}" not in single_trophies and purchase_counts[f_id] >= c_it["thresholds"][t_idx]:
+                if f"{f_id}:{t_idx}" not in single_trophies and player.pantry_purchase_counts[f_id] >= c_it["thresholds"][ t_idx]:
                     single_trophies.append(f"{f_id}:{t_idx}")
-                    purchase_counts[f_id] = 0
+                    player.pantry_purchase_counts[f_id] = 0
                     break
+
+            # Check family/cuisine sector complete flag conditions
             for t_idx in range(5):
                 if f"{c_g}:{t_idx}" not in cuisine_trophies and all(f"{it['id']}:{t_idx}" in single_trophies for it in c_d["items"]):
                     cuisine_trophies.append(f"{c_g}:{t_idx}")
-                    for it in c_d["items"]: purchase_counts[it["id"]] = 0
+                    for it in c_d["items"]:
+                        player.pantry_purchase_counts[it["id"]] = 0
                     break
-            with open(FILE_PATH, 'w', encoding='utf-8') as f: json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+
+            # Commit the state update immediately to disk
+            with open(FILE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+
             return emoji, name, val
 
         sections_meta = [
