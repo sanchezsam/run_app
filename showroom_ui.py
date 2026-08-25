@@ -807,6 +807,7 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
         weekly_mileage_tracker = {}    # Key: (year, week_num) -> Value: float miles
         weekly_elevation_tracker = {}  # Key: (year, week_num) -> Value: float feet
         weekly_runs_registry = {}      # Key: (year, week_num) -> Value: list of run logs
+        available_years_set = set()    # Track distinct calendar years found in history
 
         for log_item in getattr(player, 'history_logs', []):
             log_date_str = None
@@ -843,6 +844,8 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                     iso_year, iso_week, _ = clean_date.isocalendar()
                     bucket_key = (iso_year, iso_week)
                     
+                    available_years_set.add(iso_year)
+                    
                     if log_miles > 0.0:
                         weekly_mileage_tracker[bucket_key] = weekly_mileage_tracker.get(bucket_key, 0.0) + log_miles
                     if log_ele > 0.0:
@@ -854,55 +857,29 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                 except Exception:
                     pass
 
-        # 🟢 INSERT PANEL: In-line Weekly Details Flat Rows (Right Under Header)
-        if "inline_active_week" in st.session_state and st.session_state["inline_active_week"] is not None:
-            tgt_year, tgt_week = st.session_state["inline_active_week"]
-            week_logs = weekly_runs_registry.get((tgt_year, tgt_week), [])
-            
-            with st.container(border=True):
-                w_miles = weekly_mileage_tracker.get((tgt_year, tgt_week), 0.0)
-                w_ele = weekly_elevation_tracker.get((tgt_year, tgt_week), 0.0)
-                
-                st.markdown(f"#### 🗓️ Selected Summary Panel: Week {tgt_week}, {tgt_year}")
-                
-                m_col1, m_col2, m_col3 = st.columns(3)
-                with m_col1:
-                    st.metric("Total Mileage Volume", f"{w_miles:.1f} miles")
-                with m_col2:
-                    st.metric("Total Vertical Ascent", f"{w_ele:,.0f} ft")
-                with m_col3:
-                    st.write("") 
-                    if st.button("❌ Hide Details Panel", use_container_width=True):
-                        st.session_state["inline_active_week"] = None
-                        st.rerun()
-                        
-                st.markdown("##### 🏃‍♂️ Daily Workout Logs")
-                if not week_logs:
-                    st.caption("No individual activity payloads found for this week.")
-                else:
-                    def get_run_date(r_obj):
-                        if isinstance(r_obj, dict): return r_obj.get("Date", "9999")
-                        return "9999"
-                    sorted_week_logs = sorted(week_logs, key=get_run_date)
-                    
-                    for run_idx, run in enumerate(sorted_week_logs):
-                        if isinstance(run, dict):
-                            run_name = run.get("Name", "Standard Run")
-                            run_date = run.get("Date", "Unknown")[:10]
-                            run_dist = run.get("Distance (Miles)", run.get("distance_mi", 0.0))
-                            run_dur = run.get("Duration", "N/A")
-                            run_pace = run.get("pace", "N/A")
-                            run_elev = run.get("Elevation (ft)", "0 ft")
-                            
-                            st.markdown(f"📅 **{run_date}** | **{run_name}**: `{run_dist:.1f} mi` | ⏱️ `{run_dur}` | ⚡ `{run_pace} min/mi` | ⛰️ `{run_elev}`")
-                        elif isinstance(run, str):
-                            st.markdown(f"📝 {run}")
-                            
-                st.markdown("---")
+        # 📅 MASTER OVERVIEW TIMELINE FILTER: High-level selection outside the individual cards
+        sorted_years = sorted(list(available_years_set), reverse=True)
+        year_options = ["📅 All Years Overview"] + [str(yr) for yr in sorted_years]
+        
+        selected_overview_year = st.selectbox(
+            "🔍 Select Seasonal Timeline Filter (Overview):",
+            year_options,
+            key="master_showroom_milestone_overview_year"
+        )
+        st.write("")
 
-        # ─── FRONTEND PRESENTATION: SIDE-BY-SIDE SIDE LAYOUT DOCKS ───
-        split_col_1, split_col_2 = st.columns(2)
-        # 🟢 CALLBACK FUNCTIONS: Intercepts selection data cleanly to block infinite loop refreshes
+        # ─── SPLIT DETECTOR: Create Side-by-Side View Ports ───
+        is_inspecting = "inline_active_week" in st.session_state and st.session_state["inline_active_week"] is not None
+        
+        if is_inspecting:
+            main_left_col, main_right_col = st.columns([1.2, 1.0])
+        else:
+            main_left_col = st.container()
+
+        # ─── LEFT SIDE CONTENT PANEL: REWARDS CONFIGURATORS ───
+        with main_left_col:
+            split_col_1, split_col_2 = st.columns(2)
+        # 🟢 CALLBACK FUNCTIONS: Extract week/year and protect background memory allocations
         def on_select_mil_week(key_id):
             chosen = st.session_state[key_id]
             if chosen != "-- Select a Week to Inspect --":
@@ -913,19 +890,33 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
 
         # COLUMN 1: WEEKLY MILEAGE STRINGS INDEX
         with split_col_1:
-            st.markdown("#### 📅 Weekly Mileage Ribbons & Buckles")
-            with st.expander("Review Mileage Milestone Requirements", expanded=True):
-                for reward in WEEKLY_MILEAGE_REWARDS:
+            st.markdown("#### 📅 Weekly Mileage Ribbons")
+            with st.expander("Review Mileage Milestones", expanded=True):
+                sorted_mileage_rewards = sorted(WEEKLY_MILEAGE_REWARDS, key=lambda x: float(x.get("miles", 0.0)))
+                
+                for idx, reward in enumerate(sorted_mileage_rewards):
                     try:
                         target_miles = float(reward.get("miles", 0.0))
                     except (ValueError, TypeError):
                         target_miles = 0.0
                     
-                    mileage_weeks_met = sorted([k for k, total in weekly_mileage_tracker.items() if total >= target_miles], reverse=True)
+                    # 🟢 BRACKET FILTER: Strict limits block lower milestones from bleeding upward
+                    upper_miles_cap = float('inf')
+                    if idx + 1 < len(sorted_mileage_rewards):
+                        upper_miles_cap = float(sorted_mileage_rewards[idx+1].get("miles", float('inf')))
+                    
+                    # Gather keys matching the metric range bounds
+                    base_weeks = [k for k, total in weekly_mileage_tracker.items() if target_miles <= total < upper_miles_cap]
+                    
+                    # 🟢 TIMELINE OVERVIEW COUPLING: Filter matching elements by the master year selectbox
+                    if selected_overview_year != "📅 All Years Overview":
+                        base_weeks = [k for k in base_weeks if k[0] == int(selected_overview_year)]
+                        
+                    mileage_weeks_met = sorted(base_weeks, key=lambda x: (x[0], x[1]), reverse=True)
                     mileage_frequency = len(mileage_weeks_met)
                     mileage_unlocked = mileage_frequency > 0
                     
-                    r_col1, r_col2 = st.columns([1, 5.2])
+                    r_col1, r_col2 = st.columns([1, 4.5])
                     with r_col1:
                         render_showroom_asset(
                             img_path=reward.get("img_path"),
@@ -934,12 +925,10 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                         )
                     with r_col2:
                         if mileage_unlocked:
-                            st.markdown(f"**{reward['title']}** (`{reward['miles']} miles`) — ✅ **Unlocked ({mileage_frequency}x)**")
-                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;margin-bottom:4px;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            st.markdown(f"**{reward['title']}** (`{reward['miles']}+ mi`) — **{mileage_frequency}x**")
                             
+                            # 🟢 DROPDOWN IS SPECIFIC WEEKS: Populates choices for the active year space
                             options = ["-- Select a Week to Inspect --"] + [f"Week {wk}, {yr} ({weekly_mileage_tracker[(yr, wk)]:.1f} mi)" for yr, wk in mileage_weeks_met]
-                            
-                            # Utilizing on_change parameter to decouple event processing loops
                             st.selectbox(
                                 "📅 View Achieved Weeks:", 
                                 options, 
@@ -948,27 +937,42 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                                 args=(f"sel_mil_{reward['title']}",)
                             )
                         else:
-                            st.markdown(f'<span style="opacity:0.4;font-weight:bold;">🔒 {reward["title"]}</span> <span style="opacity:0.4;">({reward["miles"]} miles)</span>', unsafe_allow_html=True)
-                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;opacity:0.4;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<span style="opacity:0.4;font-weight:bold;">🔒 {reward["title"]}</span>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;opacity:0.4;">Requires {reward["miles"]} miles</p>', unsafe_allow_html=True)
                             
                     st.markdown('<div style="margin-bottom:8px;border-bottom:1px solid #1f232a;opacity:0.15;"></div>', unsafe_allow_html=True)
 
         # COLUMN 2: WEEKLY VERTICAL STRINGS INDEX
         with split_col_2:
-            st.markdown("#### 🏔️ Weekly Elevation Climb Milestones")
-            with st.expander("Review Vertical Milestone Requirements", expanded=True):
-                for reward in WEEKLY_ELEVATION_REWARDS:
+            st.markdown("#### 🏔️ Weekly Elevation Milestones")
+            with st.expander("Review Vertical Milestones", expanded=True):
+                def get_climb_val(r):
+                    return float(str(r.get("climb_ft", "0")).replace(",", "").strip())
+                sorted_elevation_rewards = sorted(WEEKLY_ELEVATION_REWARDS, key=get_climb_val)
+                
+                for idx, reward in enumerate(sorted_elevation_rewards):
                     try:
-                        raw_climb_ft = str(reward.get("climb_ft", "0")).replace(",", "").strip()
-                        target_climb = float(raw_climb_ft)
+                        target_climb = get_climb_val(reward)
                     except (ValueError, TypeError):
                         target_climb = 0.0
                     
-                    elevation_weeks_met = sorted([k for k, total in weekly_elevation_tracker.items() if total >= target_climb], reverse=True)
+                    # 🟢 BRACKET FILTER: Strict limits block lower milestones from bleeding upward
+                    upper_climb_cap = float('inf')
+                    if idx + 1 < len(sorted_elevation_rewards):
+                        upper_climb_cap = get_climb_val(sorted_elevation_rewards[idx+1])
+                    
+                    # Gather keys matching the metric range bounds
+                    base_weeks = [k for k, total in weekly_elevation_tracker.items() if target_climb <= total < upper_climb_cap]
+                    
+                    # 🟢 TIMELINE OVERVIEW COUPLING: Filter matching elements by the master year selectbox
+                    if selected_overview_year != "📅 All Years Overview":
+                        base_weeks = [k for k in base_weeks if k[0] == int(selected_overview_year)]
+                        
+                    elevation_weeks_met = sorted(base_weeks, key=lambda x: (x[0], x[1]), reverse=True)
                     elevation_frequency = len(elevation_weeks_met)
                     elevation_unlocked = elevation_frequency > 0
                     
-                    r_col1, r_col2 = st.columns([1, 5.2])
+                    r_col1, r_col2 = st.columns([1, 4.5])
                     with r_col1:
                         render_showroom_asset(
                             img_path=reward.get("img_path"),
@@ -977,11 +981,10 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                         )
                     with r_col2:
                         if elevation_unlocked:
-                            st.markdown(f"**{reward['title']}** (`{reward['climb_ft']:,} ft`) — ✅ **Unlocked ({elevation_frequency}x)**")
-                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;margin-bottom:4px;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            st.markdown(f"**{reward['title']}** (`{reward['climb_ft']}+ ft`) — **{elevation_frequency}x**")
                             
+                            # 🟢 DROPDOWN IS SPECIFIC WEEKS: Populates choices for the active year space
                             options = ["-- Select a Week to Inspect --"] + [f"Week {wk}, {yr} ({weekly_elevation_tracker[(yr, wk)]:,} ft)" for yr, wk in elevation_weeks_met]
-                            
                             st.selectbox(
                                 "📅 View Achieved Weeks:", 
                                 options, 
@@ -990,10 +993,59 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                                 args=(f"sel_elv_{reward['title']}",)
                             )
                         else:
-                            st.markdown(f'<span style="opacity:0.4;font-weight:bold;">🔒 {reward["title"]}</span> <span style="opacity:0.4;">({int(target_climb):,} ft)</span>', unsafe_allow_html=True)
-                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;opacity:0.4;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            st.markdown(f'<span style="opacity:0.4;font-weight:bold;">🔒 {reward["title"]}</span>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;opacity:0.4;">Requires {reward["climb_ft"]} ft</p>', unsafe_allow_html=True)
                             
                     st.markdown('<div style="margin-bottom:8px;border-bottom:1px solid #1f232a;opacity:0.15;"></div>', unsafe_allow_html=True)
+        # ─── RIGHT SIDE: Detailed Breakdown Summary Deck (Dropdown Container Rows Style) ───
+        if is_inspecting:
+            with main_right_col:
+                with st.container(border=True):
+                    tgt_year, tgt_week = st.session_state["inline_active_week"]
+                    panel_runs = weekly_runs_registry.get((tgt_year, tgt_week), [])
+                    
+                    st.markdown(f"### 🛡️ Weekly Milestone Details")
+                    st.caption(f"Selected Time Block: **Week {tgt_week}, {tgt_year}**")
+                    
+                    if st.button("Close Panel X", key=f"close_panel_key_week_{tgt_week}_{tgt_year}", use_container_width=True):
+                        st.session_state["inline_active_week"] = None
+                        st.rerun()
+                        
+                    st.divider()
+                    
+                    if not panel_runs:
+                        st.info("No individual activities found for this time block.")
+                    else:
+                        def get_run_date_sorting(r_obj):
+                            if isinstance(r_obj, dict): return r_obj.get("Date", "9999")
+                            return "9999"
+                        sorted_runs = sorted(panel_runs, key=get_run_date_sorting)
+                        
+                        for run_idx, run in enumerate(sorted_runs):
+                            if isinstance(run, dict):
+                                r_date = run.get("Date", "N/A")
+                                r_title = run.get("Name", "Standard Run")
+                                r_dist = run.get("Distance (Miles)", run.get("distance_mi", 0.0))
+                                r_time = run.get("Duration", "--:--")
+                                r_pace = run.get("pace", "—")
+                                r_elev = run.get("Elevation (ft)", "0 ft")
+                                r_date_str = str(r_date).split(" ") if " " in str(r_date) else str(r_date)
+                                
+                                # CHUNK 1: OVERVIEW FLAT METRIC SUMMARY BAR
+                                st.markdown(f"📅 **Date:** `{r_date_str}` | **Workout:** **{r_title}**")
+                                st.markdown(f"🏃 **Distance:** `{r_dist} mi` | ⏱️ **Duration:** `{r_time}` | ⚡ **Pace:** `{r_pace} /mi` | ⛰️ `{r_elev}`")
+                                
+                                # CHUNK 2: NATIVE EXPANDABLE DROPDOWN CONTAINER FOR THIS RUN SPECIFICALLY
+                                with st.expander("📋 Activity Performance Summary"):
+                                    show_run_lap_breakdown(run, unit_abbr="miles")
+                                    render_zone_octagon_display(run)
+                                    
+                                st.markdown('<div style="margin-bottom:24px; border-bottom:2px solid #2c313c; padding-top:12px;"></div>', unsafe_allow_html=True)
+                            
+                            elif isinstance(run, str):
+                                with st.expander(f"📝 Raw Text Entry Log #{run_idx + 1}"):
+                                    st.write(run)
+                                st.markdown('<div style="margin-bottom:24px; border-bottom:2px solid #2c313c; padding-top:12px;"></div>', unsafe_allow_html=True)
 
 
 
