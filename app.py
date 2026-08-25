@@ -222,7 +222,8 @@ st.session_state.user_initialized = True
 st.session_state.account_created = True
 st.session_state.setup_complete = True
 
-
+if "global_days_gap" not in st.session_state:
+    st.session_state.global_days_gap = 0
 # ==============================================================================
 # ⚡ THE ROOT INITIALIZATION HOOKS (Fixed to Eliminate NameErrors)
 # Standard safe string keys initialize cleanly without looking for un-imported catalogs!
@@ -390,9 +391,6 @@ try:
             # --- ⚔️ RPG ITEM SHOP CORES (THE SHOP_UI PERSISTENCE LOCK) ---
             # Explicitly force the raw inventory lists and gear data onto your memory model
                 
-
-
-
             # --- ⚔️ RPG ITEM SHOP CORES (THE SHOP_UI PERSISTENCE LOCK) ---
             if "inventory" in disk_snapshot:
                 player.inventory = disk_snapshot["inventory"]

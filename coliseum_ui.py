@@ -199,11 +199,123 @@ def evaluate_signature_tokens(player, boss_name, course_name):
     
 def render_coliseum(player, FILE_PATH):
     # =========================================================================
-    # 🎯 PERSISTENT SESSION STATE INITIALIZATION GATES
-    # Must run first to prevent uninitialized AttributeError crashes across tabs!
-    # =========================================================================
+    target_file = FILE_PATH if FILE_PATH else "save_file.json"
 
-    st.markdown('## 🏟️  THE BIOMETRIC COLISEUM: HIGH-STAKES CHAMPIONSHIPS')
+    if "global_endurance" not in st.session_state or st.session_state.get("global_miles_28d", 0.0) == 0.0:
+        if os.path.exists(target_file):
+            try:
+                with open(target_file, "r", encoding="utf-8") as f:
+                    disk_payload = json.load(f)
+
+                # Extract history logs from the active disk footprint
+                history_logs = disk_payload.get("history_logs", [])
+
+                now_date = datetime.now()
+                seven_days_ago = now_date - timedelta(days=7)
+                twenty_eight_ago = now_date - timedelta(days=28)
+                eighty_four_ago = now_date - timedelta(days=84)
+
+                miles_7d = 0.0
+                miles_28d = 0.0
+                miles_84d = 0.0
+                fastest_pace_in_window = 999.0
+                total_84d_elevation = 0.0
+
+                for log in history_logs:
+                    if isinstance(log, dict):
+                        dist_val = float(log.get("Distance (Miles)", 0.0))
+                        pace_raw = log.get("pace", 999.0)
+
+                        # Process pace string configuration windows
+                        if isinstance(pace_raw, str) and ":" in pace_raw:
+                            parts = pace_raw.strip().split(":")
+                            if len(parts) == 2:
+                                pace_val = float(parts[0]) + (float(parts[1]) / 60.0)
+                            elif len(parts) == 3:
+                                pace_val = (float(parts[0]) * 60.0) + float(parts[1]) + (float(parts[2]) / 60.0)
+                            else:
+                                pace_val = 999.0
+                        else:
+                            pace_val = float(pace_raw) if pace_raw is not None else 999.0
+
+                        ele_str = str(log.get("Elevation (ft)", "0")).replace('+', '').replace('ft', '').strip()
+                        ele_val = float(ele_str) if ele_str.replace('.', '', 1).isdigit() else 0.0
+
+                        date_raw = log.get("Date", "")
+                        try:
+                            log_dt = datetime.strptime(str(date_raw)[:10], '%Y-%m-%d')
+                        except Exception:
+                            continue
+
+                        if dist_val > 0:
+                            if log_dt >= seven_days_ago:
+                                miles_7d += dist_val
+                            if log_dt >= twenty_eight_ago:
+                                miles_28d += dist_val
+                            if log_dt >= eighty_four_ago:
+                                miles_84d += dist_val
+                                if ele_val > 0:
+                                    total_84d_elevation += ele_val
+                                if 2.0 < pace_val < 20.0:
+                                    if pace_val < fastest_pace_in_window:
+                                        fastest_pace_in_window = pace_val
+
+                # Execute explicit metric calculations
+                avg_weekly_macro_volume = miles_84d / 12.0
+                macro_base_cushion = min(9, int(avg_weekly_macro_volume / 8.5))
+                active_stamina_level = max(1, min(9, int(miles_28d / 15.0)))
+
+                if avg_weekly_macro_volume >= 35.0:
+                    endurance_rating = int(round((macro_base_cushion * 0.65) + (active_stamina_level * 0.35)))
+                else:
+                    endurance_rating = active_stamina_level
+                endurance_rating = max(1, min(9, endurance_rating))
+
+                if 2.0 < fastest_pace_in_window < 20.0:
+                    minutes = int(fastest_pace_in_window)
+                    seconds = min(59, int(round((fastest_pace_in_window % 1) * 100)))
+                    total_pace_seconds = (minutes * 60) + seconds
+                    speed_rating = 9 if total_pace_seconds <= 330 else max(1, min(9, int(9 - ((total_pace_seconds - 330) / 33.7))))
+                    if miles_7d >= 15.0 and speed_rating < 9:
+                        speed_rating += 1
+                else:
+                    speed_rating = 1
+
+                strength_rating = max(1, min(9, int((total_84d_elevation / 10000.0) * 9)))
+
+                # Commit computed values to active runtime state
+                st.session_state["global_endurance"] = int(endurance_rating)
+                st.session_state["global_speed"] = int(speed_rating)
+                st.session_state["global_elevation"] = int(strength_rating)
+                st.session_state["global_miles_28d"] = float(miles_28d)
+
+            except Exception:
+                pass
+
+    # =========================================================================
+    # 🎯 PERSISTENT SESSION STATE INITIALIZATION GATES
+    # Must run to pre-populate secondary layout structural definitions safely.
+    # =========================================================================
+    defaults = {
+        "global_days_gap": 0,
+        "global_miles_28d": 0.0,
+        "global_peak_target": 40.0,
+        "global_status_text": "No Data",
+        "global_alert_type": "info",
+        "global_is_building": False,
+        "p_fuel": 6.0,
+        "p_nitro": 6.0,
+        "p_torque": 9.0,
+        "p_fuel_decay": 0.0,
+        "p_nitro_decay": 0.0,
+        "p_torque_decay": 0.0
+    }
+
+    for key, default_value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = default_value
+
+    st.markdown('## 🏟️ THE BIOMETRIC COLISEUM: HIGH-STAKES CHAMPIONSHIPS')
     st.markdown('Select your Pacer Rival, inspect global circuit tracks, and launch physics-based athletic duels driven entirely by your real-world log history!')
     st.markdown('---')
 
@@ -218,12 +330,12 @@ def render_coliseum(player, FILE_PATH):
     # Reads pre-computed calculation tokens directly out of st.session_state!
     # Removes all duplicate date-scans, 400-mile ceilings, and local loops.
     # =========================================================================
-    days_since_last_run   = st.session_state.global_days_gap
-    miles_last_28_days     = st.session_state.global_miles_28d
-    peak_target           = st.session_state.global_peak_target
-    status_indicator_text = st.session_state.global_status_text
-    status_alert_type     = st.session_state.global_alert_type
-    is_building_volume    = st.session_state.global_is_building
+    days_since_last_run = st.session_state.get("global_days_gap", 0)
+    miles_last_28_days = st.session_state.get("global_miles_28d", 0.0)
+    peak_target = st.session_state.get("global_peak_target", 40.0)
+    status_indicator_text = st.session_state.get("global_status_text", "No Data")
+    status_alert_type = st.session_state.get("global_alert_type", "info")
+    is_building_volume = st.session_state.get("global_is_building", False)
 
     # 🎯 FIX: Fallback automatically to the first valid catalog keys if empty on page load!
     if not st.session_state.get("selected_boss_id") and boss_catalog:
@@ -236,22 +348,27 @@ def render_coliseum(player, FILE_PATH):
     selected_boss     = st.session_state.selected_boss_id
     parsed_course_key = st.session_state.selected_track_id
 
-    p_fuel          = st.session_state.p_fuel
-    p_nitro         = st.session_state.p_nitro
-    p_torque        = st.session_state.p_torque
-    p_fuel_decay    = st.session_state.p_fuel_decay
-    p_nitro_decay   = st.session_state.p_nitro_decay
-    p_torque_decay  = st.session_state.p_torque_decay
-    raw_history     = st.session_state.get("history_logs", [])
-    
-    p_fuel_max      = int(player.get("endurance_level", 1) if isinstance(player, dict) else getattr(player, 'stamina_level', 1))
-    p_nitro_max     = int(player.get("pace_level", 1) if isinstance(player, dict) else getattr(player, 'efficiency_level', 1))
-    p_torque_max    = int(player.get("hill_climbing_level", 1) if isinstance(player, dict) else getattr(player, 'power_level', 1))
-    
-    # Extract fatigue indices cleanly from session state dictionary profiles
-    # Extract fatigue indices cleanly from session state dictionary profiles
-    active_fatigue  = int(st.session_state.get("profile", {}).get("final_metric_data", {}).get("fatigue", 0))
-    
+    p_fuel = st.session_state.get("p_fuel", 0.0)
+    p_nitro = st.session_state.get("p_nitro", 0.0)
+    p_torque = st.session_state.get("p_torque", 0.0)
+    p_fuel_decay = st.session_state.get("p_fuel_decay", 0.0)
+    p_nitro_decay = st.session_state.get("p_nitro_decay", 0.0)
+    p_torque_decay = st.session_state.get("p_torque_decay", 0.0)
+
+    obj_fuel_max = int(getattr(player, 'endurance_level', 0))
+    obj_nitro_max = int(getattr(player, 'pace_level', 0))
+    obj_torque_max = int(getattr(player, 'hill_climbing_level', 0))
+
+    p_fuel_max = obj_fuel_max if obj_fuel_max > 0 else int(st.session_state.get("global_endurance", 6))
+    p_nitro_max = obj_nitro_max if obj_nitro_max > 0 else int(st.session_state.get("global_speed", 6))
+    p_torque_max = obj_torque_max if obj_torque_max > 0 else int(st.session_state.get("global_elevation", 9))
+
+    p_fuel_max = max(1, p_fuel_max)
+    p_nitro_max = max(1, p_nitro_max)
+    p_torque_max = max(1, p_torque_max)
+
+    profile_dict = st.session_state.get("profile", {})
+    active_fatigue = int(profile_dict.get("final_metric_data", {}).get("fatigue", 0))
     # =========================================================================
     # 🎯 THE LIFETIME ODOMETER COMPATIBILITY BRIDGE
     # Safely extracts your real career distance from your data persistence layer 
@@ -295,8 +412,10 @@ def render_coliseum(player, FILE_PATH):
         )
         
         st.markdown("---")
-        st.progress(min(1.0, max(0.0, miles_last_28_days / peak_target)), 
-                    text=f"📊 Chronic Loading: {miles_last_28_days:.1f} / {peak_target} Mi")
+        st.progress(
+    min(1.0, max(0.0, miles_last_28_days / peak_target)) if peak_target > 0 else 0.0,
+    text=f"📊 Chronic Loading: {miles_last_28_days:.1f} / {peak_target} Mi"
+)
         
         if is_building_volume:
             st.info("🚀 **Acceleration Active:** Weekly volume is expanding! All volume penalties are completely bypassed.")
@@ -430,11 +549,11 @@ def render_coliseum(player, FILE_PATH):
                 # 🟢 FIXED: Changed st.session_state.profile.get to pull from your safe local variable
                 st.metric(label="🏃 Runner Level", value=f"Lvl {profile_dict.get('running_level', 0)}")
             with stat_col3:
-                st.metric(label="🔋 Baseline Endurance", value=f"{int(player.get('endurance_level', 1) if isinstance(player, dict) else getattr(player, 'stamina_level', 1))}.0")
+                st.metric(label="🔋 Baseline Endurance", value=f"{int(st.session_state.get('global_endurance', 1))}.0")
             with stat_col4:
-                st.metric(label="⚡ Baseline Pace Tempo", value=f"{int(player.get('pace_level', 1) if isinstance(player, dict) else getattr(player, 'efficiency_level', 1))}.0")
+                st.metric(label="⚡ Baseline Pace Tempo", value=f"{int(st.session_state.get('global_speed', 1))}.0")
             with stat_col5:
-                st.metric(label="⛰️  Baseline Climbing", value=f"{int(player.get('hill_climbing_level', 1) if isinstance(player, dict) else getattr(player, 'power_level', 1))}.0")
+                st.metric(label="⛰️ Baseline Climbing", value=f"{int(st.session_state.get('global_elevation', 1))}.0")
 
         st.markdown(" ")
 
