@@ -636,95 +636,393 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
         st.markdown("### 🏆 Cumulative Career Trophy Cabinet")
         st.caption("Long-term milestone containers reflecting accumulated totals logged over your active training career.")
         
+            
+
         metric_totals = getattr(player, "final_metric_data", {})
+        
+        # Try reading from final_metric_data first; fallback to dynamic calculation if missing
         lifetime_miles = float(metric_totals.get("lifetime_odometer_miles", 0.0))
-        lifetime_elevation = float(metric_totals.get("lifetime_elevation_gain_ft", 0.0))
+        lifetime_elevation = float(metric_totals.get("lifetime_elevation_gain_ft", metric_totals.get("lifetime_elevation_gain", 0.0)))
         lifetime_calories = float(metric_totals.get("lifetime_calories_burned", 0.0))
         
-        cabinet_shelves = FINAL_METRIC_CONFIG.get("trophy_cabinet", {})
-        
-        for shelf_id, shelf_meta in cabinet_shelves.items():
-            st.markdown(f"#### {shelf_meta['name']}")
+        # 🟢 FIXEDFALLBACK CALCULATOR: If database metrics are zeroed out, dynamically sum history records
+        if lifetime_miles == 0.0 or lifetime_calories == 0.0:
+            # Reset values to ensure an accurate fresh calculation loop
+            calc_miles = 0.0
+            calc_ele = 0.0
+            calc_kcal = 0.0
             
-            # Determine contextual unit parameters based on active shelf targets
-            if "mileage" in shelf_id:
+            for log_item in getattr(player, "history_logs", []):
+                if isinstance(log_item, dict):
+                    # 1. Pull distance
+                    m_val = float(log_item.get("Distance (Miles)", log_item.get("distance_mi", 0.0)))
+                    calc_miles += m_val
+                    
+                    # 2. Pull calories safely (Fallback to estimating 100 kcal per mile if empty or 0)
+                    c_val = float(log_item.get("calories", log_item.get("Calories", 0.0)))
+                    if c_val <= 0.0 and m_val > 0.0:
+                        c_val = m_val * 100.0
+                    calc_kcal += c_val
+                    
+                    # 3. Pull elevation climbing feet safely
+                    raw_ele = log_item.get("Elevation (ft)", log_item.get("ele", 0.0))
+                    if isinstance(raw_ele, str):
+                        try:
+                            calc_ele += float(raw_ele.replace("+","").replace("ft","").replace(",","").strip())
+                        except ValueError: pass
+                    else:
+                        calc_ele += float(raw_ele)
+                        
+            # Apply our freshly calculated historical totals if the file logs held data
+            if lifetime_miles == 0.0:
+                lifetime_miles = calc_miles
+            if lifetime_elevation == 0.0:
+                lifetime_elevation = calc_ele
+            if lifetime_calories == 0.0:
+                lifetime_calories = calc_kcal
+        
+
+
+        # =========================================================================
+        # 🟢 FIXED UNIVERSAL INNER LOOP TERMINAL FOR SHOWROOM SHELVES
+        # =========================================================================
+        raw_cabinet = FINAL_METRIC_CONFIG.get("trophy_cabinet", {})
+        
+        # Normalize the data structure: Convert cabinet_shelves safely whether it is a dict or a list
+        cabinet_shelves_dict = {}
+        if isinstance(raw_cabinet, dict):
+            cabinet_shelves_dict = raw_cabinet
+        elif isinstance(raw_cabinet, list):
+            # If your config stores them as a list of dictionaries, map them out cleanly by ID
+            for idx, item in enumerate(raw_cabinet):
+                s_id = item.get("id", f"shelf_{idx}")
+                cabinet_shelves_dict[s_id] = item
+        else:
+            # Hard-coded ultimate safety backup fallback if your config file is completely unreadable
+            cabinet_shelves_dict = {
+                "shelf_a_mileage": {"name": "Cumulative Mileage Shelf", "tiers": FINAL_METRIC_CONFIG.get("mileage_tiers", [])},
+                "shelf_b_elevation": {"name": "Cumulative Elevation Shelf", "tiers": FINAL_METRIC_CONFIG.get("elevation_tiers", [])},
+                "shelf_c_calories": {"name": "The Burn Menu Shelf", "trophies": FINAL_METRIC_CONFIG.get("calorie_trophies", [])}
+            }
+        
+        # Loop through every resolved shelf structural container explicitly
+        for shelf_id, shelf_meta in cabinet_shelves_dict.items():
+            st.markdown(f"#### {shelf_meta.get('name', shelf_id.replace('_',' ').title())}")
+            
+            # 1. Determine contextual unit parameters based on active shelf attributes
+            if "mileage" in shelf_id.lower() or "mile" in shelf_meta.get('name', '').lower():
                 current_total = lifetime_miles
                 unit_label = "miles"
-            elif "elevation" in shelf_id:
+            elif "elevation" in shelf_id.lower() or "elev" in shelf_meta.get('name', '').lower():
                 current_total = lifetime_elevation
                 unit_label = "ft"
             else:
                 current_total = lifetime_calories
                 unit_label = "kcal"
-                
+        
             st.markdown(f"`Accumulated Lifetime Volume: {current_total:,.1f} {unit_label}`")
-            st.write("")
+        
+            # 2. Extract milestones across all possible schema configurations
+            trophies = shelf_meta.get("tiers", shelf_meta.get("trophies", shelf_meta.get("milestones", [])))
             
-            trophies = shelf_meta.get("trophies", [])
-            for i in range(0, len(trophies), 4):
-                row_slice = trophies[i:i+4]
-                cols = st.columns(4)
-                
-                for idx, trophy in enumerate(row_slice):
-                    with cols[idx]:
-                        with st.container(border=True):
-                            is_earned = current_total >= trophy["threshold"]
-                            
-                            t_col1, t_col2 = st.columns([1, 2.5])
-                            with t_col1:
-                                render_showroom_asset(
-                                    img_path=trophy.get("img_path"), 
-                                    fallback_emoji=trophy.get("icon", "🏆"), 
-                                    size_px=60
-                                )
-                            with t_col2:
-                                if is_earned:
-                                    st.markdown(f"**{trophy['name']}**")
-                                    st.success("✅ Unlocked")
-                                else:
-                                    st.markdown(f'<span style="opacity:0.4;font-weight:bold;">{trophy["name"]}</span>', unsafe_allow_html=True)
-                                    st.caption(f"🔒 Requires {trophy['threshold']:,} {unit_label}")
+            # Safety fallback check: if the shelf object itself is a list of trophies directly
+            if isinstance(shelf_meta, list):
+                trophies = shelf_meta
+        
+            # Safe extraction helper to clean up mixed data types inside config fields
+            def get_trophy_value(t_obj):
+                val = t_obj.get("threshold", t_obj.get("min_val", t_obj.get("value", t_obj.get("milestone", 0))))
+                try:
+                    return float(str(val).replace(",", "").strip())
+                except (ValueError, TypeError):
+                    return 0.0
+        
+            # 3. Extract values dynamically matching current performance totals
+            unlocked_trophies = []
+            for t in trophies:
+                if current_total >= get_trophy_value(t):
+                    unlocked_trophies.append(t)
+                    
+            # Calculate your absolute peak rank trophy safely
+            highest_earned_trophy = max(
+                unlocked_trophies, 
+                key=get_trophy_value, 
+                default=None
+            )
+        
+            # 4. Streamlit Grid Interaction Renderer
+            if len(trophies) == 0:
+                st.caption("ℹ️ No milestone records found inside this shelf configuration profile.")
+            else:
+                for i in range(0, len(trophies), 4):
+                    row_slice = trophies[i:i+4]
+                    cols = st.columns(4)
+                    for idx, trophy in enumerate(row_slice):
+                        with cols[idx]:
+                            with st.container(border=True):
+                                t_bound = get_trophy_value(trophy)
+                                
+                                is_highest_peak = False
+                                is_past_stepping_stone = False
+                                
+                                if highest_earned_trophy:
+                                    h_bound = get_trophy_value(highest_earned_trophy)
+                                    if t_bound == h_bound:
+                                        is_highest_peak = True
+                                    elif t_bound < h_bound:
+                                        is_past_stepping_stone = True
+                                
+                                t_col1, t_col2 = st.columns([1, 2.5])
+                                with t_col1:
+                                    resolved_img_path = trophy.get("img_path", trophy.get("pic", trophy.get("img")))
+                                    render_showroom_asset(
+                                        img_path=resolved_img_path,
+                                        fallback_emoji=trophy.get("icon", trophy.get("emoji", "🏆")),
+                                        size_px=60
+                                    )
+                                with t_col2:
+                                    if is_highest_peak:
+                                        st.markdown(f"👑 **{trophy.get('name', 'Peak')}**")
+                                        st.success("🎯 Peak Rank")
+                                    elif is_past_stepping_stone:
+                                        st.markdown(f"**{trophy.get('name', 'Unlocked')}**")
+                                        st.caption("🛡️ Milestone Met")
+                                    else:
+                                        st.markdown(f'<span style="opacity:0.4;font-weight:bold;">{trophy.get("name", "Locked")}</span>', unsafe_allow_html=True)
+                                        st.caption(f"🔒 Requires {int(t_bound):,} {unit_label}")
+            st.write("")
+            st.markdown("---")
 
+
+#############
     # =========================================================================
     # 🎗️ VIEW PANEL: WEEKLY REWARDS & COVETED ELITE PERFORMANCE TARGETS
     # =========================================================================
     with milestone_tab:
         st.markdown("### 🎗️ Weekly Progress Thresholds & Elite Milestones")
         st.caption("Short-term high-volume week blocks and historic elite running achievements.")
-        
+
+        # 📥 BACKEND CALCULATION STEP: Group all history logs by calendar week buckets
+        import datetime as dt
+        weekly_mileage_tracker = {}    # Key: (year, week_num) -> Value: float miles
+        weekly_elevation_tracker = {}  # Key: (year, week_num) -> Value: float feet
+        weekly_runs_registry = {}      # Key: (year, week_num) -> Value: list of run logs
+
+        for log_item in getattr(player, 'history_logs', []):
+            log_date_str = None
+            log_miles = 0.0
+            log_ele = 0.0
+            
+            if isinstance(log_item, dict):
+                log_date_str = log_item.get("Date", "")
+                log_miles = float(log_item.get("Distance (Miles)", log_item.get("distance_mi", 0.0)))
+                
+                raw_ele = log_item.get("Elevation (ft)", log_item.get("ele", 0.0))
+                if isinstance(raw_ele, str):
+                    try:
+                        log_ele = float(raw_ele.replace("+","").replace("ft","").replace(",","").strip())
+                    except ValueError: pass
+                else:
+                    log_ele = float(raw_ele)
+            elif isinstance(log_item, str):
+                import re
+                date_match = re.search(r'\[([0-9-]+)\]', log_item)
+                if date_match:
+                    log_date_str = date_match.group(1)
+                
+                d_match = re.search(r'(?:Run|run|ran|distance):?\s*([0-9.]+)', log_item, re.IGNORECASE)
+                if not d_match:
+                    d_match = re.search(r'([0-9.]+)\s*(?:miles|mi)', log_item, re.IGNORECASE)
+                if d_match:
+                    log_miles = float(d_match.group(1))
+
+            # Add the metrics to their respective ISO Calendar Week bucket
+            if log_date_str:
+                try:
+                    clean_date = dt.datetime.strptime(str(log_date_str)[:10], '%Y-%m-%d')
+                    iso_year, iso_week, _ = clean_date.isocalendar()
+                    bucket_key = (iso_year, iso_week)
+                    
+                    if log_miles > 0.0:
+                        weekly_mileage_tracker[bucket_key] = weekly_mileage_tracker.get(bucket_key, 0.0) + log_miles
+                    if log_ele > 0.0:
+                        weekly_elevation_tracker[bucket_key] = weekly_elevation_tracker.get(bucket_key, 0.0) + log_ele
+                    
+                    if bucket_key not in weekly_runs_registry:
+                        weekly_runs_registry[bucket_key] = []
+                    weekly_runs_registry[bucket_key].append(log_item)
+                except Exception:
+                    pass
+
+        # 🟢 INSERT PANEL: In-line Weekly Details Flat Rows (Right Under Header)
+        if "inline_active_week" in st.session_state and st.session_state["inline_active_week"] is not None:
+            tgt_year, tgt_week = st.session_state["inline_active_week"]
+            week_logs = weekly_runs_registry.get((tgt_year, tgt_week), [])
+            
+            with st.container(border=True):
+                w_miles = weekly_mileage_tracker.get((tgt_year, tgt_week), 0.0)
+                w_ele = weekly_elevation_tracker.get((tgt_year, tgt_week), 0.0)
+                
+                st.markdown(f"#### 🗓️ Selected Summary Panel: Week {tgt_week}, {tgt_year}")
+                
+                m_col1, m_col2, m_col3 = st.columns(3)
+                with m_col1:
+                    st.metric("Total Mileage Volume", f"{w_miles:.1f} miles")
+                with m_col2:
+                    st.metric("Total Vertical Ascent", f"{w_ele:,.0f} ft")
+                with m_col3:
+                    st.write("") 
+                    if st.button("❌ Hide Details Panel", use_container_width=True):
+                        st.session_state["inline_active_week"] = None
+                        st.rerun()
+                        
+                st.markdown("##### 🏃‍♂️ Daily Workout Logs")
+                if not week_logs:
+                    st.caption("No individual activity payloads found for this week.")
+                else:
+                    def get_run_date(r_obj):
+                        if isinstance(r_obj, dict): return r_obj.get("Date", "9999")
+                        return "9999"
+                    sorted_week_logs = sorted(week_logs, key=get_run_date)
+                    
+                    for run_idx, run in enumerate(sorted_week_logs):
+                        if isinstance(run, dict):
+                            run_name = run.get("Name", "Standard Run")
+                            run_date = run.get("Date", "Unknown")[:10]
+                            run_dist = run.get("Distance (Miles)", run.get("distance_mi", 0.0))
+                            run_dur = run.get("Duration", "N/A")
+                            run_pace = run.get("pace", "N/A")
+                            run_elev = run.get("Elevation (ft)", "0 ft")
+                            
+                            st.markdown(f"📅 **{run_date}** | **{run_name}**: `{run_dist:.1f} mi` | ⏱️ `{run_dur}` | ⚡ `{run_pace} min/mi` | ⛰️ `{run_elev}`")
+                        elif isinstance(run, str):
+                            st.markdown(f"📝 {run}")
+                            
+                st.markdown("---")
+
+        # ─── FRONTEND PRESENTATION: SIDE-BY-SIDE SIDE LAYOUT DOCKS ───
         split_col_1, split_col_2 = st.columns(2)
-        
+        # 🟢 CALLBACK FUNCTIONS: Intercepts selection data cleanly to block infinite loop refreshes
+        def on_select_mil_week(key_id):
+            chosen = st.session_state[key_id]
+            if chosen != "-- Select a Week to Inspect --":
+                clean_text = str(chosen).replace("Week ", "")
+                picked_part = clean_text.split(" (")
+                p_wk, p_yr = map(int, picked_part[0].split(", "))
+                st.session_state["inline_active_week"] = (p_yr, p_wk)
+
+        # COLUMN 1: WEEKLY MILEAGE STRINGS INDEX
         with split_col_1:
             st.markdown("#### 📅 Weekly Mileage Ribbons & Buckles")
             with st.expander("Review Mileage Milestone Requirements", expanded=True):
                 for reward in WEEKLY_MILEAGE_REWARDS:
+                    try:
+                        target_miles = float(reward.get("miles", 0.0))
+                    except (ValueError, TypeError):
+                        target_miles = 0.0
+                    
+                    mileage_weeks_met = sorted([k for k, total in weekly_mileage_tracker.items() if total >= target_miles], reverse=True)
+                    mileage_frequency = len(mileage_weeks_met)
+                    mileage_unlocked = mileage_frequency > 0
+                    
                     r_col1, r_col2 = st.columns([1, 5.2])
                     with r_col1:
                         render_showroom_asset(
-                            img_path=reward.get("img_path"), 
-                            fallback_emoji=reward.get("icon", "🎗️"), 
+                            img_path=reward.get("img_path"),
+                            fallback_emoji=reward.get("icon", "🎗️"),
                             size_px=45
                         )
                     with r_col2:
-                        st.markdown(f"**{reward['title']}** (`{reward['miles']} miles`)")
-                        st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;">{reward["desc"]}</p>', unsafe_allow_html=True)
-                        st.markdown('<div style="margin-bottom:8px;border-bottom:1px solid #1f232a;opacity:0.15;"></div>', unsafe_allow_html=True)
+                        if mileage_unlocked:
+                            st.markdown(f"**{reward['title']}** (`{reward['miles']} miles`) — ✅ **Unlocked ({mileage_frequency}x)**")
+                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;margin-bottom:4px;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            
+                            options = ["-- Select a Week to Inspect --"] + [f"Week {wk}, {yr} ({weekly_mileage_tracker[(yr, wk)]:.1f} mi)" for yr, wk in mileage_weeks_met]
+                            
+                            # Utilizing on_change parameter to decouple event processing loops
+                            st.selectbox(
+                                "📅 View Achieved Weeks:", 
+                                options, 
+                                key=f"sel_mil_{reward['title']}", 
+                                on_change=on_select_mil_week, 
+                                args=(f"sel_mil_{reward['title']}",)
+                            )
+                        else:
+                            st.markdown(f'<span style="opacity:0.4;font-weight:bold;">🔒 {reward["title"]}</span> <span style="opacity:0.4;">({reward["miles"]} miles)</span>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;opacity:0.4;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            
+                    st.markdown('<div style="margin-bottom:8px;border-bottom:1px solid #1f232a;opacity:0.15;"></div>', unsafe_allow_html=True)
 
+        # COLUMN 2: WEEKLY VERTICAL STRINGS INDEX
         with split_col_2:
             st.markdown("#### 🏔️ Weekly Elevation Climb Milestones")
             with st.expander("Review Vertical Milestone Requirements", expanded=True):
                 for reward in WEEKLY_ELEVATION_REWARDS:
+                    try:
+                        raw_climb_ft = str(reward.get("climb_ft", "0")).replace(",", "").strip()
+                        target_climb = float(raw_climb_ft)
+                    except (ValueError, TypeError):
+                        target_climb = 0.0
+                    
+                    elevation_weeks_met = sorted([k for k, total in weekly_elevation_tracker.items() if total >= target_climb], reverse=True)
+                    elevation_frequency = len(elevation_weeks_met)
+                    elevation_unlocked = elevation_frequency > 0
+                    
                     r_col1, r_col2 = st.columns([1, 5.2])
                     with r_col1:
                         render_showroom_asset(
-                            img_path=reward.get("img_path"), 
-                            fallback_emoji=reward.get("icon", "🔰"), 
+                            img_path=reward.get("img_path"),
+                            fallback_emoji=reward.get("icon", "🔰"),
                             size_px=45
                         )
                     with r_col2:
-                        st.markdown(f"**{reward['title']}** (`{reward['climb_ft']:,} ft`)")
-                        st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;">{reward["desc"]}</p>', unsafe_allow_html=True)
-                        st.markdown('<div style="margin-bottom:8px;border-bottom:1px solid #1f232a;opacity:0.15;"></div>', unsafe_allow_html=True)
+                        if elevation_unlocked:
+                            st.markdown(f"**{reward['title']}** (`{reward['climb_ft']:,} ft`) — ✅ **Unlocked ({elevation_frequency}x)**")
+                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;margin-bottom:4px;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            
+                            options = ["-- Select a Week to Inspect --"] + [f"Week {wk}, {yr} ({weekly_elevation_tracker[(yr, wk)]:,} ft)" for yr, wk in elevation_weeks_met]
+                            
+                            st.selectbox(
+                                "📅 View Achieved Weeks:", 
+                                options, 
+                                key=f"sel_elv_{reward['title']}", 
+                                on_change=on_select_mil_week, 
+                                args=(f"sel_elv_{reward['title']}",)
+                            )
+                        else:
+                            st.markdown(f'<span style="opacity:0.4;font-weight:bold;">🔒 {reward["title"]}</span> <span style="opacity:0.4;">({int(target_climb):,} ft)</span>', unsafe_allow_html=True)
+                            st.markdown(f'<p style="font-size:11px;color:#808495;margin:0;opacity:0.4;">{reward["desc"]}</p>', unsafe_allow_html=True)
+                            
+                    st.markdown('<div style="margin-bottom:8px;border-bottom:1px solid #1f232a;opacity:0.15;"></div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+#############
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         st.markdown("---")
         st.markdown("#### 🦄 Coveted Lifelong Elite Performance Targets")
