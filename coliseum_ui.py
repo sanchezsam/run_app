@@ -988,10 +988,30 @@ def render_coliseum(player, FILE_PATH):
                     minted_tokens = evaluate_signature_tokens(player, selected_boss, parsed_course_key)
                     token_msg = f" | Unlocked Milestone Relics: {', '.join(minted_tokens)}" if minted_tokens else ""
                     
-                    log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
-                    if not hasattr(player, 'history_logs'): 
+                    #log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
+                    #if not hasattr(player, 'history_logs'): 
+                    #    player.history_logs = []
+                    #player.history_logs.append(log_m)
+
+                    # 🟢 FIXED: Create a structured dictionary object retaining ALL of your race metrics
+                    log_m_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
+                    
+                    structured_match_log = {
+                        "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "Name": f"Coliseum Match vs {selected_boss}",
+                        "Distance (Miles)": 0.0,            # Keeps career odometer clean
+                        "Duration": p_time_str,
+                        "pace": "00:00",                    # Baseline fallback to satisfy upload filters
+                        "Elevation (ft)": "+0 ft",
+                        "Type": "Coliseum_Arena_Match",
+                        "text_payload": log_m_string        # Retains the exact summary text for display!
+                    }
+                    
+                    if not hasattr(player, 'history_logs'):
                         player.history_logs = []
-                    player.history_logs.append(log_m)
+                        
+                    player.history_logs.append(structured_match_log)
+
                     
                     # Write updated arrays permanently to JSON file
                     with open(FILE_PATH, 'w', encoding='utf-8') as db_file: 
@@ -1018,10 +1038,29 @@ def render_coliseum(player, FILE_PATH):
                     elif isinstance(player.__dict__.get('final_metric_data'), dict):
                         player.__dict__['final_metric_data']['fatigue'] = new_fatigue
                     
-                    log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
-                    if not hasattr(player, 'history_logs'): 
+                    #log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
+                    #if not hasattr(player, 'history_logs'): 
+                    #    player.history_logs = []
+                    #player.history_logs.append(log_m)
+                    # 🟢 FIXED: Create a structured dictionary object retaining ALL of your defeat race metrics
+                    log_m_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
+                    
+                    structured_match_log = {
+                        "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "Name": f"Coliseum Match vs {selected_boss}",
+                        "Distance (Miles)": 0.0,            # Keeps career odometer clean
+                        "Duration": p_time_str,
+                        "pace": "00:00",                    # Baseline fallback to satisfy upload filters
+                        "Elevation (ft)": "+0 ft",
+                        "Type": "Coliseum_Arena_Match",
+                        "text_payload": log_m_string        # Retains the exact summary text for display!
+                    }
+                    
+                    if not hasattr(player, 'history_logs'):
                         player.history_logs = []
-                    player.history_logs.append(log_m)
+                        
+                    player.history_logs.append(structured_match_log)
+
                     
                     with open(FILE_PATH, 'w', encoding='utf-8') as db_file: 
                         json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
