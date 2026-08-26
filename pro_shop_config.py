@@ -86,10 +86,10 @@ PRO_SHOP_SKINS_REGISTRY = [
 # ==============================================================================
 gear_catalog = {
     # --- FOOTWEAR ---
-    'Nike Vaporfly 4%': {
-        'cost': 120, 'cat': 'Footwear', 'weather': 'All-Weather', 'icon': '👟',
-        'img_path': 'images/pro_shop/nike_vaporfly_4%.png',
-        'desc': 'Carbon-plated shoe. Massive Sprint Velocity physics bonus.'
+    'New Balance 1080v15': {
+        'cost': 169.99, 'cat': 'Footwear', 'weather': 'All-Weather', 'icon': '👟',
+        'img_path': 'images/pro_shop/new_balance_1080.png',
+        'desc': 'Infinion Foam long-lasting performance with enhanced cushioning and energy return.'
     },
     'adidas UltraBoost': {
         'cost': 95, 'cat': 'Footwear', 'weather': 'All-Weather', 'icon': '👟',
@@ -108,20 +108,20 @@ gear_catalog = {
     },
     
     # --- SUNGLASSES ---
-    'Oakley Speed Jacket Sunglasses': {
-        'cost': 45, 'cat': 'Sunglasses', 'weather': 'All-Weather', 'icon': '🕶️',
-        'img_path': 'images/pro_shop/oakley_speed_jacket_sunglasses.png',
-        'desc': 'Aerodynamic shatterproof frames. Maximizes tracking accuracy.'
+    'Oakley Radar Path Sunglasses': {
+        'cost': 244, 'cat': 'Sunglasses', 'weather': 'All-Weather', 'icon': '🕶️',
+        'img_path': 'images/pro_shop/oakley_radar.png',
+        'desc': 'Oakley performance shield lens technology with HDO.'
     },
     '100% Speedcraft Shaded Shields': {
         'cost': 55, 'cat': 'Sunglasses', 'weather': 'All-Weather', 'icon': '😎',
         'img_path': 'images/pro_shop/100%_speedcraft_shaded_shields.png',
         'desc': 'Expanded peripheral vision. High-impact arcade neon visibility lenses.'
     },
-    'Goodr No Bounce Optics': {
-        'cost': 20, 'cat': 'Sunglasses', 'weather': 'All-Weather', 'icon': '🕶️',
-        'img_path': 'images/pro_shop/goodr_no_bounce_optics.png',
-        'desc': 'Lightweight textured frame grip. Eliminates slipping during sprint cadence loops.'
+    'EVZero™ Path': {
+        'cost': 215, 'cat': 'Sunglasses', 'weather': 'All-Weather', 'icon': '🕶️',
+        'img_path': 'images/pro_shop/oakley_evzero.png',
+        'desc': 'Durability and all-day comfort of lightweight, stress-resistant O Matter™ frame material.'
     },
     
     # --- HEAD GEAR ---
@@ -210,10 +210,10 @@ gear_catalog = {
     },
 
     # --- WATCHES ---
-    'Garmin Forerunner Pro': {
-        'cost': 85, 'cat': 'Watches', 'weather': 'All-Weather', 'icon': '⌚',
-        'img_path': 'images/pro_shop/garmin_forerunner_pro.png',
-        'desc': 'Surgical track splitting. Smooths out raw pacing lines.'
+    'Garmin Forerunner 965': {
+        'cost': 499.99, 'cat': 'Watches', 'weather': 'All-Weather', 'icon': '⌚',
+        'img_path': 'images/pro_shop/garmin_forerunner_965.png',
+        'desc': 'Forerunner 965 is a premium running smartwatch with a touchscreen AMOLED display & buttons, built-in maps.'
     },
     'Coros Pace Performance Matrix': {
         'cost': 70, 'cat': 'Watches', 'weather': 'All-Weather', 'icon': '⏱️',

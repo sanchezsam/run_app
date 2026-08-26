@@ -23,23 +23,32 @@ ITEM_ICON_MAP = {
     'Singlets': '🎽', 'Jackets': '🧥', 'Shorts': '🩳', 'Pants': '👖', 'Watches': '⌚'
 }
 
+
 def render_shop_asset(item_name: str, fallback_emoji: str, size_px: int = 60) -> str:
     """
-    Checks if a local asset image exists on disk for the specified gear piece,
-    encodes it as a base64 inline string, and streams it. Falls back to an emoji container if missing.
+    Checks for a local image; falls back to an emoji if not found.
     """
-    safe_filename = item_name.lower().replace(" ", "_").replace("[", "").replace("]", "").replace("-", "_")
-    img_path = f"images/pro_shop/{safe_filename}.png"
-    
+    spec_lookup = gear_catalog.get(item_name, {})
+    img_path = spec_lookup.get('img_path')
+
+    # Fix: Correctly define img_path without unmatched parentheses
+    if not img_path:
+        # Reconstruct path using proper syntax
+        safe_name = item_name.lower().replace(" ", "_")
+        img_path = f"images/pro_shop/{safe_name}.png"
+
+    # Stream the file if it exists
     if os.path.exists(img_path):
         try:
             with open(img_path, "rb") as image_file:
                 encoded_string = base64.b64encode(image_file.read()).decode()
-            return f'<img src="data:image/png;base64,{encoded_string}" style="width: {size_px}px; height: {size_px}px; object-fit: contain; border-radius: 6px; filter: drop-shadow(0px 0px 4px rgba(0, 240, 255, 0.25)); margin-bottom: 4px;">'
+            return f'<img src="data:image/png;base64,{encoded_string}" style="width: {size_px}px;">'
         except Exception:
             pass
-            
-    return f'<div style="font-size: {int(size_px * 0.55)}px; line-height: {size_px}px; height: {size_px}px; width: {size_px}px; text-align: center; margin-bottom: 4px; border: 2px dashed rgba(255,255,255,0.12); border-radius: 8px; background: rgba(255,255,255,0.015); display: inline-block;">{fallback_emoji}</div>'
+
+    # Fallback emoji box
+    return f'<div style="font-size: {int(size_px * 0.5)}px;">{fallback_emoji}</div>'
+
 
 def render_shop_interface(player, FILE_PATH):
     st.markdown('## 🛒 Pro Shop & Performance Equipment Forge')

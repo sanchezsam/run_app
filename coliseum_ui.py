@@ -996,20 +996,24 @@ def render_coliseum(player, FILE_PATH):
                     # 🟢 FIXED: Create a structured dictionary object retaining ALL of your race metrics
                     log_m_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
                     
+
+                    # 🟢 FIXED: Save explicitly typed structural trackers for instant index matching
                     structured_match_log = {
-                        "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "Name": f"Coliseum Match vs {selected_boss}",
-                        "Distance (Miles)": 0.0,            # Keeps career odometer clean
-                        "Duration": p_time_str,
-                        "pace": "00:00",                    # Baseline fallback to satisfy upload filters
-                        "Elevation (ft)": "+0 ft",
-                        "Type": "Coliseum_Arena_Match",
-                        "text_payload": log_m_string        # Retains the exact summary text for display!
+                         "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                         "Name": f"Coliseum Match vs {selected_boss}",
+                         "Distance (Miles)": 0.0,
+                         "Duration": p_time_str,
+                         "pace": "00:00",
+                         "Elevation (ft)": "+0 ft",
+                         "Type": "Coliseum_Arena_Match",
+                         "Match_Outcome": "Victory",  # Clean flag: "Victory" or "Defeat"
+                         "Target_Boss_Key": selected_boss,       # Store the EXACT catalog key safely
+                         "Target_Course_Key": parsed_course_key,   # Store the EXACT catalog key safely
+                         "text_payload": log_m_string
                     }
-                    
+                     
                     if not hasattr(player, 'history_logs'):
                         player.history_logs = []
-                        
                     player.history_logs.append(structured_match_log)
 
                     
@@ -1042,24 +1046,31 @@ def render_coliseum(player, FILE_PATH):
                     #if not hasattr(player, 'history_logs'): 
                     #    player.history_logs = []
                     #player.history_logs.append(log_m)
-                    # 🟢 FIXED: Create a structured dictionary object retaining ALL of your defeat race metrics
-                    log_m_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
+                    # 🔴 DEFEAT CONFIGURATION: Log updates when the pacer wins the tape
+                    log_m_defeat_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Edged out by {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Legs Overworked."
                     
-                    structured_match_log = {
+                    structured_match_log_defeat = {
                         "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                         "Name": f"Coliseum Match vs {selected_boss}",
                         "Distance (Miles)": 0.0,            # Keeps career odometer clean
                         "Duration": p_time_str,
-                        "pace": "00:00",                    # Baseline fallback to satisfy upload filters
+                        "pace": "00:00",                   # Baseline fallback to satisfy upload filters
                         "Elevation (ft)": "+0 ft",
                         "Type": "Coliseum_Arena_Match",
-                        "text_payload": log_m_string        # Retains the exact summary text for display!
+                        "Match_Outcome": "Defeat",         # 🔴 Clean explicit flag for a loss
+                        "Target_Boss_Key": selected_boss,     # Store the EXACT catalog key safely
+                        "Target_Course_Key": parsed_course_key, # Store the EXACT catalog key safely
+                        "text_payload": log_m_defeat_string # Retains the exact summary text for display!
                     }
                     
+                    # Append safely to the player object tracking matrices
                     if not hasattr(player, 'history_logs'):
                         player.history_logs = []
-                        
-                    player.history_logs.append(structured_match_log)
+                    player.history_logs.append(structured_match_log_defeat)
+
+
+
+
 
                     
                     with open(FILE_PATH, 'w', encoding='utf-8') as db_file: 

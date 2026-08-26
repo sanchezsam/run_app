@@ -71,7 +71,7 @@ boss_catalog = {
         'gold_reward': 55, 
         'desc': '🌵 Pre the Desert Predator. High-tempo execution strategy focused on mid-distance track segments.',
         'icon': '🌵',
-        'profile_pic': None,  # Left as None to verify fallback to the '🌵' icon inside UI components
+        'profile_pic': 'images/boss_profile/boss5.png', # Left as None to verify fallback to the '🌵' icon inside UI components
         'unlock_criteria': {
             'min_orl_level': 2,
             'min_efficiency_level': 4
