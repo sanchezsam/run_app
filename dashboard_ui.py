@@ -782,6 +782,16 @@ def render_dashboard_overview(player):
 
     df = pd.DataFrame(raw_activities)
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    
+    # 🟢 INJECT THIS SANITIZATION SHIELD:
+    if 'Type' in df.columns:
+        df = df[df['Type'] != "Coliseum_Arena_Match"]
+    if 'type' in df.columns:
+        df = df[df['type'] != "Coliseum_Arena_Match"]
+
+
+
+
     df['Distance (Miles)'] = pd.to_numeric(df['Distance (Miles)'], errors='coerce').fillna(0)
     df = df.dropna(subset=['Date']).sort_values('Date')
     
@@ -906,6 +916,7 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
     if "selected_activity_date" not in st.session_state:
         st.session_state.selected_activity_date = None
 
+
     if external_df is not None:
         df = external_df
     else:
@@ -921,6 +932,13 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
         df = df.dropna(subset=['Date']).sort_values('Date')
         df['Formatted_Date'] = df['Date'].dt.strftime('%Y-%m-%d')
         df['Display_Distance'] = df['Distance (Miles)']
+
+    # 🟢 INJECT FILTER SHIELD HERE (Handles both local or external dataframes safely):
+    if 'Type' in df.columns:
+        df = df[df['Type'] != "Coliseum_Arena_Match"]
+    if 'type' in df.columns:
+        df = df[df['type'] != "Coliseum_Arena_Match"]
+
     elev_cols = [col for col in df.columns if 'elev' in col.lower()]
 
     st.write("---")
