@@ -1664,7 +1664,15 @@ def show_cal(player=None, external_df=None, unit_abbr="Mi"):
             # 📊 SPREADSHEET DISPLAY VIEW (IN-MEMORY BUTTON LEDGER + HOVER STYLING)
             # =========================================================================
             elif st.session_state.calendar_display_view == "📊 Spreadsheet View":
-                
+
+                if cal_month_name != "All Months":
+                    # Find the exact numeric index of your selected month (e.g., "January" -> 1)
+                    selected_month_idx = month_names.index(cal_month_name) + 1
+                    months_to_loop = [selected_month_idx]
+                else:
+                    # Otherwise, let it default to its original all-month array sequence
+                    months_to_loop = sorted(target_df['Month_Int'].unique()) if not target_df.empty else []
+
                 # Inject a custom stylesheet to completely strip out native button widget skins
 
                 st.markdown('<div class="spreadsheet-view-marker"></div>', unsafe_allow_html=True)
@@ -1775,6 +1783,12 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                 months_to_loop = range(1, 13) if cal_month_name == "All Months" else [cal_month]
                 
                 for loop_m in months_to_loop:
+
+
+                    m_name = month_names[loop_m - 1]
+                    cal_matrix = calendar.monthcalendar(cal_year, loop_m)
+                    m_dist, m_seconds, m_elev = 0.0, 0, 0.0
+
                     if cal_month_name == "All Months":
                         st.markdown(f"<div style='font-family: monospace; font-size: 13px; font-weight: bold; color: #00ffcc; padding: 12px 16px; background-color: #1a1c23; text-transform: uppercase; border-bottom: 1px solid #2D3748;'>📅 {month_names[loop_m - 1].upper()} LOGS</div>", unsafe_allow_html=True)
                         
@@ -1948,53 +1962,56 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
 
 
 
-                    # ---------------------------------------------------------
-                    # 🧮 APPEND GRAND MONTHLY TOTALS BANNER AT SIDEBAR BOTTOM
-                    # ---------------------------------------------------------
-                    # 1. Fetch data using the explicit dropdown variable 'cal_month_name'
-                    monthly_totals = get_monthly_totals(target_df, cal_year, cal_month_name)
+                    # -----------------------------------------------------------------
+                    # 🧮 FIX 2: INDENT THE MONTHLY TOTALS INSIDE THE "loop_m" BLOCK
+                    # -----------------------------------------------------------------
+                    # This position fires EXACTLY when a month's weeks finish rendering.
+                    month_totals = get_monthly_totals(target_df, cal_year, m_name)
+                    m_dist_raw = f"{month_totals['distance']:.2f} {unit_abbr.lower()}"
+                    
+                    d_col_m = f"{f'{m_name.upper()}':<10}"
+                    s_col_m = f"{'TOTALS':<12}"
+                    dist_col_m = f"{m_dist_raw:<12}"
+                    t_col_m = f"{month_totals['duration']:<17}"
+                    p_col_m = f"{'—':<20}"
+                    e_col_m = f"{month_totals['elevation']:,.0f} ft"
 
-                    # 2. Build explicit formatting strings to match cell alignments
-                    m_label = f"M/Y OVERVIEW"
-                    m_dist_str = f"{monthly_totals['distance']:.2f} {unit_abbr.lower()}"
-                    m_duration = monthly_totals['duration']
-                    m_elev_str = f"{monthly_totals['elevation']:,.0f} ft"
-
-                    # 3. Use 'cal_month_name' for the row header so it safely handles "All Months"
-                    display_month_title = cal_month_name.upper() if cal_month_name != "All Months" else "YEAR"
-                    d_col_tot = f"{f'{display_month_title} TOTALS':<10}"
-                    s_col_tot = f"{m_label:<12}"
-                    dist_col_tot = f"{m_dist_str:<12}"
-                    t_col_tot = f"{m_duration:<17}"
-                    p_col_tot = f"{'—':<20}"
-                    e_col_tot = m_elev_str
-
-                    # 4. Render high-contrast styled summary banner row
-                    grand_totals_html = (
+                    month_totals_html = (
                         f"<div class='spreadsheet-text-block' style='"
-                        f"background-color: #2c2104; "
-                        f"color: #FFFFFF; "
-                        f"font-weight: bold; "
-                        f"border: 1px solid #ffcc00; "
-                        f"box-shadow: inset 0 0 4px rgba(255, 204, 0, 0.2);'>"
-                        f"{d_col_tot}  "
-                        f"<span style='color: #ffcc00;'>{s_col_tot}</span>  "
-                        f"<span style='color: #ffffff;'>{dist_col_tot}</span>  "
-                        f"<span style='color: #ffffff;'>{t_col_tot}</span>  "
-                        f"<span style='color: #7e8794;'>{p_col_tot}</span>  "
-                        f"<span style='color: #ffcc00;'>{e_col_tot}</span>"
-                        f"</div>"
+                        f"background-color: #1a2230; color: #FFFFFF; font-weight: bold; "
+                        f"border: 1px solid #00ffff; box-shadow: inset 0 0 4px rgba(0, 255, 255, 0.1);'>"
+                        f"{d_col_m}  <span style='color: #00ffff;'>{s_col_m}</span>  "
+                        f"{dist_col_m}  {t_col_m}  <span style='color: #7e8794;'>{p_col_m}</span>  "
+                        f"<span style='color: #00ffff;'>{e_col_m}</span></div>"
                     )
-                    st.markdown(grand_totals_html, unsafe_allow_html=True)
-                    st.markdown("<div style='margin-bottom: 16px;'></div>", unsafe_allow_html=True)
+                    st.markdown(month_totals_html, unsafe_allow_html=True)
+                    st.markdown("<div style='margin-bottom: 24px;'></div>", unsafe_allow_html=True)
 
+                # =========================================================================
+                # 🏆 FIX 3: RENDER THE GRAND YEARLY BANNER OUTSIDE THE MONTH LOOP
+                # =========================================================================
+                # Notice this is lined up with the "for loop_m" statement. It triggers once at the bottom.
+                if cal_month_name == "All Months":
+                    yearly_totals = get_monthly_totals(target_df, cal_year, "All Months")
+                    y_dist_raw = f"{yearly_totals['distance']:.2f} {unit_abbr.lower()}"
+                    
+                    d_col_y = f"{f'{cal_year} ':<10}"
+                    s_col_y = f"{'TOTALS ':<12}"
+                    dist_col_y = f"{y_dist_raw:<12}"
+                    t_col_y = f"{yearly_totals['duration']:<17}"
+                    p_col_y = f"{'—':<20}"
+                    e_col_y = f"{yearly_totals['elevation']:,.0f} ft"
 
-
-
-
-
-
-
+                    grand_yearly_html = (
+                        f"<div class='spreadsheet-text-block' style='"
+                        f"background-color: #2c2104; color: #FFFFFF; font-weight: bold; "
+                        f"border: 1px solid #ffcc00; box-shadow: inset 0 0 6px rgba(255, 204, 0, 0.2);'>"
+                        f"{d_col_y}  <span style='color: #ffcc00;'>{s_col_y}</span>  "
+                        f"{dist_col_y}  {t_col_y}  <span style='color: #7e8794;'>{p_col_y}</span>  "
+                        f"<span style='color: #ffcc00;'>{e_col_y}</span></div>"
+                    )
+                    st.markdown(grand_yearly_html, unsafe_allow_html=True)
+                    st.markdown("<div style='margin-bottom: 24px;'></div>", unsafe_allow_html=True)
 
 
 
