@@ -54,6 +54,84 @@ THEME_CONFIG = {
 
 
 
+def get_monthly_totals(df: pd.DataFrame, target_year: int, target_month_name: str) -> dict:
+    """
+    Calculates aggregated monthly running totals from historical log metrics.
+    
+    Parameters:
+    df (pd.DataFrame): The source activities DataFrame containing 'Date', 
+                      'Display_Distance', 'Duration', and elevation columns.
+    target_year (int): The selected year (e.g., 2026).
+    target_month_name (str): The name of the month (e.g., "January", "February") 
+                             or "All Months" to evaluate the full calendar year.
+                             
+    Returns:
+    dict: A summary containing total distance, formatted total duration, and total ascent.
+    """
+    import calendar
+    
+    # 1. Standardize date features and isolate target calendar window
+    temp_df = df.copy()
+    temp_df['Date'] = pd.to_datetime(temp_df['Date'], errors='coerce')
+    temp_df['Year_Int'] = temp_df['Date'].dt.year
+    temp_df['Month_Int'] = temp_df['Date'].dt.month
+    
+    # Apply primary calendar year filter
+    filtered = temp_df[temp_df['Year_Int'] == int(target_year)]
+    
+    # Apply secondary month slice if a specific month is targeted
+    month_names = list(calendar.month_name)[1:]
+    if target_month_name in month_names:
+        month_idx = month_names.index(target_month_name) + 1
+        filtered = filtered[filtered['Month_Int'] == month_idx]
+        
+    if filtered.empty:
+        return {"distance": 0.0, "duration": "00:00:00", "elevation": 0.0}
+        
+    # 2. Compute Cumulative Distance Odometer Total
+    filtered['Display_Distance'] = pd.to_numeric(filtered['Display_Distance'], errors='coerce').fillna(0.0)
+    total_distance = filtered['Display_Distance'].sum()
+    
+    # 3. Compute Cumulative Vertical Elevation Ascent Total
+    total_elevation = 0.0
+    elev_cols = [col for col in filtered.columns if 'elev' in col.lower()]
+    if elev_cols and not filtered.empty:
+        # Strip string artifacts like commas or unit abbreviations from data cells safely
+        cleaned_elev = filtered[elev_cols[0]].astype(str).str.replace(r'[^\d.]', '', regex=True)
+        total_elevation = pd.to_numeric(cleaned_elev, errors='coerce').fillna(0.0).sum()
+        
+    # 4. Compute Cumulative Time Duration Total
+    total_seconds = 0
+    for dur in filtered.get('Duration', []):
+        if pd.notna(dur) and isinstance(dur, str) and ':' in dur:
+            parts = dur.split(':')
+            try:
+                if len(parts) == 3:
+                    total_seconds += int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                elif len(parts) == 2:
+                    total_seconds += int(parts[0]) * 60 + int(parts[1])
+            except ValueError:
+                pass
+                
+    # Build clean HH:MM:SS string presentation structure
+    tot_hours = total_seconds // 3600
+    tot_mins = (total_seconds % 3600) // 60
+    tot_secs = total_seconds % 60
+    
+    if tot_hours > 0:
+        duration_str = f"{tot_hours:02d}:{tot_mins:02d}:{tot_secs:02d}"
+    else:
+        duration_str = f"{tot_mins:02d}:{tot_secs:02d}"
+        
+    return {
+        "distance": round(total_distance, 2),
+        "duration": duration_str,
+        "elevation": round(total_elevation, 0)
+    }
+
+
+
+
 def ensure_metrics_schema_is_initialized():
     """
     Surgically checks your player profile file at startup to verify that your 
@@ -1867,6 +1945,48 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                             summary_html = f"<div class='spreadsheet-text-block' style='background-color: #1a1c23; font-weight: bold; border-color: #4A5568 !important; color: #E2E8F0;'>{d_col}  <span style='color: #00ffcc;'>{s_col}</span>  {dist_col}  {t_col}  <span style='color: #7e8794;'>{p_col}</span>  {e_col}</div>"
                             st.markdown(summary_html, unsafe_allow_html=True)
                             st.markdown("<div style='margin-bottom: 4px;'></div>", unsafe_allow_html=True)
+
+
+
+                    # ---------------------------------------------------------
+                    # 🧮 APPEND GRAND MONTHLY TOTALS BANNER AT SIDEBAR BOTTOM
+                    # ---------------------------------------------------------
+                    # 1. Fetch data using the explicit dropdown variable 'cal_month_name'
+                    monthly_totals = get_monthly_totals(target_df, cal_year, cal_month_name)
+
+                    # 2. Build explicit formatting strings to match cell alignments
+                    m_label = f"M/Y OVERVIEW"
+                    m_dist_str = f"{monthly_totals['distance']:.2f} {unit_abbr.lower()}"
+                    m_duration = monthly_totals['duration']
+                    m_elev_str = f"{monthly_totals['elevation']:,.0f} ft"
+
+                    # 3. Use 'cal_month_name' for the row header so it safely handles "All Months"
+                    display_month_title = cal_month_name.upper() if cal_month_name != "All Months" else "YEAR"
+                    d_col_tot = f"{f'{display_month_title} TOTALS':<10}"
+                    s_col_tot = f"{m_label:<12}"
+                    dist_col_tot = f"{m_dist_str:<12}"
+                    t_col_tot = f"{m_duration:<17}"
+                    p_col_tot = f"{'—':<20}"
+                    e_col_tot = m_elev_str
+
+                    # 4. Render high-contrast styled summary banner row
+                    grand_totals_html = (
+                        f"<div class='spreadsheet-text-block' style='"
+                        f"background-color: #2c2104; "
+                        f"color: #FFFFFF; "
+                        f"font-weight: bold; "
+                        f"border: 1px solid #ffcc00; "
+                        f"box-shadow: inset 0 0 4px rgba(255, 204, 0, 0.2);'>"
+                        f"{d_col_tot}  "
+                        f"<span style='color: #ffcc00;'>{s_col_tot}</span>  "
+                        f"<span style='color: #ffffff;'>{dist_col_tot}</span>  "
+                        f"<span style='color: #ffffff;'>{t_col_tot}</span>  "
+                        f"<span style='color: #7e8794;'>{p_col_tot}</span>  "
+                        f"<span style='color: #ffcc00;'>{e_col_tot}</span>"
+                        f"</div>"
+                    )
+                    st.markdown(grand_totals_html, unsafe_allow_html=True)
+                    st.markdown("<div style='margin-bottom: 16px;'></div>", unsafe_allow_html=True)
 
 
 
