@@ -103,8 +103,8 @@ def check_is_unlocked(criteria, character_stats, lifetime_miles):
         errors["power"] = f"Requires Climbing Power Level {criteria['min_power_level']}"
         
     # Evaluate Lifetime Odometer Gate
-    if "min_lifetime_miles" in criteria and lifetime_miles < criteria["min_lifetime_miles"]:
-        errors["miles"] = f"Requires {criteria['min_lifetime_miles']:.1f} Career Miles ({lifetime_miles:.1f}/{criteria['min_lifetime_miles']:.1f})"
+    #if "min_lifetime_miles" in criteria and lifetime_miles < criteria["min_lifetime_miles"]:
+    #    errors["miles"] = f"Requires {criteria['min_lifetime_miles']:.1f} Career Miles ({lifetime_miles:.1f}/{criteria['min_lifetime_miles']:.1f})"
         
     if errors:
         return False, errors

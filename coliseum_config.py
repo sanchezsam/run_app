@@ -125,49 +125,49 @@ course_catalog = {
         'desc': '🇺🇸 World’s oldest annual marathon course, featuring Newton’s notorious Heartbreak Hill.', 
         'strat': 'Pushes both pacing endurance and descending muscle durability. Requires deep mileage foundations.',
         'course_img': 'images/course_profile/boston_marathon.png',
-        'unlock_criteria': {'min_orl_level': 4, 'min_stamina_level': 4, 'min_lifetime_miles': 150.0}
+        'unlock_criteria': {'min_orl_level': 4, 'min_stamina_level': 4}
     },
     'London Marathon Highway Grid': {
         'dist': 26.22, 'elev': 120, 'bias': 'Speed', 'climate_tag': 'Neutral',
         'desc': '🇬🇧 Flat, fast road course tracing the River Thames alongside millions of roaring spectators.', 
         'strat': 'Elite pace execution circuit. Leverages high carbon-plated footwear and baseline speed turnover.',
         'course_img': 'images/course_profile/london_marathon.png',
-        'unlock_criteria': {'min_orl_level': 4, 'min_stamina_level': 5, 'min_lifetime_miles': 200.0}
+        'unlock_criteria': {'min_orl_level': 4, 'min_stamina_level': 5}
     },
     'Berlin Speedway (World Record Flat)': {
         'dist': 26.22, 'elev': 45, 'bias': 'Speed', 'climate_tag': 'Neutral',
         'desc': '🇩🇪 The absolute flattest major marathon course on Earth. Home of human pacing limits.', 
         'strat': 'Shifts scoring weights heavily toward Stride Efficiency and split consistency metrics.',
         'course_img': 'images/course_profile/berlin_speedway.png',
-        'unlock_criteria': {'min_orl_level': 5, 'min_stamina_level': 5, 'min_efficiency_level': 5, 'min_lifetime_miles': 250.0}
+        'unlock_criteria': {'min_orl_level': 5, 'min_stamina_level': 5, 'min_efficiency_level': 5}
     },
     'Zegama-Aizkorri Mountain Skyrun': {
         'dist': 26.10, 'elev': 8970, 'bias': 'Torque', 'climate_tag': 'Cold',
         'desc': '🇪🇸 Legendary technical alpine marathon in the Basque Country under heavy downpours.', 
         'strat': 'Absolute mountain torture. Shifts major physics weight to Climbing Power. Trail shoes are required.',
         'course_img': 'images/course_profile/zegama_skyrun.png',
-        'unlock_criteria': {'min_orl_level': 5, 'min_power_level': 6, 'min_lifetime_miles': 150.0}
+        'unlock_criteria': {'min_orl_level': 5, 'min_power_level': 6}
     },
     'UTMB Mont-Blanc Core Loop': {
         'dist': 106.00, 'elev': 32800, 'bias': 'Fuel', 'climate_tag': 'Cold',
         'desc': '🇫🇷 The pinnacle of global trail running. Encircles the Mont-Blanc massif across France, Italy, and Switzerland.', 
         'strat': 'Extreme high-altitude ultramarathon. Pushes your Aerobic Stamina to absolute limits.',
         'course_img': 'images/course_profile/utmb_mont_blanc.png',
-        'unlock_criteria': {'min_orl_level': 7, 'min_stamina_level': 7, 'min_power_level': 7, 'min_lifetime_miles': 500.0}
+        'unlock_criteria': {'min_orl_level': 7, 'min_stamina_level': 7, 'min_power_level': 7}
     },
     'Western States 100 Canyons': {
         'dist': 100.00, 'elev': 18000, 'bias': 'Fuel', 'climate_tag': 'Hot',
         'desc': '🇺🇸 World’s oldest 100-mile trail race, tracing hot, rugged singletracks in California Sierra Nevada.', 
         'strat': 'Severe canyon heat endurance test. Maximizes Aerobic Capacity. Requires heat acclimatization history.',
         'course_img': 'images/course_profile/western_states_100.png',
-        'unlock_criteria': {'min_orl_level': 7, 'min_stamina_level': 8, 'min_power_level': 6, 'min_lifetime_miles': 400.0}
+        'unlock_criteria': {'min_orl_level': 7, 'min_stamina_level': 8, 'min_power_level': 6}
     },
     'Comrades Ultra Marathon (Up-Run)': {
         'dist': 54.00, 'elev': 5900, 'bias': 'Fuel', 'climate_tag': 'Hot',
         'desc': '🇿🇦 Legendary paved ultra between Durban and Pietermaritzburg in South Africa.', 
         'strat': 'Relentless highway climbing and muscle fatigue. Demands maximum long-run history boundaries.',
         'course_img': 'images/course_profile/comrades_ultra.png',
-        'unlock_criteria': {'min_orl_level': 6, 'min_stamina_level': 6, 'min_lifetime_miles': 300.0}
+        'unlock_criteria': {'min_orl_level': 6, 'min_stamina_level': 6}
     },
     'UNM 400-Meter Olympic Track': {
         'dist': 0.25, 'elev': 0, 'bias': 'Speed', 'climate_tag': 'Neutral',
@@ -237,14 +237,14 @@ course_catalog = {
         'desc': '❄️ Extreme technical sky-running circuit across high alpine scree fields.', 
         'strat': 'Hardcore mountain climbing test with cold environmental hazards.',
         'course_img': 'images/course_profile/taos_ski_valley.png',
-        'unlock_criteria': {'min_orl_level': 4, 'min_power_level': 5, 'min_lifetime_miles': 50.0}
+        'unlock_criteria': {'min_orl_level': 4, 'min_power_level': 5}
     },
     'La Luz Trail (Sandia Peak)': {
         'dist': 9.00, 'elev': 3775, 'bias': 'Torque', 'climate_tag': 'Neutral',
         'desc': '🧗 Legendary vertical climbing beast in Albuquerque.', 
         'strat': 'Severe vertical torture test. Amplifies your Climbing Power demands to absolute levels.',
         'course_img': 'images/course_profile/la_luz_trail.png',
-        'unlock_criteria': {'min_orl_level': 5, 'min_power_level': 5, 'min_lifetime_miles': 60.0}
+        'unlock_criteria': {'min_orl_level': 5, 'min_power_level': 5}
     },
     'Santa Fe Crest Trail Pipeline': {
         'dist': 12.00, 'elev': 2100, 'bias': 'Balanced', 'climate_tag': 'Cold',
@@ -258,35 +258,35 @@ course_catalog = {
         'desc': '🌲 Deep wilderness track with multiple rugged river crossings.', 
         'strat': 'Demands heavy endurance durability buffers and high apparel equipment stats.',
         'course_img': 'images/course_profile/gila_wilderness.png',
-        'unlock_criteria': {'min_orl_level': 5, 'min_stamina_level': 5, 'min_lifetime_miles': 80.0}
+        'unlock_criteria': {'min_orl_level': 5, 'min_stamina_level': 5}
     },
     'Albuquerque Half-Marathon Highway': {
         'dist': 13.11, 'elev': 250, 'bias': 'Fuel', 'climate_tag': 'Neutral',
         'desc': '🇲🇽 Flat, paved continuous road thoroughfare tracing the Rio Grande.', 
         'strat': 'Shifts scoring formulas heavily into Aerobic Stamina (Endurance stability).',
         'course_img': 'images/course_profile/albuquerque_half.png',
-        'unlock_criteria': {'min_orl_level': 4, 'min_stamina_level': 5, 'min_lifetime_miles': 100.0}
+        'unlock_criteria': {'min_orl_level': 4, 'min_stamina_level': 5}
     },
     'Jemez Mountain 25K Technical Loop': {
         'dist': 15.53, 'elev': 2800, 'bias': 'Torque', 'climate_tag': 'Neutral',
         'desc': '🌲 Punishing technical single-track loop circling ancient volcanic rims.', 
         'strat': 'Severe trail test. Demands high Climbing Power and pacing resilience.',
         'course_img': 'images/course_profile/jemez_mountain_25k.png',
-        'unlock_criteria': {'min_orl_level': 5, 'min_power_level': 5, 'min_lifetime_miles': 100.0}
+        'unlock_criteria': {'min_orl_level': 5, 'min_power_level': 5}
     },
     'Sandia Crest 50K Skymarathon': {
         'dist': 31.07, 'elev': 6200, 'bias': 'Torque', 'climate_tag': 'Cold',
         'desc': '🧗 Brutal 50-Kilometer skyrunning loop climbing continuously from base to peak.', 
         'strat': 'Ultramarathon endurance combined with severe vertical grade challenges.',
         'course_img': 'images/course_profile/sandia_crest_50k.png',
-        'unlock_criteria': {'min_orl_level': 6, 'min_stamina_level': 6, 'min_power_level': 6, 'min_lifetime_miles': 200.0}
+        'unlock_criteria': {'min_orl_level': 6, 'min_stamina_level': 6, 'min_power_level': 6}
     },
     'Shiprock Ultra Desert Horizon': {
         'dist': 31.00, 'elev': 850, 'bias': 'Fuel', 'climate_tag': 'Hot',
         'desc': '🦅 Brutal, high-mileage volcanic desert flats in the Navajo Nation.', 
         'strat': 'Pushes your Aerobic Stamina capacity and high heat acclimatization modifiers.',
         'course_img': 'images/course_profile/shiprock_ultra.png',
-        'unlock_criteria': {'min_orl_level': 6, 'min_stamina_level': 6, 'min_lifetime_miles': 200.0}
+        'unlock_criteria': {'min_orl_level': 6, 'min_stamina_level': 6}
     }
 }
 
