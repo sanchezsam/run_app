@@ -637,7 +637,12 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                                             raw_hr_series = splits_df['average_heart_rate']
                                         else:
                                             raw_hr_series = pd.Series([120] * len(splits_df))
-                                                                        # Clean Heart Rate Color Assigner with explicit numeric coercion
+                                        
+                                        # Ensure 'max_heart_rate' exists per split for line graph rendering
+                                        if 'max_heart_rate' not in splits_df.columns:
+                                            splits_df['max_heart_rate'] = raw_hr_series
+
+                                        # Clean Heart Rate Color Assigner with explicit numeric coercion
                                         def assign_bar_color_by_hr(avg_hr):
                                             try:
                                                 hr = int(float(avg_hr))
@@ -664,20 +669,51 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                 
                                         splits_df['Pace (Minutes)'] = splits_df['pace'].apply(safe_pace_to_mins)
                 
-                                        st.caption(f"⏱️     Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)")
+                                        st.caption(f"⏱️      Lap Split Profiles - Activity #{run_idx + 1} (Bars = Pace, Line = Max HR)")
                 
                                         import altair as alt
-                                        altair_bar_chart = (
-                                            alt.Chart(splits_df).mark_bar().encode(
-                                                x=alt.X('Split Mile:N', sort=None, title="Workout Segment"),
-                                                y=alt.Y('Pace (Minutes):Q', title="Pace Minutes"),
-                                                color=alt.Color('Zone_Color:N').scale(None), # Feeds direct color vectors
-                                                tooltip=['Split Mile', 'pace']
-                                            ).properties(height=320)
+                                        
+                                        # Base shared X-axis definition
+                                        base_chart = alt.Chart(splits_df).encode(
+                                            x=alt.X('Split Mile:N', sort=None, title="Workout Segment")
                                         )
+
+                                        # Synchronized tooltips
+                                        shared_tooltips = [
+                                            alt.Tooltip('Split Mile', title='Split'),
+                                            alt.Tooltip('pace', title='Pace'),
+                                            alt.Tooltip('avg_heart_rate:Q', title='Avg Heart Rate (bpm)') if 'avg_heart_rate' in splits_df.columns else alt.Tooltip('average_heart_rate:Q', title='Avg Heart Rate (bpm)'),
+                                            alt.Tooltip('max_heart_rate:Q', title='Max Peak HR (bpm)')
+                                        ]
+
+                                        # Left axis: Pace Bars
+                                        bar_layer = base_chart.mark_bar(opacity=0.85).encode(
+                                            y=alt.Y('Pace (Minutes):Q', title="Pace Minutes"),
+                                            color=alt.Color('Zone_Color:N').scale(None),
+                                            tooltip=shared_tooltips
+                                        )
+
+                                        # Right axis: Max HR Trendline
+                                        line_layer = base_chart.mark_line(color="#2B6CB0", strokeWidth=3.5, interpolate="monotone").encode(
+                                            y=alt.Y('max_heart_rate:Q', title="Max Heart Rate (bpm)", scale=alt.Scale(zero=False)),
+                                            tooltip=shared_tooltips
+                                        )
+
+                                        # Visual target nodes on line points
+                                        point_layer = base_chart.mark_point(color="#2B6CB0", size=60, filled=True).encode(
+                                            y=alt.Y('max_heart_rate:Q'),
+                                            tooltip=shared_tooltips
+                                        )
+
+                                        # Combine chart layers and resolve independent axes
+                                        altair_combo_chart = alt.layer(
+                                            bar_layer, line_layer, point_layer
+                                        ).resolve_scale(
+                                            y='independent'
+                                        ).properties(height=320)
                 
                                         # Render fresh by avoiding Streamlit's old layout memory
-                                        st.altair_chart(altair_bar_chart, theme=None, key=f"split_chart_refresh_id_{run_idx}_v3")
+                                        st.altair_chart(altair_combo_chart, theme=None, key=f"split_chart_refresh_id_{run_idx}_v3")
                 
                                     except Exception as e:
                                         st.error(f"❌ Chart Processing Error: {str(e)}")
