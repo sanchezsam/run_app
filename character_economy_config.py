@@ -11,6 +11,23 @@
 #
 # =========================================================================
 
+
+# 🧬 HEART RATE INTENSITY MASTER BALANCING CONTROL PANEL
+
+# 🧬 UPDATE THIS BLOCK IN character_economy_config.py
+HR_ZONE_CONFIG = {
+    "zones": [
+        {"max": 0,   "color": "#4A5568", "label": "No Data",           "text_color": "#FFFFFF"},
+        {"max": 115, "color": "#A0AEC0", "label": "Zone 1 (Recovery)",  "text_color": "#1A202C"},
+        # 🚨 SHIFTED DOWN: Changing 135 to 130 means 134 will now safely cross into Zone 3 Tempo!
+        {"max": 130, "color": "#38A169", "label": "Zone 2 (Aerobic)",   "text_color": "#FFFFFF"},
+        {"max": 150, "color": "#ECC94B", "label": "Zone 3 (Tempo)",     "text_color": "#1A202C"},
+        {"max": 170, "color": "#ED8936", "label": "Zone 4 (Threshold)", "text_color": "#FFFFFF"},
+        {"max": 999, "color": "#E53E3E", "label": "Zone 5 (Anaerobic)", "text_color": "#FFFFFF"}
+    ]
+}
+
+
 CHARACTER_XP_CONFIG = {
     # 🏃‍♂️ Volume & Mechanical Progression Anchors
     "xp_per_mile": 0.8,

@@ -1119,25 +1119,35 @@ def clean_elevation_string(elev_str: str) -> int:
 # 🎛️ HEART RATE ZONE STYLING UTILITY
 # =========================================================================
 
+from character_economy_config import HR_ZONE_CONFIG
+
 def get_hr_zone_style(avg_hr: int) -> tuple:
     """
-    Determines the background color, zone label, and text contrast color 
-    based on traditional running intensity heart rate zones.
+    Determines background styles and labels cleanly by dynamically checking 
+    the centralized HR_ZONE_CONFIG control arrays.
     """
-    if not avg_hr or avg_hr <= 0:
-        return "#4A5568", "No Data", "#FFFFFF"
-        
-    # Standard zones based on typical performance athlete thresholds (e.g., Max HR ~190)
-    if avg_hr < 115:
-        return "#A0AEC0", "Zone 1 (Recovery)", "#1A202C"
-    elif avg_hr < 135:
-        return "#38A169", "Zone 2 (Aerobic)", "#FFFFFF"
-    elif avg_hr < 155:
-        return "#ECC94B", "Zone 3 (Tempo)", "#1A202C"
-    elif avg_hr < 175:
-        return "#ED8936", "Zone 4 (Threshold)", "#FFFFFF"
-    else:
-        return "#E53E3E", "Zone 5 (Anaerobic)", "#FFFFFF"
+    try:
+        hr = int(float(avg_hr))
+    except (ValueError, TypeError):
+        hr = 0
+
+    if hr <= 0:
+        return (
+            HR_ZONE_CONFIG["zones"][0]["color"], 
+            HR_ZONE_CONFIG["zones"][0]["label"], 
+            HR_ZONE_CONFIG["zones"][0]["text_color"]
+        )
+
+    # 🚨 THE FIXED CORE ENGINE: Changed '<' to '<=' to catch exact upper bounds!
+    for zone in HR_ZONE_CONFIG["zones"]:
+        if zone["max"] > 0 and hr <= zone["max"]:
+            return zone["color"], zone["label"], zone["text_color"]
+
+    return (
+        HR_ZONE_CONFIG["zones"][-1]["color"], 
+        HR_ZONE_CONFIG["zones"][-1]["label"], 
+        HR_ZONE_CONFIG["zones"][-1]["text_color"]
+    )
 
 # =========================================================================
 # ⚙️ SAFETY TELEMETRY CONVERTERS
