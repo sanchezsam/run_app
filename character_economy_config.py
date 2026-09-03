@@ -15,17 +15,18 @@
 # 🧬 HEART RATE INTENSITY MASTER BALANCING CONTROL PANEL
 
 # 🧬 UPDATE THIS BLOCK IN character_economy_config.py
+# 🧬 PRODUCTION BOUNDARIES FOR A 45-YEAR-OLD MALE
 HR_ZONE_CONFIG = {
     "zones": [
         {"max": 0,   "color": "#4A5568", "label": "No Data",           "text_color": "#FFFFFF"},
-        {"max": 115, "color": "#A0AEC0", "label": "Zone 1 (Recovery)",  "text_color": "#1A202C"},
-        # 🚨 SHIFTED DOWN: Changing 135 to 130 means 134 will now safely cross into Zone 3 Tempo!
-        {"max": 130, "color": "#38A169", "label": "Zone 2 (Aerobic)",   "text_color": "#FFFFFF"},
-        {"max": 150, "color": "#ECC94B", "label": "Zone 3 (Tempo)",     "text_color": "#1A202C"},
-        {"max": 170, "color": "#ED8936", "label": "Zone 4 (Threshold)", "text_color": "#FFFFFF"},
-        {"max": 999, "color": "#E53E3E", "label": "Zone 5 (Anaerobic)", "text_color": "#FFFFFF"}
+        {"max": 104, "color": "#A0AEC0", "label": "Zone 1 (Recovery)",  "text_color": "#1A202C"}, # Up to 104 bpm
+        {"max": 122, "color": "#2B6CB0", "label": "Zone 2 (Easy)",      "text_color": "#FFFFFF"}, # Up to 122 bpm
+        {"max": 139, "color": "#38A169", "label": "Zone 3 (Aerobic)",   "text_color": "#FFFFFF"}, # Up to 139 bpm
+        {"max": 157, "color": "#ED8936", "label": "Zone 4 (Threshold)", "text_color": "#FFFFFF"}, # Up to 157 bpm
+        {"max": 999, "color": "#E53E3E", "label": "Zone 5 (Maximum)",   "text_color": "#FFFFFF"}  # 158+ bpm
     ]
 }
+
 
 
 CHARACTER_XP_CONFIG = {
