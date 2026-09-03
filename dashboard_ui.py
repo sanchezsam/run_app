@@ -3350,8 +3350,7 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
 # 📊 MAIN SECOND COLUMN ACTIVITY DISPLAY RENDERING
 # =========================================================================
 
-#def render_activity_column(df, elev_columns, unit_abbr):
-def render_activity_column(run, unit_abbr):
+def render_activity_column(df, elev_columns, unit_abbr):
     """Renders column 2 dashboard container views matching your loop layout structure."""
     if "selected_activity_date" not in st.session_state:
         st.session_state.selected_activity_date = None
@@ -3521,15 +3520,19 @@ def render_activity_column(run, unit_abbr):
 # ==============================================================================
 # EXTENSION: TRAINING ZONE INTENSITY GRAPHIC (WITH TIME DURATION CODES)
 # ==============================================================================
+
+
 def render_zone_octagon_display(matched_run_dict):
     """
-    Simulates training zone distributions based on split velocities or pace logs,
-    calculates exact time spent in each zone using the overall run duration,
-    and generates a native geometric donut ring.
+    Calculates exact time spent in each heart rate zone based on split duration
+    and average_heart_rate, then generates a side-by-side interface displaying 
+    a native donut ring and a breakdown table of minutes spent.
     """
     import pandas as pd
     import streamlit as st
     import altair as alt
+    
+    from character_economy_config import HR_ZONE_CONFIG
 
     st.markdown("---")
     st.markdown("#### 🛑 Intensity Zone Distribution")
@@ -3538,118 +3541,261 @@ def render_zone_octagon_display(matched_run_dict):
         st.info("Select a workout day to review cardiovascular intensity zone matrices.")
         return
 
-    # 1. Base Setup and Percentage Allocation
-    zones = [
-        {"name": "Z1: Recovery", "color": "#00ffcc", "pct": 15},
-        {"name": "Z2: Endurance", "color": "#00ccff", "pct": 45},
-        {"name": "Z3: Tempo", "color": "#ffcc00", "pct": 20},
-        {"name": "Z4: Threshold", "color": "#ff6600", "pct": 15},
-        {"name": "Z5: Anaerobic", "color": "#ff3333", "pct": 5}
-    ]
+    splits_data = matched_run_dict.get("splits", [])
+    if not isinstance(splits_data, list) or not splits_data:
+        st.warning("⚠️ No lap split telemetry available to calculate intensity zones.")
+        return
 
-    # Parse real splits array to distribute percentages dynamically
-    raw_splits = matched_run_dict.get("splits", [])
-    if isinstance(raw_splits, list) and len(raw_splits) > 0:
-        paces = []
-        for s in raw_splits:
-            p_str = str(s.get("pace", "08:00"))
-            try:
-                parts = p_str.split(':')
-                if len(parts) == 2: 
-                    paces.append(int(parts[0])*60 + int(parts[1]))
-            except Exception: 
-                pass
+    # 1. FIXED: Explicitly unpack string tokens into independent variables to guarantee parsing execution
+    def time_str_to_seconds(t_str) -> int:
+        try:
+            parts = str(t_str).strip().split(':')
+            if len(parts) == 3:    # HH:MM:SS
+                h_val, m_val, s_val = parts[0], parts[1], parts[2]
+                return int(h_val) * 3600 + int(m_val) * 60 + int(s_val)
+            elif len(parts) == 2:  # MM:SS
+                m_val, s_val = parts[0], parts[1]
+                return int(m_val) * 60 + int(s_val)
+            return int(float(t_str))
+        except (ValueError, TypeError, IndexError):
+            return 0
+
+    # 2. Track total elapsed time (seconds) per zone configuration index
+    zone_bins = {idx: 0 for idx in range(len(HR_ZONE_CONFIG["zones"]))}
+    total_seconds = 0
+
+    for lap in splits_data:
+        if not isinstance(lap, dict):
+            continue
+            
+        # Extract heart rate safely (prioritizing average_heart_rate over legacy tags)
+        raw_hr = lap.get("average_heart_rate") or lap.get("avg_heart_rate")
+        hr = int(float(raw_hr)) if raw_hr is not None else 120
         
-        if len(paces) > 1:
-            slowest = max(paces)
-            fastest = min(paces)
-            span = max(1, slowest - fastest)
-            
-            z1, z2, z3, z4, z5 = 0, 0, 0, 0, 0
-            for p in paces:
-                rel = (slowest - p) / span
-                if rel < 0.2: z1 += 1
-                elif rel < 0.5: z2 += 1
-                elif rel < 0.75: z3 += 1
-                elif rel < 0.92: z4 += 1
-                else: z5 += 1
-            
-            total = len(paces)
-            p1 = int((z1 / total) * 100)
-            p2 = int((z2 / total) * 100)
-            p3 = int((z3 / total) * 100)
-            p4 = int((z4 / total) * 100)
-            p5 = 100 - (p1 + p2 + p3 + p4)
-            
-            z_vals = [p1, p2, p3, p4, p5]
-            for idx, z_item in enumerate(zones):
-                z_item["pct"] = max(5, z_vals[idx])
+        lap_seconds = time_str_to_seconds(lap.get("time", "00:00"))
+        total_seconds += lap_seconds
 
-    # 2. NEW LOGIC: Parse run duration into total seconds to calculate exact zone times
-    duration_str = str(matched_run_dict.get('Duration', '00:00')).strip()
-    total_duration_seconds = 0
-    
-    try:
-        time_parts = duration_str.split(':')
-        if len(time_parts) == 2:  # MM:SS format
-            total_duration_seconds = int(time_parts[0]) * 60 + int(time_parts[1])
-        elif len(time_parts) == 3:  # HH:MM:SS format
-            total_duration_seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + int(time_parts[2])
-    except Exception:
-        total_duration_seconds = 2400  # Fallback baseline (40 minutes) if parsing fails
+        # Match heart rate value into your HR_ZONE_CONFIG bounds
+        matched_idx = 0  # Default fallback index ("No Data")
+        if hr > 0:
+            for idx, cfg in enumerate(HR_ZONE_CONFIG["zones"]):
+                if cfg["max"] == 0:
+                    continue
+                if hr <= cfg["max"]:
+                    matched_idx = idx
+                    break
+            else:
+                matched_idx = len(HR_ZONE_CONFIG["zones"]) - 1
+        
+        zone_bins[matched_idx] += lap_seconds
 
-    # Helper function to convert seconds back to a nice time string
-    def format_seconds_to_clock(secs):
-        hrs = secs // 3600
-        mins = (secs % 3600) // 60
-        secs = secs % 60
-        if hrs > 0:
-            return f"{hrs:02d}:{mins:02d}:{secs:02d}"
-        return f"{mins:02d}:{secs:02d}"
-
-    # 3. Build Dataset for Charting
+    # 3. Format calculated arrays into data frames for layout components
     chart_rows = []
-    for z in zones:
-        chart_rows.append({
-            "Zone": z["name"],
-            "Percentage": z["pct"]
-        })
-    df_chart = pd.DataFrame(chart_rows)
-    # 4. Render Layout Columns Side-by-Side Natively (UPSCALED CHART SIZING)
-    col_g1, col_g2 = st.columns([0.5, 0.5])
+    table_rows = []
     
-    with col_g1:
-        # Increased innerRadius to 45, width/height to 170 for a significantly larger visual display
-        donut_chart = alt.Chart(df_chart).mark_arc(innerRadius=45, stroke="#1e222b", strokeWidth=2).encode(
+    for idx, cfg in enumerate(HR_ZONE_CONFIG["zones"]):
+        # Skip displaying the 'No Data' row in the presentation layers if empty
+        if cfg["max"] == 0 and zone_bins[idx] == 0:
+            continue
+            
+        seconds_spent = zone_bins[idx]
+        pct = (seconds_spent / total_seconds * 100) if total_seconds > 0 else 0
+        mins, secs = divmod(seconds_spent, 60)
+        time_formatted = f"{mins:02d}:{secs:02d}"
+
+        # Donut Chart Dataset (Only includes active zones to preserve slice cleanly)
+        if seconds_spent > 0:
+            chart_rows.append({
+                "Zone": cfg["label"],
+                "Percentage": pct,
+                "Time": time_formatted,
+                "HexColor": cfg["color"]
+            })
+            
+        # Side Summary Table Dataset (Shows active layout distributions)
+        table_rows.append({
+            "Intensity Zone": cfg["label"],
+            "Time Spent": time_formatted,
+            "Distribution": f"{pct:.1f}%"
+        })
+
+    if not chart_rows:
+        st.info("No active heart rate metrics to calculate distributions.")
+        return
+
+    df_chart = pd.DataFrame(chart_rows)
+    df_table = pd.DataFrame(table_rows)
+
+    # 4. Generate the Donut Ring Graphic Configuration
+    domain = df_chart["Zone"].tolist()
+    range_colors = df_chart["HexColor"].tolist()
+
+    donut_chart = (
+        alt.Chart(df_chart).mark_arc(innerRadius=65, stroke="#fff", strokeWidth=1).encode(
             theta=alt.Theta(field="Percentage", type="quantitative"),
-            color=alt.Color(field="Zone", type="nominal", scale=alt.Scale(
-                domain=[z["name"] for z in zones],
-                range=[z["color"] for z in zones]
-            ), legend=None),
-            tooltip=["Zone", "Percentage"]
-        ).properties(
-            width=170,
-            height=170
+            color=alt.Color(
+                field="Zone", 
+                type="nominal", 
+                scale=alt.Scale(domain=domain, range=range_colors),
+                legend=alt.Legend(title="Intensity Status")
+            ),
+            tooltip=[
+                alt.Tooltip("Zone:N", title="Zone"),
+                alt.Tooltip("Percentage:Q", format=".1f", title="Percent"),
+                alt.Tooltip("Time:N", title="Duration")
+            ]
+        ).properties(width=340, height=280)
+    )
+
+    # 5. FIXED: Added an explicit 2 to st.columns specifier to prevent layout engine collapse
+    col_chart, col_table = st.columns(2)
+
+    with col_chart:
+        st.altair_chart(donut_chart, theme=None, use_container_width=True)
+
+    with col_table:
+        st.markdown("<br><br>", unsafe_allow_html=True) # Aligns the table with the center of the ring
+        st.dataframe(
+            df_table, 
+            hide_index=True, 
+            use_container_width=True
         )
-        
-        st.altair_chart(donut_chart, theme=None)
-        
-    with col_g2:
-        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-        for z in zones:
-            zone_color = z["color"]
-            zone_name = z["name"]
-            zone_pct = z["pct"]
-            
-            # Calculate exact seconds spent in this zone based on its percentage weight
-            zone_seconds = int(round(total_duration_seconds * (zone_pct / 100.0)))
-            zone_time_str = format_seconds_to_clock(zone_seconds)
-            
-            st.markdown(
-                f"<span style='color:{zone_color}; font-size:18px;'>■</span> "
-                f"**{zone_name}**: `{zone_pct}%` ({zone_time_str})", 
-                unsafe_allow_html=True
-            )
+
+
+
+
+
+
+#def render_zone_octagon_display(matched_run_dict):
+#    """
+#    Simulates training zone distributions based on split velocities or pace logs,
+#    calculates exact time spent in each zone using the overall run duration,
+#    and generates a native geometric donut ring.
+#    """
+#    import pandas as pd
+#    import streamlit as st
+#    import altair as alt
+#
+#    st.markdown("---")
+#    st.markdown("#### 🛑 Intensity Zone Distribution")
+#
+#    if not matched_run_dict:
+#        st.info("Select a workout day to review cardiovascular intensity zone matrices.")
+#        return
+#
+#    print(matched_run_dict)
+#    # 1. Base Setup and Percentage Allocation
+#    zones = [
+#        {"name": "Z1: Recovery", "color": "#00ffcc", "pct": 15},
+#        {"name": "Z2: Endurance", "color": "#00ccff", "pct": 45},
+#        {"name": "Z3: Tempo", "color": "#ffcc00", "pct": 20},
+#        {"name": "Z4: Threshold", "color": "#ff6600", "pct": 15},
+#        {"name": "Z5: Anaerobic", "color": "#ff3333", "pct": 5}
+#    ]
+#
+#    # Parse real splits array to distribute percentages dynamically
+#    raw_splits = matched_run_dict.get("splits", [])
+#    if isinstance(raw_splits, list) and len(raw_splits) > 0:
+#        paces = []
+#        for s in raw_splits:
+#            p_str = str(s.get("pace", "08:00"))
+#            try:
+#                parts = p_str.split(':')
+#                if len(parts) == 2: 
+#                    paces.append(int(parts[0])*60 + int(parts[1]))
+#            except Exception: 
+#                pass
+#        
+#        if len(paces) > 1:
+#            slowest = max(paces)
+#            fastest = min(paces)
+#            span = max(1, slowest - fastest)
+#            
+#            z1, z2, z3, z4, z5 = 0, 0, 0, 0, 0
+#            for p in paces:
+#                rel = (slowest - p) / span
+#                if rel < 0.2: z1 += 1
+#                elif rel < 0.5: z2 += 1
+#                elif rel < 0.75: z3 += 1
+#                elif rel < 0.92: z4 += 1
+#                else: z5 += 1
+#            
+#            total = len(paces)
+#            p1 = int((z1 / total) * 100)
+#            p2 = int((z2 / total) * 100)
+#            p3 = int((z3 / total) * 100)
+#            p4 = int((z4 / total) * 100)
+#            p5 = 100 - (p1 + p2 + p3 + p4)
+#            
+#            z_vals = [p1, p2, p3, p4, p5]
+#            for idx, z_item in enumerate(zones):
+#                z_item["pct"] = max(5, z_vals[idx])
+#
+#    # 2. NEW LOGIC: Parse run duration into total seconds to calculate exact zone times
+#    duration_str = str(matched_run_dict.get('Duration', '00:00')).strip()
+#    total_duration_seconds = 0
+#    
+#    try:
+#        time_parts = duration_str.split(':')
+#        if len(time_parts) == 2:  # MM:SS format
+#            total_duration_seconds = int(time_parts[0]) * 60 + int(time_parts[1])
+#        elif len(time_parts) == 3:  # HH:MM:SS format
+#            total_duration_seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + int(time_parts[2])
+#    except Exception:
+#        total_duration_seconds = 2400  # Fallback baseline (40 minutes) if parsing fails
+#
+#    # Helper function to convert seconds back to a nice time string
+#    def format_seconds_to_clock(secs):
+#        hrs = secs // 3600
+#        mins = (secs % 3600) // 60
+#        secs = secs % 60
+#        if hrs > 0:
+#            return f"{hrs:02d}:{mins:02d}:{secs:02d}"
+#        return f"{mins:02d}:{secs:02d}"
+#
+#    # 3. Build Dataset for Charting
+#    chart_rows = []
+#    for z in zones:
+#        chart_rows.append({
+#            "Zone": z["name"],
+#            "Percentage": z["pct"]
+#        })
+#    df_chart = pd.DataFrame(chart_rows)
+#    # 4. Render Layout Columns Side-by-Side Natively (UPSCALED CHART SIZING)
+#    col_g1, col_g2 = st.columns([0.5, 0.5])
+#    
+#    with col_g1:
+#        # Increased innerRadius to 45, width/height to 170 for a significantly larger visual display
+#        donut_chart = alt.Chart(df_chart).mark_arc(innerRadius=45, stroke="#1e222b", strokeWidth=2).encode(
+#            theta=alt.Theta(field="Percentage", type="quantitative"),
+#            color=alt.Color(field="Zone", type="nominal", scale=alt.Scale(
+#                domain=[z["name"] for z in zones],
+#                range=[z["color"] for z in zones]
+#            ), legend=None),
+#            tooltip=["Zone", "Percentage"]
+#        ).properties(
+#            width=170,
+#            height=170
+#        )
+#        
+#        st.altair_chart(donut_chart, theme=None)
+#        
+#    with col_g2:
+#        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+#        for z in zones:
+#            zone_color = z["color"]
+#            zone_name = z["name"]
+#            zone_pct = z["pct"]
+#            
+#            # Calculate exact seconds spent in this zone based on its percentage weight
+#            zone_seconds = int(round(total_duration_seconds * (zone_pct / 100.0)))
+#            zone_time_str = format_seconds_to_clock(zone_seconds)
+#            
+#            st.markdown(
+#                f"<span style='color:{zone_color}; font-size:18px;'>■</span> "
+#                f"**{zone_name}**: `{zone_pct}%` ({zone_time_str})", 
+#                unsafe_allow_html=True
+#            )
 
 
 # ==============================================================================
