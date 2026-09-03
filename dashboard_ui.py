@@ -3211,6 +3211,7 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
     
             
     # CASE 1: If real nested splits exist, parse their actual varied pacing records
+
     if isinstance(raw_splits, list) and len(raw_splits) > 0:
         total_activity_distance = float(matched_run_dict.get('Display_Distance', 0.0))
 
@@ -3218,8 +3219,10 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
             lap_idx = split_item.get("split_num", idx + 1)
             is_last_row = (idx == len(raw_splits) - 1)
 
+            # 🚨 FIXED DISTANCE PARSING: Prioritize the explicit distance parameters from the split log itself
+            raw_lap_dist = split_item.get("distance_mi") or split_item.get("distance")
             try:
-                lap_dist = float(split_item.get("distance", 1.0))
+                lap_dist = float(raw_lap_dist) if raw_lap_dist is not None else 1.0
             except Exception:
                 lap_dist = 1.0
 
@@ -3227,21 +3230,22 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
 
             try:
                 parts = pace_str.strip().split(':')
-                lap_pace_secs = int(parts[0]) * 60 + int(parts[1])
+                if len(parts) == 3:   # HH:MM:SS
+                    lap_pace_secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                elif len(parts) == 2: # MM:SS
+                    lap_pace_secs = int(parts[0]) * 60 + int(parts[1])
+                else:
+                    lap_pace_secs = float(pace_str) * 60
             except Exception:
                 lap_pace_secs = 480.0
 
-            # 🚨 FIX 1: DYNAMIC FRACTIONAL DISTANCE GUARD
-            # If the data tells us it's a full mile but we've crossed total distance, truncate it!
-            accumulated_dist_before_this = sum([float(x.get("distance", 1.0)) for x in raw_splits[:idx]])
-            if is_last_row and (accumulated_dist_before_this + lap_dist) > total_activity_distance:
-                lap_dist = total_activity_distance - accumulated_dist_before_this
+            # 🚨 REMOVED BREAKING FIX 1: Rely entirely on the actual recorded lap intervals rather than truncating math
 
-            # Calculate this split's actual elapsed duration
+            # Calculate this split's actual elapsed duration based on its real distance
             lap_seconds = lap_dist * lap_pace_secs
             cumulative_seconds += lap_seconds
 
-            lap_avg_hr = split_item.get("avg_heart_rate")
+            lap_avg_hr = split_item.get("average_heart_rate") or split_item.get("avg_heart_rate")
             hr_display_str = f"{int(lap_avg_hr)} bpm" if lap_avg_hr else "—"
 
             lap_pace_mins = lap_pace_secs / 60.0
@@ -3254,15 +3258,14 @@ def show_run_lap_breakdown(matched_run_dict, unit_abbr="Mi"):
                 secs = total_secs_rounded % 60
                 return f"{hrs:02d}:{mins:02d}:{secs:02d}" if hrs > 0 else f"{mins:02d}:{secs:02d}"
 
-            # 🚨 FIX 2: DYNAMIC LABELING CLEANUP
-            if is_last_row and lap_dist < 0.99:
-                split_title = f"Mile {lap_idx} ({lap_dist:.2f} {unit_abbr.lower()} Final)"
-            else:
-                split_title = f"Mile {lap_idx}"
+            # 🚨 FIXED LABELING CLEANUP: Generically flag intervals cleanly as 'Split X'
+            split_title = f"Split {lap_idx}"
+            if is_last_row and lap_dist != 1.0:
+                split_title += f" ({lap_dist:.2f} {unit_abbr.lower()} Final)"
 
             lap_records.append({
                 "Split": split_title,
-                "Distance": f"{lap_dist:.2f} {unit_abbr.lower()}",
+                "Distance": f"{lap_dist:.2f} {unit_abbr.lower()}", # Displays your true dynamic distance
                 "Pace": pace_str,
                 "Avg HR (bpm)": hr_display_str,
                 "Total Time": format_cumulative_clock(cumulative_seconds),

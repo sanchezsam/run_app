@@ -15,6 +15,19 @@
 # 🧬 HEART RATE INTENSITY MASTER BALANCING CONTROL PANEL
 
 # 🧬 UPDATE THIS BLOCK IN character_economy_config.py
+HR_ZONE_CONFIG = {
+    "zones": [
+        {"max": 0,   "color": "#4A5568", "label": "No Data",           "text_color": "#FFFFFF"},
+        {"max": 115, "color": "#A0AEC0", "label": "Zone 1 (Recovery)",  "text_color": "#1A202C"}, # 🪙 Grey
+        # 🚨 SHIFTED DOWN: Changing 135 to 130 means 134 will now safely cross into Zone 3 Aerobic!
+        {"max": 130, "color": "#2B6CB0", "label": "Zone 2 (Easy)",      "text_color": "#FFFFFF"}, # 🟦 Blue
+        {"max": 150, "color": "#38A169", "label": "Zone 3 (Aerobic)",   "text_color": "#FFFFFF"}, # 🟩 Green
+        {"max": 170, "color": "#ED8936", "label": "Zone 4 (Threshold)", "text_color": "#FFFFFF"}, # 🟧 Orange
+        {"max": 999, "color": "#E53E3E", "label": "Zone 5 (Maximum)",   "text_color": "#FFFFFF"}  # 🟥 Red
+    ]
+}
+
+
 # 🧬 PRODUCTION BOUNDARIES FOR A 45-YEAR-OLD MALE
 HR_ZONE_CONFIG = {
     "zones": [
