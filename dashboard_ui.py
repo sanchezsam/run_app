@@ -2118,6 +2118,8 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
     # ==========================================
     # RIGHT SIDE PANEL: ADAPTIVE VIEWS & UPGRADES
     # ==========================================
+
+
     with main_layout_col2:
         if st.session_state.selected_activity_date:
             active_date = st.session_state.selected_activity_date
@@ -2132,7 +2134,7 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
 
                     # Create a distinct visual header for multi-activity days
                     if len(matched_runs) > 1:
-                        st.markdown(f"#### 🏃‍♂️ Workout Activity #{run_idx + 1}")
+                        st.markdown(f"#### 🏃 Workout Activity #{run_idx + 1}")
                                         
                     # Single Run Elevation parsing (Moved inside loop)
                     run_elevation = 0.0     
@@ -2148,27 +2150,27 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                             splits_df = pd.DataFrame(matched_run["splits"])
                             splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
                             
-                            # 🚨 THE DIRECT COLUMN CLEANUP: Extract heart rate directly by string name safely
-                            # If 'avg_heart_rate' isn't found, check for 'average_heart_rate' or default to 120
-                            if 'avg_heart_rate' in splits_df.columns:
-                                raw_hr_series = splits_df['avg_heart_rate']
-                            elif 'average_heart_rate' in splits_df.columns:
-                                raw_hr_series = splits_df['average_heart_rate']
-                            else:
-                                raw_hr_series = pd.Series([120] * len(splits_df))
+                            # Secure raw heart rate data into your preferred 'average_heart_rate' column
+                            if 'average_heart_rate' not in splits_df.columns and 'avg_heart_rate' in splits_df.columns:
+                                splits_df['average_heart_rate'] = splits_df['avg_heart_rate']
+                            elif 'average_heart_rate' not in splits_df.columns:
+                                splits_df['average_heart_rate'] = 120  # Baseline fallback if completely missing
+
+                            # Safely resolve max_heart_rate for line tracking
+                            if 'max_heart_rate' not in splits_df.columns:
+                                splits_df['max_heart_rate'] = splits_df['average_heart_rate']
 
                             # Clean Heart Rate Color Assigner with explicit numeric coercion
                             def assign_bar_color_by_hr(avg_hr):
                                 try:
                                     hr = int(float(avg_hr))
-                                    # Call your centralized theme function!
                                     bg_color, _, _ = get_hr_zone_style(hr)
                                     return bg_color
                                 except:
-                                    return "#A0AEC0" # Distinct grey fallback so you know if data fails!
+                                    return "#A0AEC0" # Distinct grey fallback
                             
-                            # Map colors directly over your cleaned series
-                            splits_df['Zone_Color'] = raw_hr_series.apply(assign_bar_color_by_hr)
+                            # Map colors directly over your cleaned average heart rate column
+                            splits_df['Zone_Color'] = splits_df['average_heart_rate'].apply(assign_bar_color_by_hr)
                             
                             # Safe pace formatting to numeric minutes for the Y-axis heights
                             def safe_pace_to_mins(p_val):
@@ -2184,20 +2186,51 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                             
                             splits_df['Pace (Minutes)'] = splits_df['pace'].apply(safe_pace_to_mins)
                             
-                            st.caption(f"⏱️    Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)") 
+                            st.caption(f"⏱️     Lap Split Profiles - Activity #{run_idx + 1} (Bars = Pace, Line = Max HR)") 
                             
                             import altair as alt
-                            altair_bar_chart = (
-                                alt.Chart(splits_df).mark_bar().encode(
-                                    x=alt.X('Split Mile:N', sort=None, title="Workout Segment"),
-                                    y=alt.Y('Pace (Minutes):Q', title="Pace Minutes"),
-                                    color=alt.Color('Zone_Color:N').scale(None), # Feeds direct color vectors
-                                    tooltip=['Split Mile', 'pace']
-                                ).properties(height=320)
-                            )
                             
-                            # Render fresh by avoiding Streamlit's old layout memory
-                            st.altair_chart(altair_bar_chart, theme=None, key=f"split_chart_refresh_id_{run_idx}_v3")
+                            # 1. Base Shared X-Axis Config
+                            base_chart = alt.Chart(splits_df).encode(
+                                x=alt.X('Split Mile:N', sort=None, title="Workout Segment")
+                            )
+
+                            # Shared Tooltip Definitions
+                            shared_tooltips = [
+                                alt.Tooltip('Split Mile', title='Split'),
+                                alt.Tooltip('pace', title='Pace'),
+                                alt.Tooltip('average_heart_rate:Q', title='Avg Heart Rate (bpm)'),
+                                alt.Tooltip('max_heart_rate:Q', title='Max Peak HR (bpm)')
+                            ]
+
+                            # 2. Base Bar Layer (Pace heights, Colored by Average HR)
+                            bar_layer = base_chart.mark_bar(opacity=0.85).encode(
+                                y=alt.Y('Pace (Minutes):Q', title="Pace Minutes"),
+                                color=alt.Color('Zone_Color:N').scale(None),
+                                tooltip=shared_tooltips
+                            )
+
+                            # 3. Base Line Layer (Max Heart Rate running across)
+                            line_layer = base_chart.mark_line(color="#2B6CB0", strokeWidth=3.5, interpolate="monotone").encode(
+                                y=alt.Y('max_heart_rate:Q', title="Max Heart Rate (bpm)", scale=alt.Scale(zero=False)),
+                                tooltip=shared_tooltips
+                            )
+
+                            # 4. Point Overlay on top of Line to make hover targets easier to hit
+                            point_layer = base_chart.mark_point(color="#2B6CB0", size=60, filled=True).encode(
+                                y=alt.Y('max_heart_rate:Q'),
+                                tooltip=shared_tooltips
+                            )
+
+                            # 5. Layer them together and resolve independent independent Y-axes
+                            combo_chart = alt.layer(
+                                bar_layer, line_layer, point_layer
+                            ).resolve_scale(
+                                y='independent'
+                            ).properties(height=340)
+                            
+                            # Render combo chart fresh
+                            st.altair_chart(combo_chart, theme=None, key=f"split_chart_refresh_id_{run_idx}_v3")
                             
                         except Exception as e:
                             st.error(f"❌ Chart Processing Error: {str(e)}")
@@ -2209,38 +2242,36 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                         st.metric(f"Activity #{run_idx + 1} Elevation Gain", f"{run_elevation:,.0f} ft") 
                     
                     # ------------------------------------------------------------------
-                    # 💓 NEW ADDITION: DYNAMIC MAX HEART RATE INDICATOR
+                    # 💓 DYNAMIC AVERAGE HEART RATE INDICATOR
                     # ------------------------------------------------------------------
-                    max_hr_val = matched_run.get("max_heart_rate")
+                    avg_hr_val = matched_run.get("average_heart_rate") or matched_run.get("avg_heart_rate")
                     splits_list = matched_run.get("splits", [])
                     
-                    # If top-level max HR isn't populated, scan nested split lap metadata dynamically
-                    if not max_hr_val and isinstance(splits_list, list) and splits_list:
-                        valid_lap_maxes = [
-                            int(item["max_heart_rate"]) 
+                    if not avg_hr_val and isinstance(splits_list, list) and splits_list:
+                        valid_lap_hrs = [
+                            float(item.get("average_heart_rate", item.get("avg_heart_rate", 0)))
                             for item in splits_list 
-                            if isinstance(item, dict) and item.get("max_heart_rate")
+                            if isinstance(item, dict) and (item.get("average_heart_rate") or item.get("avg_heart_rate"))
                         ]
-                        if valid_lap_maxes:
-                            max_hr_val = max(valid_lap_maxes)
+                        if valid_lap_hrs:
+                            avg_hr_val = sum(valid_lap_hrs) / len(valid_lap_hrs)
 
-                    if max_hr_val:
+                    if avg_hr_val:
                         try:
-                            # Reuses the exact function definition from upload_ui.py
-                            bg_color, zone_lbl, text_color = get_hr_zone_style(int(max_hr_val))
+                            avg_hr_int = int(round(float(avg_hr_val)))
+                            bg_color, zone_lbl, text_color = get_hr_zone_style(avg_hr_int)
                             
                             hr_html = (
                                 f'<div style="background-color:{bg_color}; color:{text_color}; '
                                 f'padding:6px 12px; border-radius:8px; font-weight:bold; '
                                 f'font-size:14px; display:inline-block; margin-top:8px; margin-bottom:12px; '
                                 f'border: 1px solid rgba(0,0,0,0.1);">'
-                                f'💓 Peak Max HR: {max_hr_val} bpm — {zone_lbl}'
+                                f'💓 Overall Avg HR: {avg_hr_int} bpm — {zone_lbl}'
                                 f'</div>'
                             )
                             st.markdown(hr_html, unsafe_allow_html=True)
                         except Exception:
-                            # Safe local fallback if an import path bottleneck arises
-                            st.caption(f"💓 Peak Max HR: {max_hr_val} bpm")
+                            st.caption(f"💓 Overall Avg HR: {int(round(float(avg_hr_val)))} bpm")
                                             
                     try:                        
                         if matched_run:
@@ -2249,6 +2280,9 @@ div[data-testid="stVerticalBlock"]:has(.spreadsheet-view-marker) div[data-testid
                                         
                     except Exception:       
                         pass
+
+
+
 
 
                 if 'pace' in matched_run:
@@ -3435,7 +3469,6 @@ def render_activity_column(df, elev_columns, unit_abbr):
                             )
                             
                             # Render fresh by avoiding Streamlit's old layout memory
-                            print("Show BAR... here")
                             st.altair_chart(altair_bar_chart, theme=None, key=f"split_chart_refresh_id_{run_idx}_v3")
                             
                         except Exception as e:
