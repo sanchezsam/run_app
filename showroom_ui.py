@@ -17,6 +17,7 @@ import personal_records_config as pr_cfg
 import pro_shop_config as shop_cfg
 import arena_tournaments_config as arena_cfg
 from showroom_engine import calculate_current_week_metrics,check_streak_defense_status,calculate_personal_records
+from upload_ui import get_hr_zone_style
 from dashboard_ui import show_run_lap_breakdown, render_zone_octagon_display
 
 
@@ -604,11 +605,143 @@ def render_trophy_showroom_tab(df_instances=None, defense_state="stable", popout
                             
                             # CHUNK 2: NATIVE BREAKDOWN DROPDOWN
                             with st.expander(f"📋 Activity Log Summary:"):
-                                if run:
-                                    show_run_lap_breakdown(run, unit_abbr=unit_abbr)
-                                    render_zone_octagon_display(run)
-                                        
-                            st.markdown('<div style="margin-bottom:24px; border-bottom:2px solid #2c313c; padding-top:12px;"></div>', unsafe_allow_html=True)
+                                #if run:
+                                #    show_run_lap_breakdown(run, unit_abbr=unit_abbr)
+                                #    render_zone_octagon_display(run)
+                                # 🏁 Loop opens cleanly
+                                matched_run = run
+                
+                                # Create a distinct visual header for multi-activity days
+                                #if len(matched_run) > 1:
+                                #    st.markdown(f"#### 🏃<200d>♂️ Workout Activity #{run_idx + 1}")
+                
+                                # Single Run Elevation parsing (Moved inside loop)
+                                #run_elevation = 0.0
+                                #if elev_columns:
+                                #    raw_elev_val = matched_run.get(elev_columns[0], "0")
+                                #    cleaned_run_elev = ''.join(c for c in str(raw_elev_val) if c.isdigit() or c == '.')
+                                #    parsed_elev = pd.to_numeric(cleaned_run_elev, errors='coerce')
+                                #    if pd.notna(parsed_elev):
+                                #        run_elevation = parsed_elev
+                
+                                if "splits" in matched_run and isinstance(matched_run["splits"], list) and len(matched_run["splits"]) > 0:
+                                    try:
+                                        splits_df = pd.DataFrame(matched_run["splits"])
+                                        splits_df['Split Mile'] = "M" + splits_df['split_num'].astype(str)
+                
+                                        # 🚨 THE DIRECT COLUMN CLEANUP: Extract heart rate directly by string name safely
+                                        # If 'avg_heart_rate' isn't found, check for 'average_heart_rate' or default to 120
+                                        if 'avg_heart_rate' in splits_df.columns:
+                                            raw_hr_series = splits_df['avg_heart_rate']
+                                        elif 'average_heart_rate' in splits_df.columns:
+                                            raw_hr_series = splits_df['average_heart_rate']
+                                        else:
+                                            raw_hr_series = pd.Series([120] * len(splits_df))
+                                                                        # Clean Heart Rate Color Assigner with explicit numeric coercion
+                                        def assign_bar_color_by_hr(avg_hr):
+                                            try:
+                                                hr = int(float(avg_hr))
+                                                # Call your centralized theme function!
+                                                bg_color, _, _ = get_hr_zone_style(hr)
+                                                return bg_color
+                                            except:
+                                                return "#A0AEC0" # Distinct grey fallback so you know if data fails!
+                
+                                        # Map colors directly over your cleaned series
+                                        splits_df['Zone_Color'] = raw_hr_series.apply(assign_bar_color_by_hr)
+                
+                                        # Safe pace formatting to numeric minutes for the Y-axis heights
+                                        def safe_pace_to_mins(p_val):
+                                            try:
+                                                parts = str(p_val).strip().split(':')
+                                                if len(parts) == 3:   # HH:MM:SS
+                                                    return int(parts[0])*60 + int(parts[1]) + int(parts[2])/60.0
+                                                elif len(parts) == 2: # MM:SS
+                                                    return int(parts[0]) + int(parts[1])/60.0
+                                                return float(p_val)
+                                            except:
+                                                return 8.0
+                
+                                        splits_df['Pace (Minutes)'] = splits_df['pace'].apply(safe_pace_to_mins)
+                
+                                        st.caption(f"⏱️     Lap Split Profiles - Activity #{run_idx + 1} (Shorter bars are faster)")
+                
+                                        import altair as alt
+                                        altair_bar_chart = (
+                                            alt.Chart(splits_df).mark_bar().encode(
+                                                x=alt.X('Split Mile:N', sort=None, title="Workout Segment"),
+                                                y=alt.Y('Pace (Minutes):Q', title="Pace Minutes"),
+                                                color=alt.Color('Zone_Color:N').scale(None), # Feeds direct color vectors
+                                                tooltip=['Split Mile', 'pace']
+                                            ).properties(height=320)
+                                        )
+                
+                                        # Render fresh by avoiding Streamlit's old layout memory
+                                        st.altair_chart(altair_bar_chart, theme=None, key=f"split_chart_refresh_id_{run_idx}_v3")
+                
+                                    except Exception as e:
+                                        st.error(f"❌ Chart Processing Error: {str(e)}")
+                
+                                # Metric visualization metrics blocks (Moved inside loop)
+                                #st.metric(f"Activity #{run_idx + 1} Distance", f"{matched_run['Display_Distance']:.2f} {unit_abbr}")
+                                #st.metric(f"Activity #{run_idx + 1} Duration", matched_run.get('Duration', 'N/A'))
+                                #if run_elevation > 0:
+                                #    st.metric(f"Activity #{run_idx + 1} Elevation Gain", f"{run_elevation:,.0f} ft")
+                
+                                # ------------------------------------------------------------------
+                                # 💓 NEW ADDITION: DYNAMIC MAX HEART RATE INDICATOR
+                                # ------------------------------------------------------------------
+                                max_hr_val = matched_run.get("max_heart_rate")
+                                splits_list = matched_run.get("splits", [])
+                
+                                # If top-level max HR isn't populated, scan nested split lap metadata dynamically
+                                if not max_hr_val and isinstance(splits_list, list) and splits_list:
+                                    valid_lap_maxes = [
+                                        int(item["max_heart_rate"])
+                                        for item in splits_list
+                                        if isinstance(item, dict) and item.get("max_heart_rate")
+                                    ]
+                                    if valid_lap_maxes:
+                                        max_hr_val = max(valid_lap_maxes)
+                
+                                if max_hr_val:
+                                    try:
+                                        # Reuses the exact function definition from upload_ui.py
+                                        bg_color, zone_lbl, text_color = get_hr_zone_style(int(max_hr_val))
+                
+                                        hr_html = (
+                                            f'<div style="background-color:{bg_color}; color:{text_color}; '
+                                            f'padding:6px 12px; border-radius:8px; font-weight:bold; '
+                                            f'font-size:14px; display:inline-block; margin-top:8px; margin-bottom:12px; '
+                                            f'border: 1px solid rgba(0,0,0,0.1);">'
+                                            f'💓 Peak Max HR: {max_hr_val} bpm — {zone_lbl}'
+                                            f'</div>'
+                                        )
+                                        st.markdown(hr_html, unsafe_allow_html=True)
+                                    except Exception:
+                                        # Safe local fallback if an import path bottleneck arises
+                                        st.caption(f"💓 Peak Max HR: {max_hr_val} bpm")
+                
+                                try:
+                                    if matched_run:
+                                        show_run_lap_breakdown(matched_run, unit_abbr=unit_abbr)
+                                        render_zone_octagon_display(matched_run)
+                
+                                except Exception:
+                                    pass
+
+                               # if 'pace' in matched_run:
+                               #     flat_pace = pace_str_to_minutes(matched_run['pace'])
+                               #     st.metric("Flat Overall Pace", f"{matched_run['pace']} min/{unit_abbr.lower()}")
+                
+                               # # Grade Adjusted Pace (GAP) calculation output
+                               # gap_pace = calculate_grade_adjusted_pace(flat_pace, run_elevation, matched_run['Display_Distance'])
+                               # st.metric("🔋 Grade-Adjusted Pace (GAP)", f"{minutes_to_pace_str(gap_pace)} min/{unit_abbr.lower()}", delta=f"{run_elevation:,.0f} ft climbing effort penalty" if run_elevation > 0 else None, delta_color="inverse")
+                
+                               # if run_elevation > 0:
+                               #     st.metric("Elevation Gain", f"{run_elevation:,.0f} ft")
+                               #                         
+                               # st.markdown('<div style="margin-bottom:24px; border-bottom:2px solid #2c313c; padding-top:12px;"></div>', unsafe_allow_html=True)
 
 
 
