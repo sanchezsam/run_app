@@ -1,8 +1,8 @@
 {
     "name": "save_file.json",
     "bodyweight": 180,
-    "level": 24,
-    "total_xp": 169,
+    "level": 26,
+    "total_xp": 70,
     "running_level": 1,
     "vo2_max": 40.0,
     "avg_heart_rate": 150,
@@ -12,7 +12,7 @@
     "elevation_milestone_history": [],
     "deep_rem_streak": 0,
     "stat_points": 0,
-    "gold": 116,
+    "gold": 323,
     "inventory": [
         "Oakley Radar Path Sunglasses",
         "New Balance 1080v15",
@@ -349463,6 +349463,125 @@
                     "icon": "\ud83e\udec0"
                 }
             ]
+        },
+        {
+            "Date": "2026-09-08 10:52:20",
+            "Name": "24287693812_ACTIVITY.fit",
+            "Distance (Miles)": 8.03,
+            "Duration": "1:14:26",
+            "pace": "9:16",
+            "Elevation (ft)": "+656.2 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "10:31",
+                    "pace": "10:31",
+                    "avg_heart_rate": 121,
+                    "max_heart_rate": 136
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "09:55",
+                    "pace": "9:55",
+                    "avg_heart_rate": 134,
+                    "max_heart_rate": 152
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "08:43",
+                    "pace": "8:43",
+                    "avg_heart_rate": 129,
+                    "max_heart_rate": 141
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "09:07",
+                    "pace": "9:07",
+                    "avg_heart_rate": 131,
+                    "max_heart_rate": 145
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "09:15",
+                    "pace": "9:15",
+                    "avg_heart_rate": 134,
+                    "max_heart_rate": 144
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "09:04",
+                    "pace": "9:04",
+                    "avg_heart_rate": 122,
+                    "max_heart_rate": 141
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "08:51",
+                    "pace": "8:51",
+                    "avg_heart_rate": 124,
+                    "max_heart_rate": 134
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "08:43",
+                    "pace": "8:43",
+                    "avg_heart_rate": 128,
+                    "max_heart_rate": 137
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 0.03,
+                    "time": "00:17",
+                    "pace": "9:03",
+                    "avg_heart_rate": 127,
+                    "max_heart_rate": 128
+                }
+            ],
+            "text_payload": "[2026-09-08 10:52:20] Run: 8.03 miles | Pace: 9:16 min/mi | Elevation Climbed: +656.2 ft | [REWARD] +80g, +401 XP. | [CALORIE REWARDS] +773 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc3f\ufe0f\ud83d\udc63\ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "vertical_elevation",
+                    "id": "marmot",
+                    "name": "Marmot Traction Unit",
+                    "icon": "\ud83d\udc3f\ufe0f"
+                },
+                {
+                    "pillar": "endurance_volume",
+                    "id": "stride_tracker",
+                    "name": "Stride Tracker Array",
+                    "icon": "\ud83d\udc63"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
+        },
+        {
+            "Date": "2026-09-08 16:21:49",
+            "Name": "Coliseum Match vs Usain [CHEETAH]",
+            "Distance (Miles)": 0.0,
+            "Duration": "0:39:35.333",
+            "pace": "00:00",
+            "Elevation (ft)": "+0 ft",
+            "Type": "Coliseum_Arena_Match",
+            "Match_Outcome": "Victory",
+            "Target_Boss_Key": "Usain [CHEETAH]",
+            "Target_Course_Key": "Los Alamos Canyon Trail Loop",
+            "text_payload": "[2026-09-08] \ud83c\udfc1 Track Match Victory: Conquered Usain [CHEETAH] on the Los Alamos Canyon Trail Loop! [WIN] Your Time: 0:39:35.333 | Rival Time: 0:42:56.730 | Score: 11281 | Gold Impact: +127g."
         }
     ],
     "unlocked_badges": [],
@@ -349478,8 +349597,8 @@
         "steak_cut": 0,
         "chocolate_milkshake": 0,
         "cake_slice": 2,
-        "ice_cream": 2,
-        "donut": 1,
+        "ice_cream": 3,
+        "donut": 2,
         "cookie": 2
     },
     "pantry_single_trophies": [
@@ -349491,28 +349610,25 @@
     "pantry_cuisine_trophies": [],
     "equipped_shoe_name": "New Balance 1080v15",
     "equipped_sunglasses_name": "Oakley Radar Path Sunglasses",
+    "equipped_headgear_name": "Tracksmith Session Hat",
+    "equipped_singlet_name": "Van Cortlandt Singlet",
+    "equipped_shorts_name": "Tracksmith MeridianShorts",
     "equipped_watch_name": "Garmin Forerunner 965",
     "gold_balance": 0,
-    "calorie_bank_balance": 89,
-    "calorie_bank_total_earned": 16639,
+    "calorie_bank_balance": 32,
+    "calorie_bank_total_earned": 17412,
     "p_fuel": 6.0,
     "p_nitro": 6.0,
     "p_torque": 9.0,
+    "boss_clears": 1,
+    "boss_levels": {
+        "Usain [CHEETAH]": 2
+    },
     "endurance_level": 0,
     "pace_level": 0,
     "hill_climbing_level": 0,
     "final_metric_data": {},
     "stamina_xp": 0,
     "agility_xp": 0,
-    "power_xp": 0,
-    "boss_clears": 0,
-    "boss_levels": {},
-    "gear_colors": {
-        "Van Cortlandt Singlet": "Default Issue",
-        "Tracksmith MeridianShorts": "Default Issue",
-        "Tracksmith Session Hat": "Default Issue"
-    },
-    "equipped_singlet_name": "Van Cortlandt Singlet",
-    "equipped_shorts_name": "Tracksmith MeridianShorts",
-    "equipped_headgear_name": "Tracksmith Session Hat"
+    "power_xp": 0
 }
