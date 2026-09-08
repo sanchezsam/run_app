@@ -125,10 +125,10 @@ gear_catalog = {
     },
     
     # --- HEAD GEAR ---
-    'Arcade Neon Headband': {
-        'cost': 20, 'cat': 'Head Gear', 'weather': 'All-Weather', 'icon': '🔲',
-        'img_path': 'images/pro_shop/arcade_neon_headband.png',
-        'desc': 'Retro sweat protection. Adds style and focus multipliers.'
+    'Tracksmith Session Hat': {
+        'cost': 55, 'cat': 'Head Gear', 'weather': 'All-Weather', 'icon': '🔲',
+        'img_path': 'images/pro_shop/session_hat.png',
+        'desc': 'A lightweight running hat with mesh lininig built for daily training.'
     },
     'Ciele Athletics GOCap': {
         'cost': 25, 'cat': 'Head Gear', 'weather': 'All-Weather', 'icon': '🧢',
@@ -142,10 +142,10 @@ gear_catalog = {
     },
     
     # --- SINGLETS ---
-    'Elite Aero-Grid Singlet': {
-        'cost': 40, 'cat': 'Singlets', 'weather': 'All-Weather', 'icon': '🎽',
-        'img_path': 'images/pro_shop/elite_aero_grid_singlet.png',
-        'desc': 'Weightless track singlet. Decreases wind drag factors.'
+    'Van Cortlandt Singlet': {
+        'cost': 75, 'cat': 'Singlets', 'weather': 'All-Weather', 'icon': '🎽',
+        'img_path': 'images/pro_shop/van_cortlandt_singlet.png',
+        'desc': 'Classic style meets modern performance in lightweight mesh racing singlet.'
     },
     'Nike Dri-FIT ADV Aeroswift': {
         'cost': 70, 'cat': 'Singlets', 'weather': 'All-Weather', 'icon': '🔥',
@@ -176,10 +176,10 @@ gear_catalog = {
     },
 
     # --- SHORTS ---
-    'Split Training Track Shorts': {
-        'cost': 35, 'cat': 'Shorts', 'weather': 'All-Weather', 'icon': '🩳',
-        'img_path': 'images/pro_shop/split_training_track_shorts.png',
-        'desc': 'Classic maximum range of motion splits. Improves cadence loops.'
+    'Tracksmith MeridianShorts': {
+        'cost': 100, 'cat': 'Shorts', 'weather': 'All-Weather', 'icon': '🩳',
+        'img_path': 'images/pro_shop/meridian_shorts.png',
+        'desc': 'Streamlined split shorts designed for running hard in hot temperatures.'
     },
     'Salomon S/Lab Ultra Skirt-Short': {
         'cost': 95, 'cat': 'Shorts', 'weather': 'Rain Jacket (Wet)', 'icon': '🎒',
