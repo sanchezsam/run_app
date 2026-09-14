@@ -28,6 +28,17 @@ PANTRY_MENU = {
             {'id': 'chopsticks', 'name': 'Chopsticks', 'portion': 'Utility Item', 'cost': 5, 'emoji': '🥢', 'thresholds': [3, 6, 12, 18, 24], 'img_path': 'images/pantry/items/chopsticks.png'}
         ]
     },
+    '🍜 Vietnamese Cuisine': {
+        'flag': '🇻🇳',
+        'items': [
+            {'id': 'pho_bowl', 'name': 'Pho Noodle Soup', 'portion': '1 Restaurant Bowl Beef Broth', 'cost': 450, 'emoji': '🍜', 'thresholds': [5, 10, 15, 20, 25], 'img_path': 'images/pantry/items/pho_bowl.png'},
+            {'id': 'bun_cha', 'name': 'Bun Cha Grilled Pork', 'portion': '1 Bowl Rice Noodles with Herbs', 'cost': 580, 'emoji': '🍜', 'thresholds':[5,10,15,20,25], 'img_path': 'images/pantry/items/bun_cha.png'},
+            {'id': 'banh_mi', 'name': 'Banh Mi Sandwich', 'portion': '1 Baguette Pork Paté', 'cost': 600, 'emoji': '🥖', 'thresholds':[5, 10, 15, 20, 25], 'img_path': 'images/pantry/items/banh_mi.png'},
+            {'id': 'spring_roll', 'name': 'Fresh Spring Roll', 'portion': '1 Rice Paper Shrimp Piece', 'cost': 90, 'emoji': '🥬', 'thresholds':[3, 6, 12, 18, 24], 'img_path': 'images/pantry/items/spring_roll.png'},
+            {'id': 'viet_coffee', 'name': 'Vietnamese Iced Coffee', 'portion': '1 Glass with Condensed Milk', 'cost': 240, 'emoji': '☕', 'thresholds':[3, 6, 12, 18, 24], 'img_path': 'images/pantry/items/viet_coffee.png'},
+            {'id': 'broken_rice', 'name': 'Com Tam Broken Rice', 'portion': '1 Plate with Grilled Pork Chop', 'cost': 720, 'emoji': '🍛', 'thresholds':[3, 6, 12, 18, 24], 'img_path': 'images/pantry/items/broken_rice.png'}
+        ]
+    },
     '🌮 Mexican Cuisine': {
         'flag': '🇲🇽',
         'items': [
@@ -39,6 +50,7 @@ PANTRY_MENU = {
             {"id": "horchata", "name": "Horchata", "portion": "32oz Rice Milk Drink", "cost": 440, "emoji": "🍹", "thresholds": [3, 6, 12, 18, 24], "img_path": "images/pantry/items/horchata.png"}
         ]
     },
+
     '🍕 Italian Cuisine': {
         'flag': '🇮🇹',
         'items': [
