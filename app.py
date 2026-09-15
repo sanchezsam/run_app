@@ -23,7 +23,7 @@ from showroom_ui import generate_dashboard_motivation_alerts
 from pantry_ui import render_pantry_interface
 
 # 🚨 MUST BE THE FIRST STREAMLIT EXECUTED ACTION TO PREVENT CRASHES
-st.set_page_config(page_title="Cardio Training Hub", page_icon="🏎 ", layout="wide")
+st.set_page_config(page_title="Sammys World", page_icon="🏎 ", layout="wide")
 
 # ⚙️ Master Configuration Path Variables
 FILE_PATH = 'save_file.json'
@@ -107,7 +107,7 @@ def load_profile_state():
     Guarantees no data overwrites by automatically healing missing keys on boot.
     """
     default_state = {
-        "name": "Racer 1", 
+        "name": "RunSanchitoRun", 
         "level": 0,                     
         "total_xp": 0,                  
         "running_level": 0,             
@@ -550,7 +550,7 @@ def load_player():
                         st.session_state.profile = raw_data
                         return player_instance
                     except Exception:
-                        player_instance = Character(name=raw_data.get("name", "Racer 1"))
+                        player_instance = Character(name=raw_data.get("name", "RunSanchitoRun"))
                         for key, val in raw_data.items():
                             try:
                                 setattr(player_instance, key, val)
@@ -566,7 +566,7 @@ def load_player():
             pass
             
     try:
-        emergency_instance = Character(name="Racer 1")
+        emergency_instance = Character(name="RunSanchitoRun")
         emergency_instance.history_logs = []
         emergency_instance.inventory = []
         emergency_instance.equipped_gear = {}
@@ -578,7 +578,7 @@ def load_player():
 if player is None:
     st.title('Character Profile Initialization')
     with st.form('init_char_form'):
-        c_name = st.text_input('Driver Profile Name', value='Racer 1')
+        c_name = st.text_input('Runner Name', value='RunSanchitoRun')
         c_weight = st.number_input('Body Weight (kg)', min_value=30.0, value=75.0)
         if st.form_submit_button('Forge Active Profile'):
             player_obj = Character(name=c_name.strip())
@@ -630,8 +630,34 @@ if player is not None and os.path.exists(FILE_PATH):
     with hud_col1: st.metric('Active Level', f'{player.level}')
     with hud_col2: st.metric('Gold Balance', f'{int(getattr(player, "gold", 0))} g')  # 💰 Changed fallback from 50 to 0
     with hud_col3: st.metric('VO2 Max Baseline', f'{player.vo2_max:.1f}')
-    with hud_col4: st.metric('Fatigue Accumulation', f'{int(getattr(player, "fatigue", 0))}/100')
-    with hud_col5: st.metric('🏁 Checkered Flags', f'{getattr(player, "boss_clears", 0)} Wins')
+    with hud_col4: 
+        # --- FIXED: Read fatigue directly from the player model instance ---
+        profile_fatigue = getattr(player, 'fatigue', 0)
+        st.metric("Fatigue Accumulation", f"{int(profile_fatigue)}/100")
+
+
+    with hud_col5:
+        # --- ORIGINAL BROKEN STATS ENGINE ---
+        # st.metric("🏁 Checkered Flags", f"{player.checkered_flags} Wins")
+
+        # --- FIXED DYNAMIC STATS ENGINE ---
+        # Dynamically scan history logs using the verified database [WIN] signature
+        history_entries = getattr(player, 'history_logs', [])
+        real_win_count = 0
+
+        for entry in history_entries:
+            if isinstance(entry, dict):
+                # Check the text_payload string for our exact match victory keys
+                payload = str(entry.get("text_payload", ""))
+                if "[WIN]" in payload or "Track Match Victory" in payload:
+                    real_win_count += 1
+            elif isinstance(entry, str):
+                if "[WIN]" in entry or "Track Match Victory" in entry:
+                    real_win_count += 1
+
+        # Render the metric using your dynamic, verified win total
+        st.metric("🏁 Checkered Flags", f"{real_win_count} Wins")
+
     with hud_col6: st.metric('Stat Tokens', f'{getattr(player, "stat_points", 0)} Available')
     with hud_col7: st.metric('🔥 Calorie Bank', f'{int(getattr(player, "calorie_bank_balance", 0))} kcal')
 
@@ -655,10 +681,10 @@ if "active_tab_selection" not in st.session_state:
     st.session_state.active_tab_selection = "🏠 Dashboard Overview"
 
 with st.sidebar:
-    st.markdown("### 🏎️ Cardio Training Hub")
-    #st.caption(f"Logged in as: **{getattr(player, 'name', 'Racer 1')}**")
+    st.markdown("### 🏎️ Sammys World")
+    #st.caption(f"Logged in as: **{getattr(player, 'name', 'RunSanchitoRun')}**")
     # 🟢 Pulls the true profile string name out of your loaded state dictionary
-    active_username = st.session_state.get("profile", {}).get("name", "Racer 1")
+    active_username = st.session_state.get("profile", {}).get("name", "RunSanchitoRun")
     st.sidebar.markdown(f"**Logged in as:** {active_username}")
 
     st.markdown("---")

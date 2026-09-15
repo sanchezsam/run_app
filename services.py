@@ -392,10 +392,67 @@ def parse_garmin_gpx(player, file_bytes):
         player.total_xp = getattr(player, 'total_xp', 0) + xp_earned
         player.days_tracked = getattr(player, 'days_tracked', 0) + 1
         
-        # Accumulate fatigue points from physical running efforts, capped at 100
-        calculated_fatigue_cost = int(total_distance * 15)
-        current_fatigue = int(getattr(player, 'fatigue', 0))
-        player.fatigue = min(100, current_fatigue + calculated_fatigue_cost)
+        # =========================================================================
+        # SPORTS-SCIENCE DYNAMIC RECOVERY ENGINE
+        # =========================================================================
+        from datetime import datetime
+        history_entries = getattr(player, 'history_logs', [])
+        
+        # 1. Establish core player baseline references
+        current_fatigue = float(getattr(player, 'fatigue', 0.0))
+        speedway_pr = 5.72  # Your 5:43 PR translated to decimal minutes
+        
+        # 2. CALCULATE TIME ELAPSED SINCE LAST WORKOUT
+        hours_since_last_run = 24.0  # Safe default if this is the very first run
+        if len(history_entries) > 0:
+            try:
+                last_log = history_entries[-1]
+                last_date_str = last_log.get("Date", last_log.get("Activity Date", ""))[:19]
+                current_date_str = str(log.get("Date", log.get("Activity Date", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))))[:19]
+                
+                fmt = "%Y-%m-%d %H:%M:%S"
+                t_last = datetime.strptime(last_date_str, fmt)
+                t_curr = datetime.strptime(current_date_str, fmt)
+                
+                hours_since_last_run = (t_curr - t_last).total_seconds() / 3600.0
+            except Exception:
+                hours_since_last_run = 24.0  # Fallback
+
+        # 3. DECAY PAST FATIGUE (Standard human baseline flushes ~4 points per hour of rest)
+        # Instead of wiping to 0 instantly, fatigue bleeds off gradually over time
+        fatigue_decay_rate = 4.0 
+        fatigue_after_rest = max(0.0, current_fatigue - (hours_since_last_run * fatigue_decay_rate))
+
+        # 4. CALCULATE INCOMING WORKOUT INTENSITY STRAIN
+        current_pace_val = float(log.get("Pace_Val", 8.5))
+        if current_pace_val > 0:
+            # If your pace matches your PR, intensity is 1.0. If you run slower, intensity drops.
+            intensity_factor = speedway_pr / current_pace_val
+        else:
+            intensity_factor = 0.65
+
+        # 5. GENERATE DYNAMIC INBOUND FATIGUE COST
+        # Base Cost: 8 points per mile
+        base_mileage_cost = total_distance * 8.0
+        
+        # Pacing Multiplier: Running at top-tier speed increases fatigue quadratically 
+        pace_multiplier = 1.0 + (intensity_factor ** 2) * 1.5
+        
+        # Final calculated cost for this workout
+        incoming_fatigue_cost = base_mileage_cost * pace_multiplier
+        
+        # 6. COMMIT SYSTEMIC TOTAL (Capped at 100)
+        player.fatigue = min(100.0, fatigue_after_rest + incoming_fatigue_cost)
+        
+        # Convert back to clean int for the metric cards block display
+        player.fatigue = int(round(player.fatigue))
+        # =========================================================================
+
+
+
+
+
+
         
         while hasattr(player, 'xp_needed_for_next_level') and player.total_xp >= player.xp_needed_for_next_level():
             player.total_xp -= player.xp_needed_for_next_level()

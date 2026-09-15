@@ -368,7 +368,102 @@ def render_coliseum(player, FILE_PATH):
     p_torque_max = max(1, p_torque_max)
 
     profile_dict = st.session_state.get("profile", {})
-    active_fatigue = int(profile_dict.get("final_metric_data", {}).get("fatigue", 0))
+    active_fatigue = int(getattr(player, 'fatigue', 0))
+    
+    # 1. --- RENDER THE LIVE STATUS BANNER CONTAINER DIRECTLY ---
+    if active_fatigue >= 75:
+        st.error(
+            f"🔴 CRITICAL ADVISORY: RECOVERY MODE MANDATORY (Fatigue: {active_fatigue}/100)\n\n"
+            "Systemic fatigue exceeds safe bounds. Stride physics are heavily degraded. "
+            "Log an 8+ hour Deep REM sleep session form immediately to flush fatigue spikes!"
+        )
+    elif active_fatigue >= 50:
+        st.warning(
+            f"🟡 FATIGUED PROFILE STATE (Fatigue: {active_fatigue}/100)\n\n"
+            "Accumulated running strain detected. Stride velocity speed penalty is active. "
+            "Pacing metrics are slightly degraded."
+        )
+    else:
+        st.success(
+            f"🔋 ATHLETE FRESH (Fatigue: {active_fatigue}/100)\n\n"
+            "Muscle tissue is fully recovered and sharp. Stride physics receiving a +5% freshness velocity boost!"
+        )
+
+    # 2. =========================================================================
+    # NEW: LIVE PACING TELEMETRY HUD FOR THE COLISEUM
+    # =========================================================================
+    base_fresh_pace = 5.72  # Your 5:43 baseline decimal minutes
+    
+    # Calculate current penalty percentage matching your models.py rules
+    if active_fatigue > 30:
+        drag_coeff = ((active_fatigue - 30.0) / 70.0) ** 2 * 0.15
+        penalty_pct = drag_coeff * 100
+        current_race_pace_dec = base_fresh_pace * (1.0 + drag_coeff)
+    else:
+        penalty_pct = 0.0
+        current_race_pace_dec = base_fresh_pace
+        
+    # Convert calculated decimal pace back to a clock string format
+    p_mins = int(current_race_pace_dec)
+    p_secs = int(round((current_race_pace_dec - p_mins) * 60))
+    if p_secs == 60: p_mins += 1; p_secs = 0
+    formatted_race_pace = f"{p_mins}:{p_secs:02d}"
+
+    # Render a clean, stylized visual readout panel
+    st.markdown("### 📊 Active Racing Telemetry Profiles")
+    t_col1, t_col2 = st.columns(2)
+    
+    with t_col1:
+        if penalty_pct > 0:
+            st.metric("🐌 Active Speed Penalty", f"+{penalty_pct:.1f}%", delta="- Fatigue Drag", delta_color="inverse")
+        else:
+            st.metric("⚡ Active Speed Penalty", "0.0%", delta="Peak Conditioning", delta_color="normal")
+            
+    with t_col2:
+        st.metric("🏁 Projected Time Trial Pace", f"{formatted_race_pace} min/mi", help="Your actual mile speed based on current fatigue levels.")
+    st.markdown("---")
+
+    # 3. =========================================================================
+    # INTEGRATED SLEEP UTILITY BUTTON FOR DYNAMIC RECOVERY
+    # =========================================================================
+    if active_fatigue >= 50:
+        st.markdown("### 💤 Athletic Recovery Facility")
+        
+        # Interactive full-width action button
+        if st.button("🛌 Log 8+ Hour Deep REM Sleep Session", use_container_width=True):
+            # 1. Reset the live character model attributes instantly
+            player.fatigue = 0
+            
+            # 2. Sync changes back into the core session state memory mapping
+            if "profile" in st.session_state:
+                prof_data = st.session_state["profile"].get("final_metric_data", {})
+                if isinstance(prof_data, dict):
+                    prof_data["fatigue"] = 0
+            
+            # 3. Commit updates straight back to hard disk layers
+            try:
+                with open("save_file.json", "r", encoding="utf-8") as f:
+                    disk_data = json.load(f)
+                
+                # Write to both tracking anchor keys safely
+                if isinstance(disk_data, dict):
+                    disk_data["fatigue"] = 0
+                    if "player" in disk_data and isinstance(disk_data["player"], dict):
+                        disk_data["player"]["fatigue"] = 0
+                        
+                    with open("save_file.json", "w", encoding="utf-8") as f:
+                        json.dump(disk_data, f, indent=2)
+                        
+                st.success("✨ Deep REM Sleep Logged successfully! Muscle tissues repaired, stride velocity restored to +5% fresh boost! Reloading...")
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"Database write anomaly encountered: {e}")
+    # =========================================================================
+
+
+
+
     # =========================================================================
     # 🎯 THE LIFETIME ODOMETER COMPATIBILITY BRIDGE
     # Safely extracts your real career distance from your data persistence layer 
@@ -704,33 +799,66 @@ def render_coliseum(player, FILE_PATH):
 
 
         # =========================================================================
-        # 🎯 COCKPIT DICTIONARY LOOKUP SAFETY GUARD
-        # If either key accidentally becomes a list, unwrap it to a clean string
-        # to guarantee a flawless dictionary index lookup!
+        # 1. COCKPIT DICTIONARY LOOKUP SAFETY GUARD (MUST RUN FIRST)
         # =========================================================================
         if isinstance(selected_boss, list):
             selected_boss = selected_boss[0] if len(selected_boss) > 0 else "drone"
-            
+                    
         if isinstance(parsed_course_key, list):
             parsed_course_key = parsed_course_key[0] if len(parsed_course_key) > 0 else "london"
-    
-        # Lines 507 & 508 (Your existing logic now running completely safe!):
+                    
+        # Pull catalog specifications into memory safely
         boss_specs = boss_catalog[selected_boss]
         course_specs = course_catalog[parsed_course_key]
+                    
+        # =========================================================================
+        # 2. FIXED: SELF-HEALING DISK DIRECT LOOKUP PIPE
+        # Bypasses all stale session state cache structures to match raw disk telemetry
+        # =========================================================================
+        disk_level = 1
+        try:
+            if os.path.exists("save_file.json"):
+                with open("save_file.json", "r", encoding="utf-8") as f:
+                    disk_data = json.load(f)
+                    if isinstance(disk_data, dict):
+                        player_nest = disk_data.get("player", {})
+                        if isinstance(player_nest, dict) and "boss_levels" in player_nest:
+                            disk_level = int(player_nest.get("boss_levels", {}).get(selected_boss, 1))
+                        elif "boss_levels" in disk_data:
+                            disk_level = int(disk_data.get("boss_levels", {}).get(selected_boss, 1))
+        except Exception:
+            disk_level = 1
 
-        curr_level = int(player.boss_levels.get(selected_boss, 1))
-
-        # Scale boss attributes dynamically based on their current clear difficulty level
+        # Bind the verified value to your rendering variables
+        curr_level = disk_level
+        
+        # Synchronize your active live player memory object so the next race reads it right
+        if hasattr(player, 'boss_levels'):
+            player.boss_levels[selected_boss] = curr_level
+        if hasattr(player, 'player') and isinstance(player.player, dict):
+            player.player.setdefault('boss_levels', {})[selected_boss] = curr_level
+                    
+        # 3. Scale boss attributes dynamically based on their current clear difficulty level
         b_fuel = min(9, boss_specs['fuel'] + (curr_level - 1))
         b_nitro = min(9, boss_specs['nitro'] + (curr_level - 1))
         b_torque = min(9, boss_specs['torque'] + (curr_level - 1))
+                    
+        # Apply the dynamic Trail Biome climb buff if on rough terrain
+        if "TRAIL" in str(parsed_course_key).upper() or "CANYON" in str(parsed_course_key).upper():
+            b_torque = min(9, b_torque + 3)
 
+        # 4. Render the dynamic visual header attributes cleanly
+        st.markdown(f"### 🟢 {selected_boss}")
+        st.markdown(f"🏆 **Difficulty Level:** Rank {curr_level} | **Status:** 🔓 ACTIVE")
+                    
+        st.markdown("**🔋 Live Performance Ratings:**")
+        st.markdown(f"🏃 `Stamina: {b_fuel}` | ⚡ `Stride: {b_nitro}` | ⛰️ `Hill Power: {b_torque}`")
+        # =========================================================================
+ 
         # 🎯 TRACKING UPGRADE FIXED: Replaced old character_stats object mapping values
-        # The engine now evaluates your true real-world training level variables
-        # (Endurance 7, Speed 8, Climbing 9) stored directly inside the session dictionary!
         boss_unlocked, boss_errs = check_is_unlocked(boss_specs.get("unlock_criteria"), character_stats, lifetime_miles)
         course_unlocked, course_errs = check_is_unlocked(course_specs.get("unlock_criteria"), character_stats, lifetime_miles)
-
+    
         st.markdown("---")
 
         # Scenario A: Blocked Content Rendering
@@ -875,215 +1003,336 @@ def render_coliseum(player, FILE_PATH):
                     st.metric("Win Probability", f"{win_probability_pct:.1f}%")
                     st.progress(float(win_probability_pct / 100.0))
 
-            # ─── RUN PHYSICS PACING SIMULATOR ENGINE ───
+         # ─── RUN PHYSICS PACING SIMULATOR ENGINE ───
             st.write("")
-            if st.button(f"🏁🟢 START MATCH: Release Pacers vs {selected_boss}", use_container_width=True):
-                base_seconds_per_mile = 600.0
+            
+            # 1. Gold verification checks run at standard indentation layer...
+            player_gold = int(getattr(player, 'gold', 0)) if hasattr(player, 'gold') else int(player.player.get('gold', 0))
+            required_entry_fee = course_specs.get('entry_fee', course_specs.get('gold_stake', 100))
+            if "ultra" in str(parsed_course_key).lower() or "shiprock" in str(parsed_course_key).lower():
+                required_entry_fee = 819
+                
+            if player_gold < required_entry_fee:
+                st.error(f"❌ **REGISTRATION DECLINED: INSUFFICIENT FUNDS**")
+                st.button(f"🔒 START MATCH: Gated by Entry Fee ({required_entry_fee}g)", use_container_width=True, disabled=True)
+            else:
+                st.info(f"🎫 **Registration Verified:** Paid entry fee of {required_entry_fee}g.")
                 
                 # =========================================================================
-                # 🧬 PHYSIOLOGICAL DETRAINING & METABOLIC BONK CALCULATOR
-                # Uses your globally computed days_since_last_run timeline directly!
+                # 2. TRIGGER THE MATCH SECTOR: EVERYTHING INSIDE THIS BUTTON IS INDENTED!
                 # =========================================================================
-                bonk_penalty_per_mile = 0.0
-                
-                # Check if you are past your 5-day peak window and tackling an endurance track
-                if days_since_last_run > 5 and course_specs['dist'] >= 10.0:
-                    # Penalty scales smoothly with distance and timeline severity up to a 30-day cap
-                    severity_multiplier = min(30.0, float(days_since_last_run)) / 30.0
-                    bonk_penalty_per_mile = (course_specs['dist'] * 1.5) * severity_multiplier
-                
-                # Formulate velocity shifts (Pulling your live effective attributes!)
-                p_speed_factor = (p_fuel * 0.1) + (p_nitro * 0.3) + (p_torque * 0.1) + (total_kit_physics_bonus * 0.5) + environment_bonus_points
-                r_speed_factor = (b_fuel * 0.1) + (b_nitro * 0.3) + (b_torque * 0.1)
-                
-                # Incorporate your custom bonk penalty into the base mile calculation
-                player_seconds_per_mile = (base_seconds_per_mile + bonk_penalty_per_mile - (p_speed_factor * 35.0)) / fatigue_pace_multiplier
-                rival_seconds_per_mile = base_seconds_per_mile - (r_speed_factor * 35.0)
-                
-                p_total_seconds = max(240.0, player_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
-                r_total_seconds = max(240.0, rival_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
-                
-                p_time_str = format_finish_time(p_total_seconds)
-                r_time_str = format_finish_time(r_total_seconds)
-        
-                # Initialize Live Interface Progress Placeholders
-                distance_placeholder = st.empty()
-                commentary_placeholder = st.empty()
-                player_bar_placeholder = st.empty()
-                rival_bar_placeholder = st.empty()
-                total_dist = course_specs['dist']
-
-
-                # Animation Stage 1: The Start Line
-                distance_placeholder.markdown(f'### 📍 **Mile 0.00** / {total_dist:.2f} Mi')
-                commentary_placeholder.info(f'🟢 **START LINE:** The starter pistol fires! You and **{selected_boss}** surge out of the blocks across the **{parsed_course_key}** using a **{chosen_stance.split(" (")[0]}** stance!')
-                player_bar_placeholder.progress(0.15, text='🏃‍♂️ **Your Progress** (15%)')
-                rival_bar_placeholder.progress(0.15, text=f'⚡ **{selected_boss}** (15%)')
-                time.sleep(2.0)
-
-                # Animation Stage 2: The Mid-Race Breakdown
-                mid_mile = round(total_dist * 0.5, 2)
-                distance_placeholder.markdown(f'### 📍 **Mile {mid_mile:.2f}** / {total_dist:.2f} Mi')
-                if total_3wk_miles >= 30.0:
-                    commentary_placeholder.success(f'⚡ **MID-RACE ASSESSMENT:** Your excellent 3-week physical training volume of **{total_3wk_miles:.1f} miles** provides a massive endurance shield. You stay locked stride-for-stride with the challenger!')
-                    player_bar_placeholder.progress(0.55, text='🏃‍♂️ **Your Progress** (55%)')
-                    rival_bar_placeholder.progress(0.50, text=f'⚡ **{selected_boss}** (50%)')
-                else:
-                    commentary_placeholder.warning(f'🥵 **MID-RACE ASSESSMENT:** Aerobic pressure spikes! Your restricted 3-week mileage profile of **{total_3wk_miles:.1f} miles** limits your oxygen recovery curves. The pacer moves ahead!')
-                    player_bar_placeholder.progress(0.42, text='🏃‍♂️ **Your Progress** (42%)')
-                    rival_bar_placeholder.progress(0.55, text=f'⚡ **{selected_boss}** (55%)')
-                time.sleep(2.5)
-
-                # Animation Stage 3: The Home Stretch Acceleration
-                stretch_mile = round(total_dist * 0.9, 2)
-                distance_placeholder.markdown(f'### 📍 **Mile {stretch_mile:.2f}** / {total_dist:.2f} Mi')
-                if total_kit_physics_bonus >= 0.50:
-                    commentary_placeholder.success(f'👟 **THE HOME STRETCH:** Your equipped pro-shop apparel advantage of **+{total_kit_physics_bonus:.2f} points** activates! High energy-return carbon elements maximize your closing sprint pace!')
-                    player_bar_placeholder.progress(0.92, text='🏃‍♂️ **Your Progress** (92%)')
-                    rival_bar_placeholder.progress(0.85, text=f'⚡ **{selected_boss}** (85%)')
-                else:
-                    commentary_placeholder.info('🏁 **THE HOME STRETCH:** Minimal kit enhancements detected. It\'s a high-cadence, raw muscular sprint to the tape!')
-                    player_bar_placeholder.progress(0.85, text='🏃‍♂️ **Your Progress** (85%)')
-                    rival_bar_placeholder.progress(0.86, text=f'⚡ **{selected_boss}** (86%)')
-                time.sleep(2.0)
-
-                # Animation Stage 4: The Tape Crossing Finish Hold
-                distance_placeholder.markdown(f'### 🏁 **Mile {total_dist:.2f} (Finished)** / {total_dist:.2f} Mi')
-                if p_total_seconds < r_total_seconds:
-                    commentary_placeholder.success(f'🏁 **FINISH LINE REACHED:** Absolute tactical triumph! You break the tape fractions of a second ahead of **{selected_boss}**!')
-                    player_bar_placeholder.progress(1.00, text='🏃‍♂️ **Your Progress** (100% - Winner)')
-                    rival_bar_placeholder.progress(0.98, text=f'⚡ **{selected_boss}** (98% - Finished)')
-                else:
-                    commentary_placeholder.error(f'🏁 **FINISH LINE REACHED:** Heartbreak at the line! **{selected_boss}** leans forward at the tape to edge you out.')
-                    player_bar_placeholder.progress(0.98, text='🏃‍♂️ **Your Progress** (98% - Finished)')
-                    rival_bar_placeholder.progress(1.00, text=f'⚡ **{selected_boss}** (100% - Winner)')
-                time.sleep(3.5)
-
-                # Clear animation canvas objects smoothly
-                distance_placeholder.empty()
-                commentary_placeholder.empty()
-                player_bar_placeholder.empty()
-                rival_bar_placeholder.empty()
-
-                # Score Allocation Calculations
-                calc_racing_score = int(10000 * (r_total_seconds / p_total_seconds) * (course_specs['dist'] / 5.0))
-                calculated_gold_stake = int(gold_bounty + ((calc_racing_score / 150.0) * curr_level))
-                
-                # Execute Victory Save State Changes
-                if p_total_seconds < r_total_seconds:
-                    player.gold = getattr(player, 'gold', 0) + calculated_gold_stake
-                    player.boss_clears = getattr(player, 'boss_clears', 0) + 1
-                    player.boss_levels[selected_boss] = curr_level + 1
+                if st.button(f"🏁🟢 START MATCH: Release Pacers vs {selected_boss}", use_container_width=True):
+                    base_seconds_per_mile = 600.0
+                    bonk_penalty_per_mile = 0.0
+    
+                    if days_since_last_run > 5 and course_specs['dist'] >= 10.0:
+                        severity_multiplier = min(30.0, float(days_since_last_run)) / 30.0
+                        bonk_penalty_per_mile = (course_specs['dist'] * 1.5) * severity_multiplier
+    
+                    p_speed_factor = (p_fuel * 0.1) + (p_nitro * 0.3) + (p_torque * 0.1) + (total_kit_physics_bonus * 0.5) + environment_bonus_points
+                    r_speed_factor = (b_fuel * 0.1) + (b_nitro * 0.3) + (b_torque * 0.1)
                     
-                    # Accumulate localized file fatigue parameters
+                    # Calculated variable inside the button local scope:
+                    player_seconds_per_mile = (base_seconds_per_mile + bonk_penalty_per_mile - (p_speed_factor * 35.0)) / fatigue_pace_multiplier
                     
-                    # Calculate and save fatigue inline directly to the player schema matrix
-                    new_fatigue = min(100, active_fatigue + 15 + stance_fatigue_penalty)
-                    if hasattr(player, 'final_metric_data'):
-                        player.final_metric_data['fatigue'] = new_fatigue
-                    elif isinstance(player.__dict__.get('final_metric_data'), dict):
-                        player.__dict__['final_metric_data']['fatigue'] = new_fatigue
-
-                    # Check for rare home-circuit token awards
-                    minted_tokens = evaluate_signature_tokens(player, selected_boss, parsed_course_key)
-                    token_msg = f" | Unlocked Milestone Relics: {', '.join(minted_tokens)}" if minted_tokens else ""
+                    curr_level = int(player.boss_levels.get(selected_boss, 1))
+                    level_pacing_multiplier = 1.0 - ((curr_level - 1) * 0.05)
+                    scaled_base_seconds = base_seconds_per_mile * level_pacing_multiplier
+                    rival_seconds_per_mile = scaled_base_seconds - (r_speed_factor * 35.0)
                     
-                    #log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
-                    #if not hasattr(player, 'history_logs'): 
-                    #    player.history_logs = []
-                    #player.history_logs.append(log_m)
+                    if str(boss_specs.get('tier', '')).lower() in ['elite', 'championship']:
+                        rival_seconds_per_mile = min(rival_seconds_per_mile, 333.0)
+                        
+                    rival_seconds_per_mile = max(223.0, rival_seconds_per_mile)
 
-                    # 🟢 FIXED: Create a structured dictionary object retaining ALL of your race metrics
-                    log_m_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
-                    
-
-                    # 🟢 FIXED: Save explicitly typed structural trackers for instant index matching
+                    # 🌟 👉 INDENTED 4 SPACES INWARD TO RESOLVE LINE 1075 CRASH:
+                    p_total_seconds = max(240.0, player_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
+                    r_total_seconds = max(240.0, rival_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
                      
-                    structured_match_log = {
-                         "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                         "Name": f"Coliseum Match vs {selected_boss}",
-                         "Distance (Miles)": float(course_specs['dist']), # 🟢 FIX: Log the actual race mileage!
-                         "Duration": p_time_str,
-                         "pace": format_finish_time(p_total_seconds / course_specs['dist']) if course_specs['dist'] > 0 else "00:00",
-                         "Elevation (ft)": f"+{course_specs['elev']} ft", # 🟢 FIX: Log the track elevation context
-                         "Type": "Coliseum_Arena_Match",
-                         "Match_Outcome": "Victory",
-                         "Target_Boss_Key": selected_boss,
-                         "Target_Course_Key": parsed_course_key,
-                         "text_payload": log_m_string # 🟢 Retains exact string formatting for loose string parsers
-                    }
+                    p_time_str = format_finish_time(p_total_seconds)
+                    r_time_str = format_finish_time(r_total_seconds)
 
-                    if not hasattr(player, 'history_logs'):
-                        player.history_logs = []
-                    player.history_logs.append(structured_match_log)
+                    # 🌟 👉 MAKE SURE ALL PROGRESS BARS, MATCH OUTCOME LOGS, AND RERUNS IN THIS SECTION 
+                    # ARE SIMILARLY INDENTED RIGHT HERE UNDER THE BUTTON CLICK CONTAINER BLOCK!
+                    # =========================================================================
 
+                    # Your live race progress bar animation loops, victory evaluation loops,
+                    # structured_match_log appends, and st.rerun() code blocks proceed below...
+                    # (Ensure they all retain the exact same indented alignment hierarchy inside this button!)
+                    rival_seconds_per_mile = max(223.0, rival_seconds_per_mile)
                     
-                    # Write updated arrays permanently to JSON file
-                    with open(FILE_PATH, 'w', encoding='utf-8') as db_file: 
-                        json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
+                    # =========================================================================
+                    # FIXED: ENTIRE ANIMATION DECK CLEANLY ALIGNED AT 20 SPACES INWARD
+                    # =========================================================================
+                    p_total_seconds = max(240.0, player_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
+                    r_total_seconds = max(240.0, rival_seconds_per_mile) * course_specs['dist'] + random.uniform(-4, 4)
+                     
+                    p_time_str = format_finish_time(p_total_seconds)
+                    r_time_str = format_finish_time(r_total_seconds)
+                     
+                    distance_placeholder = st.empty()
+                    commentary_placeholder = st.empty()
+                    player_bar_placeholder = st.empty()
+                    rival_bar_placeholder = st.empty()
+                    total_dist = course_specs['dist']
+                     
+                    # Animation Stage 1: The Start Line
+                    distance_placeholder.markdown(f'### 📍 **Mile 0.00** / {total_dist:.2f} Mi')
+                    commentary_placeholder.info(f'🟢 **START LINE:** The starter pistol fires! You and **{selected_boss}** surge out of the blocks across the **{parsed_course_key}** using a **{chosen_stance.split(" (")[0]}** stance!')
+                    player_bar_placeholder.progress(0.15, text='🏃‍♂️ **Your Progress** (15%)')
+                    rival_bar_placeholder.progress(0.15, text=f'⚡ **{selected_boss}** (15%)')
+                    time.sleep(2.0)
+                     
+                    # Animation Stage 2: The Mid-Race Breakdown
+                    mid_mile = round(total_dist * 0.5, 2)
+                    distance_placeholder.markdown(f'### 📍 **Mile {mid_mile:.2f}** / {total_dist:.2f} Mi')
+                    if total_3wk_miles >= 30.0:
+                        commentary_placeholder.success(f'⚡ **MID-RACE ASSESSMENT:** Your excellent 3-week physical training volume of **{total_3wk_miles:.1f} miles** provides a massive endurance shield. You stay locked stride-for-stride with the challenger!')
+                        player_bar_placeholder.progress(0.55, text='🏃‍♂️ **Your Progress** (55%)')
+                        rival_bar_placeholder.progress(0.50, text=f'⚡ **{selected_boss}** (50%)')
+                    else:
+                        # Make sure the rest of your animation stages (Stage 3, Finish line, etc.)
+                        # are also cleanly shifted 4 spaces right to match this 20-space indentation!
+                        pass
+
+
+                    time.sleep(2.5)
+                    # Animation Stage 3: The Home Stretch Acceleration
+                    stretch_mile = round(total_dist * 0.9, 2)
+                    distance_placeholder.markdown(f'### 📍 **Mile {stretch_mile:.2f}** / {total_dist:.2f} Mi')
+                    
+                    # 🌟 FIXED: Shifted 4 spaces right to join the 20-space button action loop!
+                    if total_kit_physics_bonus >= 0.50:
+                        commentary_placeholder.success(f'👟 **THE HOME STRETCH:** Your equipped pro-shop apparel advantage of **+{total_kit_physics_bonus:.2f} points** activates! High energy-return carbon elements maximize your closing sprint pace!')
+                        player_bar_placeholder.progress(0.92, text='🏃‍♂️ **Your Progress** (92%)')
+                        rival_bar_placeholder.progress(0.85, text=f'⚡ **{selected_boss}** (85%)')
+                    else:
+                        commentary_placeholder.info('🏁 **THE HOME STRETCH:** Minimal kit enhancements detected. It\'s a high-cadence, raw muscular sprint to the tape!')
+                        player_bar_placeholder.progress(0.85, text='🏃‍♂️ **Your Progress** (85%)')
+                        rival_bar_placeholder.progress(0.86, text=f'⚡ **{selected_boss}** (86%)')
+                    time.sleep(2.0)
+
+                    # Animation Stage 4: The Tape Crossing Finish Hold
+                    distance_placeholder.markdown(f'### 🏁 **Mile {total_dist:.2f} (Finished)** / {total_dist:.2f} Mi')
+                    if p_total_seconds < r_total_seconds:
+                        commentary_placeholder.success(f'🏁 **FINISH LINE REACHED:** Absolute tactical triumph! You break the tape fractions of a second ahead of **{selected_boss}**!')
+                        player_bar_placeholder.progress(1.00, text='🏃‍♂️ **Your Progress** (100% - Winner)')
+                        rival_bar_placeholder.progress(0.98, text=f'⚡ **{selected_boss}** (98% - Finished)')
+                    else:
+                        commentary_placeholder.error(f'🏁 **FINISH LINE REACHED:** Heartbreak at the line! **{selected_boss}** leans forward at the tape to edge you out.')
+                        player_bar_placeholder.progress(0.98, text='🏃‍♂️ **Your Progress** (98% - Finished)')
+                        rival_bar_placeholder.progress(1.00, text=f'⚡ **{selected_boss}** (100% - Winner)')
+                    time.sleep(3.5)
+
+                    # Clear animation canvas objects smoothly
+                    distance_placeholder.empty()
+                    commentary_placeholder.empty()
+                    player_bar_placeholder.empty()
+                    rival_bar_placeholder.empty()
+
+                    # Score Allocation Calculations
+                    calc_racing_score = int(10000 * (r_total_seconds / p_total_seconds) * (course_specs['dist'] / 5.0))
+                    calculated_gold_stake = int(gold_bounty + ((calc_racing_score / 150.0) * curr_level))
+                
+                    # Execute Victory Save State Changes
+                    if p_total_seconds < r_total_seconds:
+                        player.gold = getattr(player, 'gold', 0) + calculated_gold_stake
+                        player.boss_clears = getattr(player, 'boss_clears', 0) + 1
+                        player.boss_levels[selected_boss] = curr_level + 1
                         
-                    st.session_state.last_race_summary = {
-                        "is_win": True, "p_time": p_time_str, "r_time": r_time_str, "score": calc_racing_score, 
-                        "gold": calculated_gold_stake, "course": parsed_course_key, "dist": course_specs['dist'], "tokens": minted_tokens
-                    }
-                    st.balloons()
-                    st.rerun()
-                    
-                # Execute Defeat Save State Changes
-                else:
-                    calc_racing_score = int(calc_racing_score * 0.4)
-                    gold_lost = min(getattr(player, 'gold', 0), calculated_gold_stake // 2)
-                    player.gold = getattr(player, 'gold', 0) - gold_lost
-                    
-                    # Defeat still adds minor muscle fatigue
-                    # Calculate and save defeat fatigue inline directly to the player schema matrix
-                    new_fatigue = min(100, active_fatigue + 8)
-                    if hasattr(player, 'final_metric_data'):
-                        player.final_metric_data['fatigue'] = new_fatigue
-                    elif isinstance(player.__dict__.get('final_metric_data'), dict):
-                        player.__dict__['final_metric_data']['fatigue'] = new_fatigue
-                    
-                    #log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
-                    #if not hasattr(player, 'history_logs'): 
-                    #    player.history_logs = []
-                    #player.history_logs.append(log_m)
-                    # 🔴 DEFEAT CONFIGURATION: Log updates when the pacer wins the tape
-                    log_m_defeat_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Edged out by {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Legs Overworked."
-                    
-                    
-
-                    structured_match_log_defeat = {
-                        "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "Name": f"Coliseum Match vs {selected_boss}",
-                        "Distance (Miles)": 0.01,            # 🟢 FIX: Passes the > 0 filter without breaking your odometer
-                        "Duration": p_time_str,
-                        "pace": "00:00",                   
-                        "Elevation (ft)": "+0 ft",
-                        "Type": "Coliseum_Arena_Match",
-                        "Match_Outcome": "Defeat",         
-                        "Target_Boss_Key": selected_boss,     
-                        "Target_Course_Key": parsed_course_key, 
-                        "text_payload": log_m_defeat_string  # 🟢 Ensures regex can scan "🏁 Track Match Defeat:" from the string
-                    }
-
-                    # Append safely to the player object tracking matrices
-                    if not hasattr(player, 'history_logs'):
-                        player.history_logs = []
-                    player.history_logs.append(structured_match_log_defeat)
-
-
-
-
-
-                    
-                    with open(FILE_PATH, 'w', encoding='utf-8') as db_file: 
-                        json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, db_file, default=str, indent=4)
+                        # Accumulate localized file fatigue parameters
                         
-                    st.session_state.last_race_summary = {
-                        "is_win": False, "p_time": p_time_str, "r_time": r_time_str, "score": calc_racing_score, 
-                        "gold": gold_lost, "course": parsed_course_key, "dist": course_specs['dist'], "tokens": []
-                    }
-                    st.rerun()
+                        # Calculate and save fatigue inline directly to the player schema matrix
+                        new_fatigue = min(100, active_fatigue + 15 + stance_fatigue_penalty)
+                        if hasattr(player, 'final_metric_data'):
+                            player.final_metric_data['fatigue'] = new_fatigue
+                        elif isinstance(player.__dict__.get('final_metric_data'), dict):
+                            player.__dict__['final_metric_data']['fatigue'] = new_fatigue
+
+                        # Check for rare home-circuit token awards
+                        minted_tokens = evaluate_signature_tokens(player, selected_boss, parsed_course_key)
+                        token_msg = f" | Unlocked Milestone Relics: {', '.join(minted_tokens)}" if minted_tokens else ""
+                        
+                        #log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
+                        #if not hasattr(player, 'history_logs'): 
+                        #    player.history_logs = []
+                        #player.history_logs.append(log_m)
+
+                        # 🟢 FIXED: Create a structured dictionary object retaining ALL of your race metrics
+                        log_m_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Victory: Conquered {selected_boss} on the {parsed_course_key}! [WIN] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: +{calculated_gold_stake}g.{token_msg}"
+                        
+
+                        # 🟢 FIXED: Save explicitly typed structural trackers for instant index matching
+                         
+                        structured_match_log = {
+                             "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                             "Name": f"Coliseum Match vs {selected_boss}",
+                             "Distance (Miles)": float(course_specs['dist']), # 🟢 FIX: Log the actual race mileage!
+                             "Duration": p_time_str,
+                             "pace": format_finish_time(p_total_seconds / course_specs['dist']) if course_specs['dist'] > 0 else "00:00",
+                             "Elevation (ft)": f"+{course_specs['elev']} ft", # 🟢 FIX: Log the track elevation context
+                             "Type": "Coliseum_Arena_Match",
+                             "Match_Outcome": "Victory",
+                             "Target_Boss_Key": selected_boss,
+                             "Target_Course_Key": parsed_course_key,
+                             "text_payload": log_m_string # 🟢 Retains exact string formatting for loose string parsers
+                        }
+
+                        
+                        # Append safely to the player object tracking matrices
+                        if not hasattr(player, 'history_logs'):
+                            player.history_logs = []
+                        player.history_logs.append(structured_match_log)
+                        
+                            
+                        # =========================================================================
+                        # FIXED: INCREMENT AND PERSIST BOTH DATABASE NESTING PLACES
+                        # =========================================================================
+                        # 1. Capture true active fatigue and current gold balances snapshots
+                        live_fatigue_snapshot = int(getattr(player, 'fatigue', 0))
+                        live_gold_snapshot = int(getattr(player, 'gold', 0))
+                        
+                        # Read the boss level dictionary block out of whichever layer holds it
+                        if hasattr(player, 'player') and isinstance(player.player, dict):
+                            live_boss_levels = player.player.get('boss_levels', {}).copy()
+                        else:
+                            live_boss_levels = getattr(player, 'boss_levels', {}).copy()
+                        
+                        # Force the incremental progression forward inside the save dictionary
+                        curr_level = int(live_boss_levels.get(selected_boss, 1))
+                        next_level = curr_level + 1
+                        live_boss_levels[selected_boss] = next_level
+                        
+                        # Push it back to the live memory models as well so they stay unified
+                        if hasattr(player, 'player') and isinstance(player.player, dict):
+                            player.player.setdefault('boss_levels', {})[selected_boss] = next_level
+                        player.boss_levels[selected_boss] = next_level
+                        
+                        # 2. Package your save dictionary layer cleanly
+                        save_payload = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__.copy()
+
+                        # 3. Inject ALL snapshots directly to database target anchors
+                        save_payload['fatigue'] = live_fatigue_snapshot 
+                        save_payload['boss_levels'] = live_boss_levels
+                        save_payload['gold'] = live_gold_snapshot
+                        
+                        if 'player' in save_payload and isinstance(save_payload['player'], dict):
+                            save_payload['player']['fatigue'] = live_fatigue_snapshot 
+                            save_payload['player']['boss_levels'] = live_boss_levels
+                            save_payload['player']['gold'] = live_gold_snapshot
+                        else:
+                            save_payload['player'] = {
+                                'fatigue': live_fatigue_snapshot,
+                                'boss_levels': live_boss_levels,
+                                'gold': live_gold_snapshot
+                            }
+                        # =========================================================================
+
+                        # 4. Commit updates straight back to hard disk layers cleanly using our save_payload
+                        with open(FILE_PATH, 'w', encoding='utf-8') as db_file: 
+                            json.dump(save_payload, db_file, default=str, indent=4)
+
+                        # --- FIXED: SET TO TRUE AND USE STAKE VARIABLE FOR VICTORY OUTCOMES ---
+                        st.session_state.last_race_summary = {
+                            "is_win": True, 
+                            "p_time": p_time_str, 
+                            "r_time": r_time_str, 
+                            "score": calc_racing_score, 
+                            "gold": calculated_gold_stake if 'calculated_gold_stake' in locals() else 0, 
+                            "course": parsed_course_key, 
+                            "dist": course_specs['dist'], 
+                            "tokens": []
+                        }
+                        st.rerun()
+
+
+                    # Execute Defeat Save State Changes
+                    else:
+                        calc_racing_score = int(calc_racing_score * 0.4)
+                        gold_lost = min(getattr(player, 'gold', 0), calculated_gold_stake // 2)
+                        player.gold = getattr(player, 'gold', 0) - gold_lost
+                        
+                        # Defeat still adds minor muscle fatigue
+                        # Calculate and save defeat fatigue inline directly to the player schema matrix
+                        new_fatigue = min(100, active_fatigue + 8)
+                        if hasattr(player, 'final_metric_data'):
+                            player.final_metric_data['fatigue'] = new_fatigue
+                        elif isinstance(player.__dict__.get('final_metric_data'), dict):
+                            player.__dict__['final_metric_data']['fatigue'] = new_fatigue
+                        
+                        #log_m = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Raced {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Gold Impact: -{gold_lost}g."
+                        #if not hasattr(player, 'history_logs'): 
+                        #    player.history_logs = []
+                        #player.history_logs.append(log_m)
+                        # 🔴 DEFEAT CONFIGURATION: Log updates when the pacer wins the tape
+                        log_m_defeat_string = f"[{datetime.now().strftime('%Y-%m-%d')}] 🏁 Track Match Defeat: Edged out by {selected_boss} on the {parsed_course_key}! [LOSS] Your Time: {p_time_str} | Rival Time: {r_time_str} | Score: {calc_racing_score} | Legs Overworked."
+                        
+                        
+
+                        structured_match_log = {
+                            "Date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "Name": f"Coliseum Match vs {selected_boss}",
+                            "Distance (Miles)": 0.01,            # Passes the > 0 filter without breaking your odometer
+                            "Duration": p_time_str,
+                            "pace": "00:00",
+                            "Elevation (ft)": "+0 ft",
+                            "Type": "Coliseum_Arena_Match",
+                            "Match_Outcome": "Defeat",
+                            "Target_Boss_Key": selected_boss,
+                            "Target_Course_Key": parsed_course_key,
+                            "text_payload": log_m_defeat_string  # Ensures regex can scan properly
+                        }
+
+                        # =========================================================================
+                        # FIXED: APPENDING HISTORY BEFORE SAVING DATA TO PREVENT SUMMARY MISSES
+                        # =========================================================================
+                        if not hasattr(player, 'history_logs'):
+                            player.history_logs = []
+                        player.history_logs.append(structured_match_log)
+
+                        # 1. Capture true snapshots of live dynamic player states
+                        live_fatigue_snapshot = int(getattr(player, 'fatigue', 0))
+                        live_boss_levels = getattr(player, 'boss_levels', {})
+                        live_gold_snapshot = int(getattr(player, 'gold', 0))
+
+                        # 2. Package your save dictionary layer cleanly
+                        save_payload = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__.copy()
+
+                        # 3. Inject ALL snapshots directly to database target anchors
+                        save_payload['fatigue'] = live_fatigue_snapshot
+                        save_payload['boss_levels'] = live_boss_levels
+                        save_payload['gold'] = live_gold_snapshot
+
+                        if 'player' in save_payload and isinstance(save_payload['player'], dict):
+                            save_payload['player']['fatigue'] = live_fatigue_snapshot
+                            save_payload['player']['boss_levels'] = live_boss_levels
+                            save_payload['player']['gold'] = live_gold_snapshot
+                        else:
+                            save_payload['player'] = {
+                                'fatigue': live_fatigue_snapshot,
+                                'boss_levels': live_boss_levels,
+                                'gold': live_gold_snapshot
+                            }
+                        # =========================================================================
+
+                        # 4. Commit updates straight back to hard disk layers cleanly using our save_payload
+                        with open(FILE_PATH, 'w', encoding='utf-8') as db_file:
+                            json.dump(save_payload, db_file, default=str, indent=4)
+
+                        # Safe fallback wrapper validation for the session state summary UI container
+                        final_gold_penalty = gold_lost if 'gold_lost' in locals() else 819
+
+                        st.session_state.last_race_summary = {
+                            "is_win": False, 
+                            "p_time": p_time_str, 
+                            "r_time": r_time_str, 
+                            "score": calc_racing_score,
+                            "gold": final_gold_penalty, 
+                            "course": parsed_course_key, 
+                            "dist": course_specs['dist'], 
+                            "tokens": []
+                        }
+                        st.rerun()
 
     # Render Post-Match Overlay Summaries
     if "last_race_summary" in st.session_state:
@@ -1147,8 +1396,11 @@ def render_coliseum(player, FILE_PATH):
                     # ─── 2. PROFILE MIDDLE: PORTRAITS AND ATTRIBUTES STACKED VERTICALLY ───
                     display_boss_portrait(b_name, b_specs, size=110)
                     
-                    st.markdown("**🔋 Performance Scaling Baselines:**")
-                    st.markdown(f"⛽ `Fuel: {b_specs['fuel']}` | ⚡ `Nitro: {b_specs['nitro']}` | ⛰️ `Torque: {b_specs['torque']}`")
+                    #st.markdown("**🔋 Performance Scaling Baselines:**")
+                    #st.markdown(f"⛽ `Fuel: {b_specs['fuel']}` | ⚡ `Nitro: {b_specs['nitro']}` | ⛰️ `Torque: {b_specs['torque']}`")
+                    st.markdown("**🔋 Live Performance Ratings:**")
+                    st.markdown(f"🏃 `Stamina: {b_fuel}` | ⚡ `Stride: {b_nitro}` | ⛰️ `Hill Power: {b_torque}`")
+
                     
                     st.markdown(f"_*Description:*_ \n{b_specs['desc']}")
                     st.write("")
@@ -1206,13 +1458,18 @@ def render_coliseum(player, FILE_PATH):
     historic_races = []
     
     for log in reversed(raw_history):
-        log_str = str(log)
-        if "Track Match Victory:" in log_str or "Track Match Defeat:" in log_str:
-            try:
+        log_str = str(log) 
+        
+        # --- FIXED: Catch both legacy and new modern ultra-marathon headers ---
+        has_legacy = "Track Match Victory:" in log_str or "Track Match Defeat:" in log_str
+        has_modern = "COMPETITIVE TRIUMPH" in log_str or "TRACK CIRCUIT DEFEAT" in log_str
+        
+        if has_legacy or has_modern: 
+            try:    
                 date_match = re.search(r'\[([0-9-]+)\]', log_str)
-                is_win = "[WIN]" in log_str or "Victory:" in log_str
-                
-                # Reconstruct track layout key mapping strings
+                is_win = "[WIN]" in log_str or "Victory:" in log_str or "COMPETITIVE TRIUMPH" in log_str
+        
+                # Reconstruct track layout key mapping strings 
                 parsed_historical_course = "Championship Loop"
                 for c_name in course_catalog.keys():
                     clean_c = c_name.split(" [")[0]
@@ -1220,23 +1477,27 @@ def render_coliseum(player, FILE_PATH):
                         parsed_historical_course = c_name
                         break
                         
-                boss_match = re.search(r'(?:Victory|Defeat):\s*(?:Conquered|Raced|Defeated)\s*(.*?)\s*on', log_str, re.IGNORECASE)
-                p_time_match = re.search(r'Your Time:\s*([0-9:.]+)', log_str)
-                r_time_match = re.search(r'Rival Time:\s*([0-9:.]+)', log_str)
-                gold_impact_match = re.search(r'Gold Impact:\s*([+\\-][0-9]+g)', log_str)
+                # --- FIXED REGEX MATCHERS: Support both old and new label fields ---
+                boss_match = re.search(r'(?:Victory|Defeat|TRIUMPH|DEFEAT)(?::|\s*!!)\s*(?:Conquered|Raced|Defeated|vs|Edged out by)\s*(.*?)\s*(?:on|the|$)', log_str, re.IGNORECASE)
                 
+                p_time_match = re.search(r'(?:Your Time|Finish Time):\s*([0-9:.]+)', log_str, re.IGNORECASE)
+                r_time_match = re.search(r'(?:Rival Time):\s*([0-9:.]+)', log_str, re.IGNORECASE) 
+                
+                # Catches old "Gold Impact" or new "Entry Lost" / "Purse Awarded" patterns
+                gold_impact_match = re.search(r'(?:Gold Impact|Entry Lost|Purse Awarded):\s*([+\-0-9]+g)', log_str, re.IGNORECASE)
+                         
                 historic_races.append({
-                    "Race Date": date_match.group(1) if date_match else "N/A", 
+                    "Race Date": date_match.group(1) if date_match else datetime.now().strftime('%Y-%m-%d'),
                     "Outcome": "🏆 WON" if is_win else "❌ LOST",
-                    "📍 Circuit Track": parsed_historical_course, 
-                    "Rival Athlete": boss_match.group(1).strip() if boss_match else "Pace Master",
+                    "📍 Circuit Track": parsed_historical_course,
+                    "Rival Athlete": boss_match.group(1).strip() if boss_match else "Kilian [GAZELLE]",
                     "Your Time": p_time_match.group(1) if p_time_match else "N/A", 
                     "Rival Time": r_time_match.group(1) if r_time_match else "N/A",
                     "Gold Impact": gold_impact_match.group(1) if gold_impact_match else "0g"
-                })
+                })  
             except Exception: 
                 pass
-                
+ 
     if historic_races: 
         st.dataframe(pd.DataFrame(historic_races), use_container_width=True, hide_index=True)
     else: 

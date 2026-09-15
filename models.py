@@ -140,7 +140,13 @@ class Character:
             mitigation_factor = max(0.15, 1.0 - (self.running_level * 0.025))
             estimated_pace_per_mile *= (1.0 + (climbing_tax_pct * mitigation_factor))
             
-        if self.fatigue >= 50: estimated_pace_per_mile *= (1.0 + ((self.fatigue - 49) * 0.0025))
+        # --- FIXED: ADVANCED SPORTS-SCIENCE FATIGUE PERFORMANCE DRAG ---
+        if self.fatigue > 30:
+            # Quadratic scaling: Under 30 fatigue = optimal. 
+            # At 50 fatigue = ~1.2% slower. At 100 fatigue = a massive 15% pace degradation.
+            fatigue_drag_coefficient = ((self.fatigue - 30.0) / 70.0) ** 2 * 0.15
+            estimated_pace_per_mile *= (1.0 + fatigue_drag_coefficient)
+
         
         if self.equipped_gear.get("feet") == "⚡ Hyper-Velocity Sonic Propulsion Boot": estimated_pace_per_mile -= 0.45
         elif self.equipped_gear.get("feet") == "Pro Alpha Running Shoes": estimated_pace_per_mile -= 0.15 
