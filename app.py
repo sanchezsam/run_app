@@ -712,46 +712,57 @@ with st.sidebar:
         sb_col1 = st.container()
         sb_col2 = None
 
+
     # 🎯 STEP 2: Place all your existing navigation buttons inside the left column (sb_col1)
+    # 🔗 RE-ROUTING CAPTURE ENGINE: Catch the cabinet challenge route request before buttons render!
+    if st.session_state.get("coliseum_auto_launch_flag", False):
+        st.session_state.active_tab_selection = "Biometric Coliseum"
+
     with sb_col1:
         # Category Group 1: Core Hub
         st.markdown("🎮 **CORE ATHLETE HUB**")
-        if st.button("🏠 Dashboard Overview", key="nav_sidebar_dash", type="primary" if st.session_state.active_tab_selection == "🏠 Dashboard Overview" else "secondary", use_container_width=True):
+        if st.button("🏠 Dashboard Overview", key="nav_sidebar_dash", type="primary" if st.session_state.active_tab_selection == "🏠 Dashboard Overview" else "secondary", width='stretch'):
+            # 🧼 CLEAR FLAGS: Wipe out the auto-launch state whenever a manual side button is clicked!
+            st.session_state["coliseum_auto_launch_flag"] = False
             st.session_state.active_tab_selection = "🏠 Dashboard Overview"
             st.rerun()
-        if st.button("👤 Athlete Profile", key="nav_sidebar_prof", type="primary" if st.session_state.active_tab_selection == "👤 Athlete Profile" else "secondary", use_container_width=True):
+        if st.button("👤 Athlete Profile", key="nav_sidebar_prof", type="primary" if st.session_state.active_tab_selection == "👤 Athlete Profile" else "secondary", width='stretch'):
+            st.session_state["coliseum_auto_launch_flag"] = False
             st.session_state.active_tab_selection = "👤 Athlete Profile"
             st.rerun()
             
         st.markdown("")
         # Category Group 2: Data Ingest & Logging
         st.markdown("⚡ **DATA INGESTION**")
-        if st.button("📥 Telemetry Sync", key="nav_sidebar_sync", type="primary" if st.session_state.active_tab_selection == "Telemetry Sync" else "secondary", use_container_width=True):
+        if st.button("📥 Telemetry Sync", key="nav_sidebar_sync", type="primary" if st.session_state.active_tab_selection == "Telemetry Sync" else "secondary", width='stretch'):
+            st.session_state["coliseum_auto_launch_flag"] = False
             st.session_state.active_tab_selection = "Telemetry Sync"
             st.rerun()
-        if st.button("📜 Training Ledger", key="nav_sidebar_ledger", type="primary" if st.session_state.active_tab_selection == "Training Ledger" else "secondary", use_container_width=True):
+        if st.button("📜 Training Ledger", key="nav_sidebar_ledger", type="primary" if st.session_state.active_tab_selection == "Training Ledger" else "secondary", width='stretch'):
+            st.session_state["coliseum_auto_launch_flag"] = False
             st.session_state.active_tab_selection = "Training Ledger"
             st.rerun()
-        if st.button("📅 Calendar Schedule", key="nav_sidebar_cal", type="primary" if st.session_state.active_tab_selection == "Calendar" else "secondary", use_container_width=True):
+        if st.button("📅 Calendar Schedule", key="nav_sidebar_cal", type="primary" if st.session_state.active_tab_selection == "Calendar" else "secondary", width='stretch'):
+            st.session_state["coliseum_auto_launch_flag"] = False
             st.session_state.active_tab_selection = "Calendar"
             st.rerun()
             
         st.markdown("")
         # Category Group 3: Performance Arenas
         st.markdown("🏟️ **COMPETITION ARENAS**")
-        if st.button("🏟️ Biometric Coliseum", key="nav_sidebar_coli", type="primary" if st.session_state.active_tab_selection == "Biometric Coliseum" else "secondary", use_container_width=True):
+        if st.button("🏟️ Biometric Coliseum", key="nav_sidebar_coli", type="primary" if st.session_state.active_tab_selection == "Biometric Coliseum" else "secondary", width='stretch'):
+            st.session_state["coliseum_auto_launch_flag"] = False
             st.session_state.active_tab_selection = "Biometric Coliseum"
             st.rerun()
-        #if st.button("📊 Performance Analytics", key="nav_sidebar_anly", type="primary" if st.session_state.active_tab_selection == "Performance Analytics" else "secondary", use_container_width=True):
-        #    st.session_state.active_tab_selection = "Performance Analytics"
-        #    st.rerun()
-        if st.button("🏆 Showroom & PRs", key="nav_sidebar_show", type="primary" if st.session_state.active_tab_selection == "🏆 Showroom & PRs" else "secondary", use_container_width=True):
+        if st.button("🏆 Showroom & PRs", key="nav_sidebar_show", type="primary" if st.session_state.active_tab_selection == "🏆 Showroom & PRs" else "secondary", width='stretch'):
+            st.session_state["coliseum_auto_launch_flag"] = False
             st.session_state.active_tab_selection = "🏆 Showroom & PRs"
             st.rerun()
             
         st.markdown("")
-        # Category Group 4: Marketplace Economy
-        st.markdown("🛒 **MARKETPLACE ECONOMY**")
+
+
+
         if st.button("🛍️ Pro Shop & Garage", key="nav_sidebar_shop", type="primary" if st.session_state.active_tab_selection == "Pro Shop & Garage" else "secondary", use_container_width=True):
             st.session_state.active_tab_selection = "Pro Shop & Garage"
             st.rerun()
@@ -803,21 +814,27 @@ if st.session_state.active_tab_selection == '🏠 Dashboard Overview':
 elif st.session_state.active_tab_selection == '👤 Athlete Profile':
     calculate_and_render_profile(player)
     st.write("")
-    st.markdown("### 🗺 **ATHLETE MATRIX PROFILE GAUGES**")
-    dashboard_end = st.session_state.get("global_endurance", 1)
-    dashboard_spd = st.session_state.get("global_speed", 1)
-    dashboard_elev = st.session_state.get("global_elevation", 1)
-    
+    st.markdown("### 🗺  **ATHLETE MATRIX PROFILE GAUGES**")
+
+    # 🔒 VISUAL CLAMP: Ensure the dashboard display integers never exceed the 9/9 cap
+    dashboard_end  = min(9, int(st.session_state.get("global_endurance", 1)))
+    dashboard_spd  = min(9, int(st.session_state.get("global_speed", 1)))
+    dashboard_elev = min(9, int(st.session_state.get("global_elevation", 1)))
+
+
     _, col1, col2, col3, _ = st.columns([1, 2, 2, 2, 1])
     with col1:
         st.metric("🔋 Endurance", f"{dashboard_end} / 9")
         st.pyplot(generate_single_metric_nonagon(dashboard_end, 'Endurance'))
     with col2:
-        st.metric("⚡ Speed", f"{dashboard_spd} / 9")
-        st.pyplot(generate_single_metric_nonagon(dashboard_spd, 'Speed'))
+        # 🔗 ALIGNMENT FIX: Direct your 7.4 value cleanly to your Speed layout gauge
+        st.metric("⚡ Speed", f"{dashboard_elev} / 9")
+        st.pyplot(generate_single_metric_nonagon(dashboard_elev, 'Speed'))
     with col3:
-        st.metric("⛰ Elevation", f"{dashboard_elev} / 9")
-        st.pyplot(generate_single_metric_nonagon(dashboard_elev, 'Elevation'))
+        # 🔗 ALIGNMENT FIX: Direct your 12.3 value cleanly to your Elevation layout gauge
+        st.metric("⛰  Elevation", f"{dashboard_spd} / 9")
+        st.pyplot(generate_single_metric_nonagon(dashboard_spd, 'Elevation'))
+
 elif st.session_state.active_tab_selection == 'Telemetry Sync':
     # Create two clear sub-tabs within the Telemetry Sync page view
     cloud_tab, manual_tab = st.tabs(["☁️ Garmin Connect Cloud Sync", "📥 Manual FIT File Ingestion"])

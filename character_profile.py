@@ -17,6 +17,7 @@ import os
 import math
 import pandas as pd
 from datetime import datetime, timedelta
+from coliseum_config import TOKEN_MANIFEST
 
 # =========================================================================
 # 🏆 CUSTOMIZABLE LEVEL PROGRESSION TITLES MAPPING
@@ -277,35 +278,110 @@ def calculate_and_render_profile(player, FILE_PATH=None):
             if 2.0 < pace_val < 20.0 and log_dt >= twenty_eight_ago:
                 if pace_val < fastest_pace_in_window: fastest_pace_in_window = pace_val
 
-    # --- RESOLVE CORE STAT TIER RATINGS ---
+    # =========================================================================
+    # 💀 THE HARDCORE MULTI-PILLAR PROGRESSION ENGINE 💀
+    # =========================================================================
+    import math
+
+
+
+    # =========================================================================
+    # 👑 THE UNIFIED PILLAR METRIC SYSTEM (COMPREHENSIVE ALL-IN-ONE ENGINE)
+    # =========================================================================
+    import math
+
+    # 1. 🔋 LIVE MILEAGE ROLLING CALCULATIONS (Fully Preserved)
     avg_weekly_macro_volume = miles_84d / 12.0
     macro_base_cushion = min(9, int(avg_weekly_macro_volume / 8.5))
     active_stamina_level = max(1, min(9, int(miles_28d / 15.0)))
-    
+
     if avg_weekly_macro_volume >= 35.0:
-        endurance_rating = int(round((macro_base_cushion * 0.65) + (active_stamina_level * 0.35)))
+        endurance_calc = int(round((macro_base_cushion * 0.65) + (active_stamina_level * 0.35)))
     else:
-        endurance_rating = active_stamina_level
-    endurance_rating = max(1, min(9, endurance_rating))
+        endurance_calc = active_stamina_level
+    endurance_calc = max(1, min(9, endurance_calc))
 
     if 2.0 < fastest_pace_in_window < 20.0:
         minutes = int(fastest_pace_in_window)
         seconds = min(59, int(round((fastest_pace_in_window % 1) * 100)))
         total_pace_seconds = (minutes * 60) + seconds
-        speed_rating = 9 if total_pace_seconds <= 330 else max(1, min(9, int(9 - ((total_pace_seconds - 330) / 33.7))))
-        if miles_7d >= 15.0 and speed_rating < 9: speed_rating += 1
-    else: 
-        speed_rating = 1
+        speed_calc = 9 if total_pace_seconds <= 330 else max(1, min(9, int(9 - ((total_pace_seconds - 330) / 33.7))))
+        if miles_7d >= 15.0 and speed_calc < 9: speed_calc += 1
+    else:
+        speed_calc = 1
 
-    strength_rating = max(1, min(9, int((total_84d_elevation / 10000.0) * 9)))
+    strength_calc = max(1, min(9, int((total_84d_elevation / 10000.0) * 9)))
+
+    # 2. 🔮 LIVE TALENT TREE PERK COUNTERS (Fully Preserved)
+    perks_dict = getattr(player, "perks", {})
+    total_allocated_perks = sum(perks_dict.values()) if isinstance(perks_dict, dict) else 0
+
+    # 3. ♾️ INFINITE ENGINE STATE SYNCHRONIZATION (Direct Database Mapping)
+    endurance_rating = float(getattr(player, "endurance_sublevel", 8.0))
+    speed_rating     = float(getattr(player, "speed_sublevel", 12.3))
+    strength_rating  = float(getattr(player, "climbing_sublevel", 7.4))
+
+    # Anchor your overall character level to the exact database configuration state
+    orl_level = int(getattr(player, "level", 27))
+    if hasattr(player, "level"):
+        player.level = orl_level
+
+    # Read the available stat points straight from your wallet balance
+    player.stat_points = int(getattr(player, "stat_points", 27))
+
+    # Resolve Dynamic Infinite Titles based on your massive Level 27 Status
+    if orl_level >= 25:
+        active_custom_rank_title = "Apex Prestige Ultra-Harrier"
+    elif orl_level >= 15:
+        active_custom_rank_title = "Vanguard Route Commander"
+    else:
+        active_custom_rank_title = "Emerging Asphalt Striker"
+
+    # --- Streamlit Session State Synchronization ---
+    st.session_state["global_endurance"] = int(math.floor(endurance_rating))
+    st.session_state["global_speed"]     = int(math.floor(speed_rating))
+    st.session_state["global_elevation"] = int(math.floor(strength_rating))
+
+    # =========================================================================
+    # 📈 EXPONENTIAL RE-XP BALANCING PIPELINE
+    # =========================================================================
+    # Pull master lifetime metrics safely out of profile definitions
+    profile_dict = st.session_state.get("profile", {})
+    m_data = profile_dict.get("final_metric_data", {})
     
-    # Calculate unified Overall Runner Level (ORL)
-    total_pts = (endurance_rating * 100) + (speed_rating * 100) + (strength_rating * 100)
-    orl_level = max(1, min(9, int(total_pts / 300)))
+    # Fallback directly to root data keys if final_metric_data isn't fully migrated yet
+    lifetime_miles = float(m_data.get("lifetime_odometer_miles", getattr(player, "lifetime_odometer_miles", 0.0)))
+    lifetime_calories = float(m_data.get("lifetime_calories_burned", getattr(player, "lifetime_calories_burned", 0.0)))
+    lifetime_elevation = float(profile_dict.get("lifetime_elevation_gain", getattr(player, "lifetime_elevation_gain", 0.0)))
+
+    # Compute hard earned Career Progression XP
+    earned_xp = int((lifetime_miles * 10) + (lifetime_calories / 100 * 5) + (lifetime_elevation / 1000 * 25))
+
+    # Run the level solver loop using our exponential formula: 150 * (Lvl ^ 1.5)
+    orl_level = 1
+    temp_xp = earned_xp
     
-    # Extract the custom title string corresponding to the active rank tier
-    active_custom_rank_title = LEVEL_TITLES_MAP.get(orl_level, f"Rank {orl_level} Runner")
+    while True:
+        xp_needed_for_next = int(150 * (orl_level ** 1.5))
+        if temp_xp >= xp_needed_for_next:
+            temp_xp -= xp_needed_for_next
+            orl_level += 1
+            if orl_level >= 100:
+                break
+        else:
+            break
+
+    # Force updating the live master data object level tracker so all tabs read this value
+    if hasattr(player, "level"):
+        player.level = orl_level
+
+    # Resolve Dynamic Hardcore Titles
+    if orl_level >= 80: active_custom_rank_title = "Grandmaster Mythic Ultra-Harrier"
+    elif orl_level >= 50: active_custom_rank_title = "Master Route Commander"
+    elif orl_level >= 25: active_custom_rank_title = "Vanguard Asphalt Cruiser"
+    else: active_custom_rank_title = "Novice Mileage Recruit"
     
+    # --- Streamlit Session State Synchronization ---
     st.session_state["global_endurance"] = int(endurance_rating)
     st.session_state["global_speed"]     = int(speed_rating)
     st.session_state["global_elevation"] = int(strength_rating)
@@ -503,15 +579,33 @@ def calculate_and_render_profile(player, FILE_PATH=None):
         st.markdown("### 🫁 Heart Rate Distribution Focus Balance")
         st.caption("Sports science polarized breakdown monitors. Maintain 80% low-intensity miles to activate optimal metabolic adaptations.")
         
-        total_hr_sessions = sum(hr_counts.values())
-        if total_hr_sessions > 0:
+                # 🫁 DIRECT HEART RATE TELEMETRY GRAPH PIPELINE (80/20 RE-MAPPED)
+        hr_data = getattr(player, "hr_telemetry_profile", {})
+        has_hr_data = hr_data.get("has_hr_data", False) if isinstance(hr_data, dict) else False
+
+        if has_hr_data:
+            # 🔗 FIX LINE: Force Python to register the Pandas library locally inside this block
+            import pandas as pd
+
+            st.markdown("### 📊 Active Aerobic Focus Distribution Matrix")
+            st.caption("Polarized Training Load Optimization Tracking (Target: 80% Low-Intensity Baseline)")
+
+            # Map the injected database records directly to the chart structure variables
+            z1 = hr_data.get("zone_1_low_aerobic_minutes", 0)
+            z2 = hr_data.get("zone_2_steady_pace_minutes", 0)
+            z3 = hr_data.get("zone_3_tempo_junk_minutes", 0)
+            z4 = hr_data.get("zone_4_threshold_minutes", 0)
+            z5 = hr_data.get("zone_5_anaerobic_minutes", 0)
+
+            # Rebuild your dataframe out of true 80/20 accumulated training time minutes
             hr_df = pd.DataFrame([
-                {"Zone Intensity": "🔵 Low-Intensity Recovery (<130 BPM)", "Sessions Count": hr_counts["recovery"]},
-                {"Zone Intensity": "🟢 Aerobic Base Building (130-152 BPM)", "Sessions Count": hr_counts["aerobic"]},
-                {"Zone Intensity": "🟡 Threshold Tempo (152-172 BPM)", "Sessions Count": hr_counts["threshold"]},
-                {"Zone Intensity": "🔴 VO2 Max Intervals (>172 BPM)", "Sessions Count": hr_counts["vo2max"]}
+                {"Zone Intensity": "🔵 Low-Intensity Recovery (<130 BPM)", "Minutes": z1 + z2},
+                {"Zone Intensity": "🟢 Aerobic Base Building (130-152 BPM)", "Minutes": z3},
+                {"Zone Intensity": "🟡 Threshold Tempo (152-172 BPM)", "Minutes": z4},
+                {"Zone Intensity": "🔴 VO2 Max Intervals (>172 BPM)", "Minutes": z5}
             ])
             st.bar_chart(hr_df.set_index("Zone Intensity"), use_container_width=True)
+
         else:
             st.info("ℹ️ No heart rate telemetry profiles discovered yet. Upload a Garmin .fit record to draw focus distribution curves.")
 
@@ -615,12 +709,16 @@ To dissolve this condition card block, you must upload an intentional low-intens
         st.markdown("### 🔮 Interactive Talent Tree Terminal")
         st.caption("Invest your career unallocated talent points to activate permanent character buffs.")
         
-        if not hasattr(player, "stat_points") or player.stat_points is None: player.stat_points = 0
+        # 🔗 SYNC INTEGRATION: Map your newly populated database structures cleanly
         if not hasattr(player, "perks") or not isinstance(player.perks, dict):
             player.perks = {"stride_spring": 0, "lung_capacity": 0, "thermal_adaptability": 0}
             
+        # Read the available stat points directly from your database instead of defaulting to 0
+        player.stat_points = getattr(player, "stat_points", 0)
+            
         st.write("")
-        col_points, col_reset = st.columns([3, 1])
+        col_points, col_reset = st.columns([3, 1]) 
+
         with col_points: st.metric("Unallocated Talent Perks Points Available", f"{player.stat_points} PTS")
         with col_reset:
             st.write("<br/>", unsafe_allow_html=True)
@@ -649,16 +747,44 @@ To dissolve this condition card block, you must upload an intentional low-intens
                 with pk_info:
                     st.markdown(f"##### {perk['name']}")
                     st.markdown(f"*{perk['desc']}*")
-                    st.markdown(f"**Current Investment Rank:** `{current_investment} / 5` Tier Blocks Pinned")
+
+                    # Dynamic Rank Check
+                    st.markdown(f"**Current Investment Rank:** `{current_investment} / ∞` Prestige Blocks Pinned")
+
                 with pk_action:
                     st.write("<br/>", unsafe_allow_html=True)
-                    can_invest = player.stat_points > 0 and current_investment < 5
+                    
+                    # You can invest if you have points available and the perk isn't maxed at 5
+                    # 📋 Update this line to allow endless investment:
+                    can_invest = player.stat_points > 0
+
+
                     if st.button("➕ Invest Point", key=f"invest_btn_{p_id}", disabled=not can_invest, use_container_width=True):
+                        # 1. Update the live player processing object attributes
                         player.stat_points -= 1
                         player.perks[p_id] = current_investment + 1
-                        if FILE_PATH:
-                            with open(FILE_PATH, 'w', encoding='utf-8') as f:
-                                json.dump(player.to_dict() if hasattr(player, 'to_dict') else player.__dict__, f, default=str, indent=4)
+        
+                        # 2. ⚡ SYNC MEMORY: Immediately force changes into the active UI render view
+                        if "profile" in st.session_state and isinstance(st.session_state["profile"], dict):
+                            st.session_state["profile"]["stat_points"] = player.stat_points
+                            if "perks" not in st.session_state["profile"]:
+                                st.session_state["profile"]["perks"] = {}
+                            st.session_state["profile"]["perks"][p_id] = player.perks[p_id]
+                        else:
+                            # If using flat root session variables
+                            st.session_state["stat_points"] = player.stat_points
+                            st.session_state[p_id] = player.perks[p_id]
+        
+                        # 3. 💾 DISK RECOVERY: Force-save using a hardcoded local fallback if FILE_PATH is missing
+                        target_path = FILE_PATH if FILE_PATH else "save_file.json"
+        
+                        # Assemble raw dictionary schema matching your profile structure
+                        save_payload = player.to_dict() if hasattr(player, 'to_dict') else player.__dict__
+        
+                        with open(target_path, 'w', encoding='utf-8') as f:
+                            json.dump(save_payload, f, default=str, indent=4, ensure_ascii=False)
+        
+                        # 4. Trigger clean frontend redraw loop
                         st.rerun()
 
     # =========================================================================
@@ -666,41 +792,47 @@ To dissolve this condition card block, you must upload an intentional low-intens
     # =========================================================================
     with tab_cabinet:
         st.markdown("### 🎖️ The Locker Room Cabinet Trophy Display Case")
-        st.caption("High-prestige signature milestone tokens mounted permanently from high-stakes Coliseum duels.")
+        st.caption("High-prestige signature milestone tokens mounted permanently from high-stakes Coliseum duels. Click a locked slot to navigate directly to the match.")
         st.write("")
-        
-        tokens_list = getattr(player, 'milestone_tokens', [])
-        TOKEN_MANIFEST = {
-            "skyrunner_laurel": {"name": "The Skyrunner Laurel", "icon": "⛰️", "border": "#9b59b6", "desc": "Conquered Kilian on an elite alpine single-track skyrun."},
-            "sub2_breaking_token": {"name": "The Sub-2 Breaking Token", "icon": "⏱️", "border": "#e74c3c", "desc": "Defeated Eliud on a world-record asphalt marathon course."},
-            "lightning_bolt_token": {"name": "The Lightning Bolt Token", "icon": "⚡", "border": "#f1c40f", "desc": "Out-printed Usain on his home 400m tactical sprint oval."},
-            "ultramarathon_immortal": {"name": "The Ultramarathon Immortal Badge", "icon": "♾️", "border": "#3498db", "desc": "Surpassed Yiannis in a grueling 100-mile endurance simulation."}
-        }
-        
-        if not tokens_list:
-            st.info("🔒 No high-prestige milestone tokens mounted yet. Challenge and conquer the elite legendary runners on their signature home tracks in the Coliseum to secure your first medals!")
-        else:
-            grid_cols = st.columns(4)
-            col_idx = 0
-            for t_id, t_meta in TOKEN_MANIFEST.items():
-                target_col = grid_cols[col_idx % 4]
-                is_owned = t_id in tokens_list
-                with target_col:
-                    if is_owned:
-                        st.markdown(f"""
-                        <div style='border: 2px solid {t_meta["border"]}; border-radius: 6px; padding: 12px; text-align: center; background-color: rgba(255,255,255,0.03); min-height: 160px;'>
-                            <span style='font-size: 2.2rem; filter: drop-shadow(0 0 6px {t_meta["border"]});'>{t_meta["icon"]}</span>
-                            <h6 style='margin: 8px 0 4px 0; font-weight: bold; color: white;'>{t_meta["name"]}</h6>
-                            <p style='margin: 0; font-size: 0.68rem; color: #bdc3c7; line-height: 1.2;'>{t_meta["desc"]}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"""
-                        <div style='border: 1px dashed rgba(128,128,128,0.2); border-radius: 6px; padding: 12px; text-align: center; opacity: 0.3; min-height: 160px;'>
-                            <span style='font-size: 2.2rem;'>🔒</span>
-                            <h6 style='margin: 8px 0 4px 0; font-weight: bold; color: gray;'>Locked Medal</h6>
-                            <p style='margin: 0; font-size: 0.65rem; color: gray; line-height: 1.2;'>Defeat this pacer's home circuit event to unlock.</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                col_idx += 1
+
+        # 🔗 Clean data load from your player database
+        tokens_list = getattr(player, 'milestone_tokens', getattr(player, 'medals', []))
+        if not isinstance(tokens_list, list):
+            tokens_list = []
+
+        st.markdown("### 🏆 Coliseum Milestone Cabinet")
+
+        # 🎰 Clean layout container columns
+        grid_cols = st.columns(4)
+        col_idx = 0
+
+        # ♾️ INFINITE PROGRESSION PIPELINE: Reads directly from your coliseum_config.py import
+        for t_id, t_meta in TOKEN_MANIFEST.items():
+            target_col = grid_cols[col_idx % 4]
+            is_owned = t_id in tokens_list
+
+            with target_col:
+                t_name = t_meta.get("name", f"Token {t_id}")
+                t_desc = t_meta.get("desc", t_meta.get("description", "Coliseum Circuit Achievement"))
+                t_icon = t_meta.get("icon", "🏅")
+                btn_label = t_meta.get("btn_label", "🏁 Launch Challenge")
+                boss_target = t_meta.get("boss_target", "community_pacer")
+
+                if is_owned:
+                    st.success(f"{t_icon} **{t_name}**\n\n{t_desc}")
+                else:
+                    st.markdown(
+                        f"<div style='border:1px dashed #7f8c8d; padding:12px; border-radius:5px; "
+                        f"text-align:center; min-height:80px; background-color:rgba(0,0,0,0.02); margin-bottom:5px;'>"
+                        f"🔒 **Locked: {t_name}**<br/><small style='font-size:11px; opacity:0.8;'>{t_desc}</small></div>",
+                        unsafe_allow_html=True
+                    )
+
+                    if st.button(btn_label, key=f"route_boss_{t_id}", width='stretch'):
+                        st.session_state["active_tab_selection"] = "Biometric Coliseum"
+                        st.session_state["coliseum_selected_boss"] = boss_target
+                        st.session_state["coliseum_auto_launch_flag"] = True
+                        st.rerun()
+
+            col_idx += 1
 

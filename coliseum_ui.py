@@ -340,6 +340,7 @@ def render_coliseum(player, FILE_PATH):
     # 🎯 FIX: Fallback automatically to the first valid catalog keys if empty on page load!
     if not st.session_state.get("selected_boss_id") and boss_catalog:
         st.session_state.selected_boss_id = list(boss_catalog.keys())[0]
+    selected_boss = st.session_state.selected_boss_id
 
     if not st.session_state.get("selected_track_id") and course_catalog:
         st.session_state.selected_track_id = list(course_catalog.keys())[0]

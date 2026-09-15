@@ -32,11 +32,21 @@ def process_and_award_metrics(new_run_log: dict):
         
     with open(SAVE_FILE, "r", encoding="utf-8") as f:
         profile = json.load(f)
-        
-    # Safeguard initialization if user hasn't run the migration snippet yet
+       
+
+    # ⚡ AUTO-MIGRATION RECOVERY: If final_metric_data is missing, build it on the fly!
     if "final_metric_data" not in profile:
-        return
+        profile["final_metric_data"] = {
+            "lifetime_odometer_miles": float(profile.get("lifetime_elevation_gain", 0.0) * 0.0), # Default safety map
+            "lifetime_calories_burned": 0.0,
+            "weekly_rolling_mileage": 0.0,
+            "monthly_rolling_mileage": 0.0
+        }
         
+        # Sync root flat keys into the new dictionary structure if they exist
+        if "bodyweight" in profile:
+            profile["final_metric_data"]["athlete_weight_lbs"] = profile["bodyweight"]
+
     m_data = profile["final_metric_data"]
     
     # --- A. DATA CONVERSION EXTRACTORS ---

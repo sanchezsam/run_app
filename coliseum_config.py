@@ -11,6 +11,85 @@ Supports explicit portrait artwork definitions and character emoji fallback rout
 # Maps competitive opponents onto standard baseline running physics stats.
 # Explicitly defines profile picture asset paths and fallback character icons.
 # =========================================================================
+
+
+# =========================================================================
+# 🏆 CENTRALIZED COLISEUM CHALLENGE TOKENS MANIFEST MATRIX
+# =========================================================================
+# This manages the full progression ladder from amateur to prestige endgame.
+TOKEN_MANIFEST = {
+    # 🌱 ENTRY LEVEL / EASIER CHALLENGES (Tier 1-4 Core Blocks)
+    "asphalt_recruit": {
+        "name": "Asphalt Recruit Token", 
+        "icon": "👟", 
+        "border": "#2ecc71", 
+        "desc": "Defeat the Local Community Pacer Bot on a flat 5K fun run circuit.",
+        "boss_target": "community_pacer",
+        "btn_label": "🌱 Launch 5K Open"
+    },
+    "hill_sprinter": {
+        "name": "Hill Sprinter Emblem", 
+        "icon": "🏃‍♂️", 
+        "border": "#3498db", 
+        "desc": "Out-climb the Park Ranger Drone on the Local Park Hill Trail.",
+        "boss_target": "park_drone",
+        "btn_label": "🏃‍♂️ Launch Hill Sprint"
+    },
+    "base_endurance": {
+        "name": "Aerobic Anchor Medal", 
+        "icon": "⚓", 
+        "border": "#1abc9c", 
+        "desc": "Maintain a steady cruise split against the Training AI on a 10K loop.",
+        "boss_target": "training_ai",
+        "btn_label": "⚓ Launch 10K Cruise"
+    },
+    "weather_novice": {
+        "name": "Microclimate Badge", 
+        "icon": "🌦️", 
+        "border": "#f1c40f", 
+        "desc": "Complete a stormy simulation run against the Basic Weather Bot.",
+        "boss_target": "weather_bot",
+        "btn_label": "🌦️ Launch Climate Check"
+    },
+    
+    # 👑 LEGENDARY END-GAME CIRCUITS (Prestige Over-Level Brackets)
+    "skyrunner_laurel": {
+        "name": "The Skyrunner Laurel", 
+        "icon": "⛰️ ", 
+        "border": "#9b59b6", 
+        "desc": "Conquered Kilian on an elite alpine single-track skyrun.",
+        "boss_target": "mountain_ultra",
+        "btn_label": "⛰️ Launch Alpine Challenge"
+    },
+    "sub2_breaking_token": {
+        "name": "The Sub-2 Breaking Token", 
+        "icon": "⏱️ ", 
+        "border": "#e74c3c", 
+        "desc": "Defeated Eliud on a world-record asphalt marathon course.",
+        "boss_target": "boston_pacer",
+        "btn_label": "⏱️ Launch Marathon Challenge"
+    },
+    "lightning_bolt_token": {
+        "name": "The Lightning Bolt Token", 
+        "icon": "⚡", 
+        "border": "#f1c40f", 
+        "desc": "Out-printed Usain on his home 400m tactical sprint oval.",
+        "boss_target": "tracksmith_velocity",
+        "btn_label": "⚡ Launch Sprint Challenge"
+    },
+    "ultramarathon_immortal": {
+        "name": "The Ultramarathon Immortal Badge", 
+        "icon": "♾️", 
+        "border": "#3498db", 
+        "desc": "Surpassed Yiannis in a grueling 100-mile endurance simulation.",
+        "boss_target": "grandmaster",
+        "btn_label": "👑 Launch Endgame Challenge"
+    }
+}
+
+
+
+
 boss_catalog = {
     'Kilian [GAZELLE]': {
         'fuel': 3, 
