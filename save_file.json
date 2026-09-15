@@ -12,7 +12,7 @@
     "elevation_milestone_history": [],
     "deep_rem_streak": 0,
     "stat_points": 0,
-    "gold": 821,
+    "gold": 8,
     "inventory": [
         "Oakley Radar Path Sunglasses",
         "New Balance 1080v15",
@@ -22,11 +22,11 @@
         "Tracksmith Session Hat"
     ],
     "equipped_gear": {
-        "Oakley Radar Path Sunglasses": 1,
-        "New Balance 1080v15": 1,
+        "Oakley Radar Path Sunglasses": 2,
+        "New Balance 1080v15": 2,
         "Garmin Forerunner 965": 1,
-        "Van Cortlandt Singlet": 1,
-        "Tracksmith MeridianShorts": 1,
+        "Van Cortlandt Singlet": 3,
+        "Tracksmith MeridianShorts": 2,
         "Tracksmith Session Hat": 1
     },
     "registered_races": [],
@@ -350294,6 +350294,7 @@
     "p_fuel": 6.0,
     "p_nitro": 6.0,
     "p_torque": 9.0,
+    "gear_colors": {},
     "endurance_level": 0,
     "pace_level": 0,
     "hill_climbing_level": 0,

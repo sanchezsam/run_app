@@ -18,6 +18,8 @@ def render_training_ledger(player):
     
     run_list = []
     historical_logs = getattr(player, 'history_logs', [])
+    #st.write("Debug: Raw logs found in player object:", historical_logs[:3])
+
     
         # =========================================================================
     # REPLACED PARSER ENGINE INITIALIZATION IN PART 1 OF ledger_ui.py
@@ -30,24 +32,36 @@ def render_training_ledger(player):
     
     # FIRST PASS: Read all advanced structured dictionaries to prioritize high-fidelity data
     for log in historical_logs:
-        if isinstance(log, dict) and ("text_payload" in log or "text_payload" in log):
+        if isinstance(log, dict) and "text_payload" in log:
             try:
                 date_str = log.get("Date", log.get("Activity Date"))
                 raw_dist = float(log.get("Distance (Miles)", log.get("dist", 0.0)))
+                
+                # --- FIXED PACE PARSER FOR MM:SS AND STRINGS ---
                 p_val = log.get("Pace_Val", log.get("pace", 0.0))
-                if isinstance(p_val, str): 
-                    p_val = float(p_val.replace(" min/mi", "").strip())
+                if isinstance(p_val, str):
+                    p_val = p_val.replace(" min/mi", "").strip()
+                    if ":" in p_val:
+                        # Convert "10:30" string format to 10.50 float format
+                        pace_parts = p_val.split(":")
+                        p_val = float(pace_parts[0]) + (float(pace_parts[1]) / 60.0)
+                    else:
+                        p_val = float(p_val)
+                else:
+                    p_val = float(p_val)
                 
                 raw_ele = str(log.get("Elevation (ft)", log.get("ele", "0")))
                 elev_val = float(''.join(c for c in raw_ele if c.isdigit() or c=='.') or 0.0)
+                
+                # Extract just the YYYY-MM-DD component for the datetime parser
                 dt_val = datetime.strptime(str(date_str)[:10], '%Y-%m-%d')
                 
                 run_list.append({
-                    'Activity Date': date_str,
+                    'Activity Date': str(date_str)[:10],
                     'Distance (Miles)': raw_dist,
                     'Duration': log.get("Duration", log.get("duration", "00:00:00")),
-                    'Pace_Val': float(p_val),
-                    'Pace (min/mi)': f"{float(p_val):.2f} min/mi" if float(p_val) > 0 else "0.00 min/mi",
+                    'Pace_Val': p_val,
+                    'Pace (min/mi)': f"{p_val:.2f} min/mi" if p_val > 0 else "0.00 min/mi",
                     'Elevation_Val': elev_val,
                     'Elevation (ft)': f"+{int(elev_val)} ft" if "ft" not in raw_ele else raw_ele,
                     'DateObj': dt_val,
@@ -55,12 +69,15 @@ def render_training_ledger(player):
                 })
                 
                 # Register this authentic activity signature fingerprint
-                # We round distance slightly to catch floating-point variations (e.g., 26.69 vs 26.7)
                 fingerprint = (str(date_str)[:10], round(raw_dist, 1))
                 processed_fingerprints.add(fingerprint)
                 
-            except Exception: pass
+            except Exception as e:
+                # Uncomment the line below if you ever need to debug hidden parsing errors again:
+                # st.write(f"Parsing error on run {log.get('Name')}: {e}")
+                pass
             
+
     # SECOND PASS: Load legacy plain text lines, skipping them if a structured version already exists
     for log in historical_logs:
         if not isinstance(log, dict):
@@ -213,10 +230,72 @@ def render_training_ledger(player):
                 date_span_string = f"{first_date_val.strftime('%b %d')} - {last_date_val.strftime('%b %d, %Y')}"
                 
                 with st.expander(f"📆 Weekly Report & Sheet — {wk_label} ({date_span_string} | {len(df_wk_chunk)} Runs)"):
+                    
+                    # =========================================================================
+                    # NEW: ADD 4-COLUMN SUMMARY METRICS MATRIX TO WEEKLY BREAKDOWN
+                    # =========================================================================
+                    wk_total_dist = df_wk_chunk['Distance (Miles)'].sum()
+                    wk_total_elev = df_wk_chunk['Elevation_Val'].sum()
+                    
+                    # 1. Standard Average Weekly Pace (filtering out 0.0 entries)
+                    valid_wk_paces = df_wk_chunk[df_wk_chunk['Pace_Val'] > 0.0]['Pace_Val']
+                    wk_avg_pace = valid_wk_paces.mean() if not valid_wk_paces.empty else 0.0
+                    
+                    # 2. SCAN FOR TRUE FASTEST INDIVIDUAL MILE SPLIT IN THIS SPECIFIC WEEK
+                    wk_fastest_pr = 0.0
+                    lowest_wk_split_seconds = None
+                    
+                    for split_list in df_wk_chunk['splits']:
+                        if isinstance(split_list, list):
+                            for sp in split_list:
+                                s_dist = float(sp.get('distance_mi', sp.get('distance', 0.0)))
+                                # Target full 1-mile lap splits
+                                if 0.99 <= s_dist <= 1.02:
+                                    s_time = sp.get('time', sp.get('pace', ''))
+                                    if ':' in s_time:
+                                        t_parts = s_time.split(':')
+                                        tot_secs = int(t_parts[0]) * 60 + int(t_parts[1])
+                                        
+                                        # Glitch safeguard: Ignore impossible tracking errors under 3:45
+                                        if tot_secs < 225:
+                                            continue
+                                            
+                                        if lowest_wk_split_seconds is None or tot_secs < lowest_wk_split_seconds:
+                                            lowest_wk_split_seconds = tot_secs
+                                            wk_fastest_pr = int(t_parts[0]) + (int(t_parts[1]) / 60.0)
+                                            
+                    # Fallback to workout average minimum if no split arrays exist
+                    if wk_fastest_pr == 0.0 and not valid_wk_paces.empty:
+                        wk_fastest_pr = valid_wk_paces.min()
+
+                    # 3. RENDER THE 4-COLUMN MATRIX USING WEEKLY LAYOUT SCOPES
+                    wc1, wc2, wc3, wc4 = st.columns(4)
+                    with wc1: 
+                        st.metric("Odometer Volume", f"{wk_total_dist:.2f} Mi")
+                    
+                    with wc2:
+                        wk_avg_mins = int(wk_avg_pace)
+                        wk_avg_secs = int(round((wk_avg_pace - wk_avg_mins) * 60))
+                        if wk_avg_secs == 60: wk_avg_mins += 1; wk_avg_secs = 0
+                        st.metric("Average Split Pace", f"{wk_avg_mins}:{wk_avg_secs:02d} min/mi" if wk_avg_pace > 0 else "0:00 min/mi")
+                    
+                    with wc3: 
+                        st.metric("Vertical Ascent", f"+{int(wk_total_elev):,} Ft")
+                        
+                    with wc4:
+                        wk_pr_mins = int(wk_fastest_pr) 
+                        wk_pr_secs = int(round((wk_fastest_pr - wk_pr_mins) * 60))
+                        if wk_pr_secs == 60: wk_pr_mins += 1; wk_pr_secs = 0
+                        st.metric("Fastest PR Split", f"{wk_pr_mins}:{wk_pr_secs:02d} min/mi" if wk_fastest_pr > 0 else "0:00 min/mi")
+                        
+                    st.markdown("<p style='margin-top:15px; margin-bottom:15px; border-bottom: 1px solid #f3f4f6;'></p>", unsafe_allow_html=True)
+                    
                     # =========================================================================
                     # NEW: FOCUS 7-DAY DAILY VOLUME BAR CHART FOR THIS SPECIFIC WEEK
                     # =========================================================================
                     if not df_wk_chunk.empty:
+                        # Group rows by explicit calendar date to handle multiple same-day runs cleanly
+
                         # Group rows by explicit calendar date to handle multiple same-day runs cleanly
                         df_daily_volume = df_wk_chunk.groupby('Activity Date').agg(
                             Daily_Distance=('Distance (Miles)', 'sum')
@@ -297,12 +376,15 @@ def render_training_ledger(player):
                         if isinstance(splits_data, list) and len(splits_data) > 0:
                             # Generate a unique key using the dataframe row index and a random tag
                             unique_exp_key = f"exp_splits_{idx}_{wk_label}_{wk_idx}_{random.randint(1000, 9999)}"
-                            
-                            with st.expander("⏱️ View Mile Splits Breakdown", expanded=False):
+                            with st.expander("⏱ View Mile Splits Breakdown", expanded=False):
                                 df_splits_display = pd.DataFrame(splits_data)
-                                df_splits_display.columns = ["Split #", "Distance (Mi)", "Split Time", "Pace (/mi)"]
+                
+                                # --- FIXED: Dynamically map columns depending on metric lengths ---
+                                if len(df_splits_display.columns) == 6:
+                                    df_splits_display.columns = ["Split #", "Distance (Mi)", "Split Time", "Pace (/mi)", "Avg HR", "Max HR"]
+                                elif len(df_splits_display.columns) == 4:
+                                    df_splits_display.columns = ["Split #", "Distance (Mi)", "Split Time", "Pace (/mi)"]
                                 st.dataframe(df_splits_display, use_container_width=True, hide_index=True)
-                        
                         # Soft visual divider line between separate workouts
                         st.markdown("<p style='margin-top:2px; margin-bottom:8px; border-bottom: 1px dashed #e2e8f0;'></p>", unsafe_allow_html=True)
                         
@@ -323,16 +405,61 @@ def render_training_ledger(player):
                 
                 with st.expander(f"📉 Cumulative Standings Summary — {m_title} ({len(df_m_chunk)} Runs)"):
                     m_total_dist = df_m_chunk['Distance (Miles)'].sum()
-                    m_avg_pace = df_m_chunk['Pace_Val'].mean()
                     m_total_elev = df_m_chunk['Elevation_Val'].sum()
-                    m_fastest_pr = df_m_chunk['Pace_Val'].min()
-                    
+
+                    # 1. Standard Average Pace calculation (filtering out 0.0 entries)
+                    valid_m_paces = df_m_chunk[df_m_chunk['Pace_Val'] > 0.0]['Pace_Val']
+                    m_avg_pace = valid_m_paces.mean() if not valid_m_paces.empty else 0.0
+
+                    # 2. SCAN FOR TRUE FASTEST INDIVIDUAL MILE SPLIT (Monthly Level)
+                    m_fastest_pr = 0.0
+                    lowest_m_split_seconds = None
+
+                    for split_list in df_m_chunk['splits']:
+                        if isinstance(split_list, list):
+                            for sp in split_list:
+                                s_dist = float(sp.get('distance_mi', sp.get('distance', 0.0)))
+                                # Strictly target full 1-mile lap splits
+                                if 0.99 <= s_dist <= 1.02:
+                                    s_time = sp.get('time', sp.get('pace', ''))
+                                    if ':' in s_time:
+                                        t_parts = s_time.split(':')
+                                        # Calculate total seconds
+                                        tot_secs = int(t_parts[0]) * 60 + int(t_parts[1])
+
+                                        # Glitch safeguard: Ignore impossible tracking errors under 3:45
+                                        if tot_secs < 225:
+                                            continue
+
+                                        if lowest_m_split_seconds is None or tot_secs < lowest_m_split_seconds:
+                                            lowest_m_split_seconds = tot_secs
+                                            # Store as standard float decimal minutes for our metric formatter
+                                            m_fastest_pr = int(t_parts[0]) + (int(t_parts[1]) / 60.0)
+
+                    # Fallback to workout average minimum if no split arrays exist
+                    if m_fastest_pr == 0.0 and not valid_m_paces.empty:
+                        m_fastest_pr = valid_m_paces.min()
+
+                    # 3. RENDER METRICS WITH BASE-60 CLOCK FORMATTING
                     mc1, mc2, mc3, mc4 = st.columns(4)
-                    with mc1: st.metric("Odometer Volume", f"{m_total_dist:.2f} Mi")
-                    with mc2: st.metric("Average Split Pace", f"{m_avg_pace:.2f} min/mi")
-                    with mc3: st.metric("Vertical Ascent", f"+{int(m_total_elev):,} Ft")
-                    with mc4: st.metric("Fastest PR Split", f"{m_fastest_pr:.2f} min/mi")
-                    
+                    with mc1:
+                        st.metric("Odometer Volume", f"{m_total_dist:.2f} Mi")
+
+                    with mc2:
+                        m_avg_mins = int(m_avg_pace)
+                        m_avg_secs = int(round((m_avg_pace - m_avg_mins) * 60))
+                        if m_avg_secs == 60: m_avg_mins += 1; m_avg_secs = 0
+                        st.metric("Average Split Pace", f"{m_avg_mins}:{m_avg_secs:02d} min/mi" if m_avg_pace > 0 else "0:00 min/mi")
+
+                    with mc3:
+                        st.metric("Vertical Ascent", f"+{int(m_total_elev):,} Ft")
+
+                    with mc4:
+                        m_pr_mins = int(m_fastest_pr)
+                        m_pr_secs = int(round((m_fastest_pr - m_pr_mins) * 60))
+                        if m_pr_secs == 60: m_pr_mins += 1; m_pr_secs = 0
+                        st.metric("Fastest PR Split", f"{m_pr_mins}:{m_pr_secs:02d} min/mi" if m_fastest_pr > 0 else "0:00 min/mi")
+
                     g_col1, g_col2 = st.columns(2)
                     with g_col1:
                         st.caption("🟢 Mileage Volume Timeline")
@@ -360,18 +487,63 @@ def render_training_ledger(player):
             for yr_title in unique_years_list:
                 df_y_chunk = df_summary[df_summary['Year_Label'] == yr_title].copy()
                 
-                with st.expander(f"👑 Grand Championship Achievements — Year {yr_title} ({len(df_y_chunk)} Total Runs)"):
+                with st.expander(f"👑 — Year Achievements {yr_title} ({len(df_y_chunk)} Total Runs)"):
                     y_total_dist = df_y_chunk['Distance (Miles)'].sum()
-                    y_avg_pace = df_y_chunk['Pace_Val'].mean()
                     y_total_elev = df_y_chunk['Elevation_Val'].sum()
-                    y_fastest_pr = df_y_chunk['Pace_Val'].min()
                     
+                    # 1. Standard Average Pace calculation (filtering out 0.0 entries)
+                    valid_y_paces = df_y_chunk[df_y_chunk['Pace_Val'] > 0.0]['Pace_Val']
+                    y_avg_pace = valid_y_paces.mean() if not valid_y_paces.empty else 0.0
+                    
+                    # 2. SCAN FOR TRUE FASTEST INDIVIDUAL MILE SPLIT (The 5:43 Finder)
+                    y_fastest_pr = 0.0
+                    lowest_split_seconds = None
+                    
+                    for split_list in df_y_chunk['splits']:
+                        if isinstance(split_list, list):
+                            for sp in split_list:
+                                s_dist = float(sp.get('distance_mi', sp.get('distance', 0.0)))
+                                # Strictly target full 1-mile lap splits
+                                if 0.99 <= s_dist <= 1.02:
+                                    s_time = sp.get('time', sp.get('pace', ''))
+                                    if ':' in s_time:
+                                        t_parts = s_time.split(':')
+                                        # Calculate total seconds
+                                        tot_secs = int(t_parts[0]) * 60 + int(t_parts[1])
+                                        
+                                        # Glitch safeguard: Ignore impossible tracking errors under 3:45
+                                        if tot_secs < 225:
+                                            continue
+                                            
+                                        if lowest_split_seconds is None or tot_secs < lowest_split_seconds:
+                                            lowest_split_seconds = tot_secs
+                                            # Store as standard float decimal minutes for our metric formatter
+                                            y_fastest_pr = int(t_parts[0]) + (int(t_parts[1]) / 60.0)
+                                            
+                    # Fallback to workout average minimum if no split arrays exist
+                    if y_fastest_pr == 0.0 and not valid_y_paces.empty:
+                        y_fastest_pr = valid_y_paces.min()
+
+                    # 3. RENDER METRICS WITH BASE-60 CLOCK FORMATTING
                     yc1, yc2, yc3, yc4 = st.columns(4)
-                    with yc1: st.metric("Annual Distance Sum", f"{y_total_dist:.2f} Mi")
-                    with yc2: st.metric("Annual Mean Pace", f"{y_avg_pace:.2f} min/mi")
-                    with yc3: st.metric("Annual Climbing Power", f"+{int(y_total_elev):,} Ft")
-                    with yc4: st.metric("Annual Speedway PR", f"{y_fastest_pr:.2f} min/mi")
+                    with yc1: 
+                        st.metric("Annual Distance Sum", f"{y_total_dist:.2f} Mi")
                     
+                    with yc2:
+                        y_avg_mins = int(y_avg_pace)
+                        y_avg_secs = int(round((y_avg_pace - y_avg_mins) * 60))
+                        if y_avg_secs == 60: y_avg_mins += 1; y_avg_secs = 0
+                        st.metric("Annual Mean Pace", f"{y_avg_mins}:{y_avg_secs:02d} min/mi" if y_avg_pace > 0 else "0:00 min/mi")
+                    
+                    with yc3: 
+                        st.metric("Annual Climbing Power", f"+{int(y_total_elev):,} Ft")
+                        
+                    with yc4:
+                        y_pr_mins = int(y_fastest_pr) 
+                        y_pr_secs = int(round((y_fastest_pr - y_pr_mins) * 60))
+                        if y_pr_secs == 60: y_pr_mins += 1; y_pr_secs = 0
+                        st.metric("Annual Speedway PR", f"{y_pr_mins}:{y_pr_secs:02d} min/mi" if y_fastest_pr > 0 else "0:00 min/mi")
+
                     df_y_chunk['Month Name'] = df_y_chunk['DateObj'].dt.strftime('%b')
                     month_order_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                     df_y_grouped = df_y_chunk.groupby('Month Name', as_index=False).agg({'Distance (Miles)': 'sum', 'Pace_Val': 'mean'})
