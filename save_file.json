@@ -1,8 +1,8 @@
 {
     "name": "save_file.json",
     "bodyweight": 180,
-    "level": 43,
-    "total_xp": 118,
+    "level": 58,
+    "total_xp": 12,
     "running_level": 1,
     "vo2_max": 40.0,
     "avg_heart_rate": 150,
@@ -12,7 +12,7 @@
     "elevation_milestone_history": [],
     "deep_rem_streak": 0,
     "stat_points": 0,
-    "gold": 136,
+    "gold": 372,
     "inventory": [
         "Oakley Radar Path Sunglasses",
         "New Balance 1080v15",
@@ -25,9 +25,9 @@
         "Oakley Radar Path Sunglasses": 2,
         "New Balance 1080v15": 2,
         "Garmin Forerunner 965": 2,
-        "Van Cortlandt Singlet": 2,
-        "Tracksmith MeridianShorts": 1,
-        "Tracksmith Session Hat": 2
+        "Van Cortlandt Singlet": 3,
+        "Tracksmith MeridianShorts": 2,
+        "Tracksmith Session Hat": 3
     },
     "registered_races": [],
     "boss_wins": {
@@ -350716,6 +350716,888 @@
                     "icon": "\ud83e\udec0"
                 }
             ]
+        },
+        {
+            "Date": "2026-09-21 11:09:48",
+            "Name": "24447438439_ACTIVITY.fit",
+            "Distance (Miles)": 13.13,
+            "Duration": "1:34:43",
+            "pace": "7:13",
+            "Elevation (ft)": "+597.1 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "08:36",
+                    "pace": "8:36",
+                    "avg_heart_rate": 127,
+                    "max_heart_rate": 147
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "08:09",
+                    "pace": "8:09",
+                    "avg_heart_rate": 146,
+                    "max_heart_rate": 151
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "07:48",
+                    "pace": "7:48",
+                    "avg_heart_rate": 146,
+                    "max_heart_rate": 157
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "07:39",
+                    "pace": "7:39",
+                    "avg_heart_rate": 151,
+                    "max_heart_rate": 159
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "07:30",
+                    "pace": "7:30",
+                    "avg_heart_rate": 160,
+                    "max_heart_rate": 164
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "07:22",
+                    "pace": "7:22",
+                    "avg_heart_rate": 164,
+                    "max_heart_rate": 172
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "07:11",
+                    "pace": "7:11",
+                    "avg_heart_rate": 166,
+                    "max_heart_rate": 172
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "07:00",
+                    "pace": "7:00",
+                    "avg_heart_rate": 158,
+                    "max_heart_rate": 163
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "06:50",
+                    "pace": "6:50",
+                    "avg_heart_rate": 160,
+                    "max_heart_rate": 163
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 1.0,
+                    "time": "06:40",
+                    "pace": "6:40",
+                    "avg_heart_rate": 166,
+                    "max_heart_rate": 174
+                },
+                {
+                    "split_num": 11,
+                    "distance_mi": 1.0,
+                    "time": "06:31",
+                    "pace": "6:31",
+                    "avg_heart_rate": 170,
+                    "max_heart_rate": 177
+                },
+                {
+                    "split_num": 12,
+                    "distance_mi": 1.0,
+                    "time": "06:19",
+                    "pace": "6:19",
+                    "avg_heart_rate": 173,
+                    "max_heart_rate": 176
+                },
+                {
+                    "split_num": 13,
+                    "distance_mi": 1.0,
+                    "time": "06:11",
+                    "pace": "6:11",
+                    "avg_heart_rate": 175,
+                    "max_heart_rate": 179
+                },
+                {
+                    "split_num": 14,
+                    "distance_mi": 0.13,
+                    "time": "00:55",
+                    "pace": "7:20",
+                    "avg_heart_rate": 174,
+                    "max_heart_rate": 178
+                }
+            ],
+            "text_payload": "[2026-09-21 11:09:48] Run: 13.13 miles | Pace: 7:13 min/mi | Elevation Climbed: +597.1 ft | [REWARD] +131g, +656 XP. | [CALORIE REWARDS] +1282 kcal | \ud83c\udf96\ufe0f Rewards: \ud83e\udd8c\ud83d\udc3f\ufe0f\ud83d\uddfa\ufe0f\ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "stride_velocity",
+                    "id": "deer",
+                    "name": "Deer Sprint Node",
+                    "icon": "\ud83e\udd8c"
+                },
+                {
+                    "pillar": "vertical_elevation",
+                    "id": "marmot",
+                    "name": "Marmot Traction Unit",
+                    "icon": "\ud83d\udc3f\ufe0f"
+                },
+                {
+                    "pillar": "endurance_volume",
+                    "id": "horizon_mapper",
+                    "name": "Horizon Mapper Processor",
+                    "icon": "\ud83d\uddfa\ufe0f"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
+        },
+        {
+            "Date": "2026-09-20 19:01:57",
+            "Name": "24438491242_ACTIVITY.fit",
+            "Distance (Miles)": 5.05,
+            "Duration": "0:50:14",
+            "pace": "9:57",
+            "Elevation (ft)": "+249.3 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "10:44",
+                    "pace": "10:44",
+                    "avg_heart_rate": 110,
+                    "max_heart_rate": 120
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "10:00",
+                    "pace": "10:00",
+                    "avg_heart_rate": 113,
+                    "max_heart_rate": 120
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "09:26",
+                    "pace": "9:26",
+                    "avg_heart_rate": 111,
+                    "max_heart_rate": 117
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "09:35",
+                    "pace": "9:35",
+                    "avg_heart_rate": 111,
+                    "max_heart_rate": 129
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "09:57",
+                    "pace": "9:57",
+                    "avg_heart_rate": 110,
+                    "max_heart_rate": 117
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 0.05,
+                    "time": "00:32",
+                    "pace": "10:21",
+                    "avg_heart_rate": 108,
+                    "max_heart_rate": 110
+                }
+            ],
+            "text_payload": "[2026-09-20 19:01:57] Run: 5.05 miles | Pace: 9:57 min/mi | Elevation Climbed: +249.3 ft | [REWARD] +50g, +252 XP. | [CALORIE REWARDS] +464 kcal | \ud83c\udf96\ufe0f Rewards: \ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
+        },
+        {
+            "Date": "2026-09-22 14:24:34",
+            "Name": "24462039356_ACTIVITY.fit",
+            "Distance (Miles)": 8.14,
+            "Duration": "1:10:21",
+            "pace": "8:39",
+            "Elevation (ft)": "+465.9 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "09:20",
+                    "pace": "9:20",
+                    "avg_heart_rate": 118,
+                    "max_heart_rate": 133
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "08:46",
+                    "pace": "8:46",
+                    "avg_heart_rate": 123,
+                    "max_heart_rate": 130
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "08:38",
+                    "pace": "8:38",
+                    "avg_heart_rate": 129,
+                    "max_heart_rate": 149
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "09:12",
+                    "pace": "9:12",
+                    "avg_heart_rate": 127,
+                    "max_heart_rate": 146
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "09:02",
+                    "pace": "9:02",
+                    "avg_heart_rate": 125,
+                    "max_heart_rate": 135
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "08:27",
+                    "pace": "8:27",
+                    "avg_heart_rate": 119,
+                    "max_heart_rate": 129
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "08:15",
+                    "pace": "8:15",
+                    "avg_heart_rate": 126,
+                    "max_heart_rate": 135
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "07:38",
+                    "pace": "7:38",
+                    "avg_heart_rate": 126,
+                    "max_heart_rate": 137
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 0.14,
+                    "time": "01:03",
+                    "pace": "7:45",
+                    "avg_heart_rate": 134,
+                    "max_heart_rate": 137
+                }
+            ],
+            "text_payload": "[2026-09-22 14:24:34] Run: 8.14 miles | Pace: 8:39 min/mi | Elevation Climbed: +465.9 ft | [REWARD] +81g, +407 XP. | [CALORIE REWARDS] +764 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc3f\ufe0f\ud83d\udca5\ud83d\udc63\ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "vertical_elevation",
+                    "id": "marmot",
+                    "name": "Marmot Traction Unit",
+                    "icon": "\ud83d\udc3f\ufe0f"
+                },
+                {
+                    "pillar": "race_strategy",
+                    "id": "overdrive",
+                    "name": "Overdrive Finisher Core",
+                    "icon": "\ud83d\udca5"
+                },
+                {
+                    "pillar": "endurance_volume",
+                    "id": "stride_tracker",
+                    "name": "Stride Tracker Array",
+                    "icon": "\ud83d\udc63"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
+        },
+        {
+            "Date": "2026-09-24 11:48:08",
+            "Name": "24494220099_ACTIVITY.fit",
+            "Distance (Miles)": 9.27,
+            "Duration": "1:21:01",
+            "pace": "8:45",
+            "Elevation (ft)": "+436.4 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "09:31",
+                    "pace": "9:31",
+                    "avg_heart_rate": 113,
+                    "max_heart_rate": 125
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "08:47",
+                    "pace": "8:47",
+                    "avg_heart_rate": 117,
+                    "max_heart_rate": 124
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "09:07",
+                    "pace": "9:07",
+                    "avg_heart_rate": 117,
+                    "max_heart_rate": 128
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "08:47",
+                    "pace": "8:47",
+                    "avg_heart_rate": 117,
+                    "max_heart_rate": 127
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "08:44",
+                    "pace": "8:44",
+                    "avg_heart_rate": 121,
+                    "max_heart_rate": 128
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "08:58",
+                    "pace": "8:58",
+                    "avg_heart_rate": 126,
+                    "max_heart_rate": 142
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "08:31",
+                    "pace": "8:31",
+                    "avg_heart_rate": 122,
+                    "max_heart_rate": 134
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "08:06",
+                    "pace": "8:06",
+                    "avg_heart_rate": 127,
+                    "max_heart_rate": 138
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "08:16",
+                    "pace": "8:16",
+                    "avg_heart_rate": 124,
+                    "max_heart_rate": 135
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 0.27,
+                    "time": "02:15",
+                    "pace": "8:26",
+                    "avg_heart_rate": 124,
+                    "max_heart_rate": 127
+                }
+            ],
+            "text_payload": "[2026-09-24 11:48:08] Run: 9.27 miles | Pace: 8:45 min/mi | Elevation Climbed: +436.4 ft | [REWARD] +92g, +463 XP. | [CALORIE REWARDS] +1021 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc3f\ufe0f\u23f1\ufe0f\ud83d\udc63\ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "vertical_elevation",
+                    "id": "marmot",
+                    "name": "Marmot Traction Unit",
+                    "icon": "\ud83d\udc3f\ufe0f"
+                },
+                {
+                    "pillar": "race_strategy",
+                    "id": "second_wind",
+                    "name": "Second Wind System",
+                    "icon": "\u23f1\ufe0f"
+                },
+                {
+                    "pillar": "endurance_volume",
+                    "id": "stride_tracker",
+                    "name": "Stride Tracker Array",
+                    "icon": "\ud83d\udc63"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
+        },
+        {
+            "Date": "2026-09-28 12:08:51",
+            "Name": "24533489590_ACTIVITY.fit",
+            "Distance (Miles)": 10.14,
+            "Duration": "1:29:51",
+            "pace": "8:51",
+            "Elevation (ft)": "+439.6 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "09:47",
+                    "pace": "9:47",
+                    "avg_heart_rate": 123,
+                    "max_heart_rate": 128
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "09:02",
+                    "pace": "9:02",
+                    "avg_heart_rate": 115,
+                    "max_heart_rate": 124
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "08:43",
+                    "pace": "8:43",
+                    "avg_heart_rate": 116,
+                    "max_heart_rate": 127
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "09:07",
+                    "pace": "9:07",
+                    "avg_heart_rate": 124,
+                    "max_heart_rate": 142
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "09:27",
+                    "pace": "9:27",
+                    "avg_heart_rate": 124,
+                    "max_heart_rate": 137
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "08:56",
+                    "pace": "8:56",
+                    "avg_heart_rate": 125,
+                    "max_heart_rate": 133
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "08:37",
+                    "pace": "8:37",
+                    "avg_heart_rate": 122,
+                    "max_heart_rate": 131
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "08:30",
+                    "pace": "8:30",
+                    "avg_heart_rate": 128,
+                    "max_heart_rate": 137
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "08:24",
+                    "pace": "8:24",
+                    "avg_heart_rate": 125,
+                    "max_heart_rate": 140
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 1.0,
+                    "time": "08:07",
+                    "pace": "8:07",
+                    "avg_heart_rate": 129,
+                    "max_heart_rate": 136
+                },
+                {
+                    "split_num": 11,
+                    "distance_mi": 0.14,
+                    "time": "01:13",
+                    "pace": "8:21",
+                    "avg_heart_rate": 127,
+                    "max_heart_rate": 129
+                }
+            ],
+            "text_payload": "[2026-09-28 12:08:51] Run: 10.14 miles | Pace: 8:51 min/mi | Elevation Climbed: +439.6 ft | [REWARD] +101g, +507 XP. | [CALORIE REWARDS] +1146 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc3f\ufe0f\u23f2\ufe0f\ud83d\uddfa\ufe0f\ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "vertical_elevation",
+                    "id": "marmot",
+                    "name": "Marmot Traction Unit",
+                    "icon": "\ud83d\udc3f\ufe0f"
+                },
+                {
+                    "pillar": "race_strategy",
+                    "id": "split_striker",
+                    "name": "Split Striker Module",
+                    "icon": "\u23f2\ufe0f"
+                },
+                {
+                    "pillar": "endurance_volume",
+                    "id": "horizon_mapper",
+                    "name": "Horizon Mapper Processor",
+                    "icon": "\ud83d\uddfa\ufe0f"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
+        },
+        {
+            "Date": "2026-09-27 08:15:34",
+            "Name": "24520739171_ACTIVITY.fit",
+            "Distance (Miles)": 20.06,
+            "Duration": "2:28:17",
+            "pace": "7:24",
+            "Elevation (ft)": "+882.5 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "09:21",
+                    "pace": "9:21",
+                    "avg_heart_rate": 125,
+                    "max_heart_rate": 135
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "08:43",
+                    "pace": "8:43",
+                    "avg_heart_rate": 132,
+                    "max_heart_rate": 140
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "08:15",
+                    "pace": "8:15",
+                    "avg_heart_rate": 136,
+                    "max_heart_rate": 144
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "08:06",
+                    "pace": "8:06",
+                    "avg_heart_rate": 138,
+                    "max_heart_rate": 151
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "08:02",
+                    "pace": "8:02",
+                    "avg_heart_rate": 145,
+                    "max_heart_rate": 156
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "07:49",
+                    "pace": "7:49",
+                    "avg_heart_rate": 150,
+                    "max_heart_rate": 159
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "07:47",
+                    "pace": "7:47",
+                    "avg_heart_rate": 155,
+                    "max_heart_rate": 166
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 1.0,
+                    "time": "07:36",
+                    "pace": "7:36",
+                    "avg_heart_rate": 151,
+                    "max_heart_rate": 160
+                },
+                {
+                    "split_num": 9,
+                    "distance_mi": 1.0,
+                    "time": "07:26",
+                    "pace": "7:26",
+                    "avg_heart_rate": 148,
+                    "max_heart_rate": 155
+                },
+                {
+                    "split_num": 10,
+                    "distance_mi": 1.0,
+                    "time": "07:21",
+                    "pace": "7:21",
+                    "avg_heart_rate": 152,
+                    "max_heart_rate": 164
+                },
+                {
+                    "split_num": 11,
+                    "distance_mi": 1.0,
+                    "time": "07:13",
+                    "pace": "7:13",
+                    "avg_heart_rate": 145,
+                    "max_heart_rate": 155
+                },
+                {
+                    "split_num": 12,
+                    "distance_mi": 1.0,
+                    "time": "07:04",
+                    "pace": "7:04",
+                    "avg_heart_rate": 144,
+                    "max_heart_rate": 151
+                },
+                {
+                    "split_num": 13,
+                    "distance_mi": 1.0,
+                    "time": "06:48",
+                    "pace": "6:48",
+                    "avg_heart_rate": 150,
+                    "max_heart_rate": 153
+                },
+                {
+                    "split_num": 14,
+                    "distance_mi": 1.0,
+                    "time": "06:45",
+                    "pace": "6:45",
+                    "avg_heart_rate": 154,
+                    "max_heart_rate": 161
+                },
+                {
+                    "split_num": 15,
+                    "distance_mi": 1.0,
+                    "time": "06:33",
+                    "pace": "6:33",
+                    "avg_heart_rate": 156,
+                    "max_heart_rate": 162
+                },
+                {
+                    "split_num": 16,
+                    "distance_mi": 1.0,
+                    "time": "06:45",
+                    "pace": "6:45",
+                    "avg_heart_rate": 162,
+                    "max_heart_rate": 169
+                },
+                {
+                    "split_num": 17,
+                    "distance_mi": 1.0,
+                    "time": "06:14",
+                    "pace": "6:14",
+                    "avg_heart_rate": 161,
+                    "max_heart_rate": 168
+                },
+                {
+                    "split_num": 18,
+                    "distance_mi": 1.0,
+                    "time": "06:42",
+                    "pace": "6:42",
+                    "avg_heart_rate": 159,
+                    "max_heart_rate": 168
+                },
+                {
+                    "split_num": 19,
+                    "distance_mi": 1.0,
+                    "time": "05:25",
+                    "pace": "5:25",
+                    "avg_heart_rate": 172,
+                    "max_heart_rate": 181
+                },
+                {
+                    "split_num": 20,
+                    "distance_mi": 1.0,
+                    "time": "07:53",
+                    "pace": "7:53",
+                    "avg_heart_rate": 163,
+                    "max_heart_rate": 181
+                },
+                {
+                    "split_num": 21,
+                    "distance_mi": 0.06,
+                    "time": "00:29",
+                    "pace": "8:06",
+                    "avg_heart_rate": 153,
+                    "max_heart_rate": 155
+                }
+            ],
+            "text_payload": "[2026-09-27 08:15:34] Run: 20.06 miles | Pace: 7:24 min/mi | Elevation Climbed: +882.5 ft | [REWARD] +200g, +1002 XP. | [CALORIE REWARDS] +2331 kcal | \ud83c\udf96\ufe0f Rewards: \ud83e\udd8c\ud83d\udc0f\ud83d\udcdc\ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "stride_velocity",
+                    "id": "deer",
+                    "name": "Deer Sprint Node",
+                    "icon": "\ud83e\udd8c"
+                },
+                {
+                    "pillar": "vertical_elevation",
+                    "id": "bighorn",
+                    "name": "Bighorn Climb Module",
+                    "icon": "\ud83d\udc0f"
+                },
+                {
+                    "pillar": "endurance_volume",
+                    "id": "endurance_laurel",
+                    "name": "Endurance Laurel Shield",
+                    "icon": "\ud83d\udcdc"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
+        },
+        {
+            "Date": "2026-09-25 11:29:28",
+            "Name": "24497100972_ACTIVITY.fit",
+            "Distance (Miles)": 7.14,
+            "Duration": "1:01:52",
+            "pace": "8:40",
+            "Elevation (ft)": "+265.7 ft",
+            "splits": [
+                {
+                    "split_num": 1,
+                    "distance_mi": 1.0,
+                    "time": "09:42",
+                    "pace": "9:42",
+                    "avg_heart_rate": 116,
+                    "max_heart_rate": 134
+                },
+                {
+                    "split_num": 2,
+                    "distance_mi": 1.0,
+                    "time": "09:10",
+                    "pace": "9:10",
+                    "avg_heart_rate": 125,
+                    "max_heart_rate": 132
+                },
+                {
+                    "split_num": 3,
+                    "distance_mi": 1.0,
+                    "time": "07:58",
+                    "pace": "7:58",
+                    "avg_heart_rate": 126,
+                    "max_heart_rate": 136
+                },
+                {
+                    "split_num": 4,
+                    "distance_mi": 1.0,
+                    "time": "08:22",
+                    "pace": "8:22",
+                    "avg_heart_rate": 128,
+                    "max_heart_rate": 137
+                },
+                {
+                    "split_num": 5,
+                    "distance_mi": 1.0,
+                    "time": "08:20",
+                    "pace": "8:20",
+                    "avg_heart_rate": 128,
+                    "max_heart_rate": 136
+                },
+                {
+                    "split_num": 6,
+                    "distance_mi": 1.0,
+                    "time": "08:38",
+                    "pace": "8:38",
+                    "avg_heart_rate": 130,
+                    "max_heart_rate": 142
+                },
+                {
+                    "split_num": 7,
+                    "distance_mi": 1.0,
+                    "time": "08:29",
+                    "pace": "8:29",
+                    "avg_heart_rate": 126,
+                    "max_heart_rate": 134
+                },
+                {
+                    "split_num": 8,
+                    "distance_mi": 0.14,
+                    "time": "01:15",
+                    "pace": "8:45",
+                    "avg_heart_rate": 124,
+                    "max_heart_rate": 128
+                }
+            ],
+            "text_payload": "[2026-09-25 11:29:28] Run: 7.14 miles | Pace: 8:40 min/mi | Elevation Climbed: +265.7 ft | [REWARD] +71g, +357 XP. | [CALORIE REWARDS] +801 kcal | \ud83c\udf96\ufe0f Rewards: \ud83d\udc63\ud83e\udec0",
+            "aerobic_decoupling_percent": 0.0,
+            "ambient_temp_f": 72.0,
+            "zone_1_2_duration_percent": 60.0,
+            "earned_patches": [
+                {
+                    "pillar": "endurance_volume",
+                    "id": "stride_tracker",
+                    "name": "Stride Tracker Array",
+                    "icon": "\ud83d\udc63"
+                },
+                {
+                    "pillar": "cardiac_efficiency",
+                    "id": "cardio_cyborg",
+                    "name": "Cardio Cyborg Patch",
+                    "icon": "\ud83e\udec0"
+                }
+            ]
         }
     ],
     "unlocked_badges": [],
@@ -350730,14 +351612,14 @@
         "hot_dog": 1,
         "steak_cut": 0,
         "chocolate_milkshake": 0,
-        "cake_slice": 2,
-        "ice_cream": 3,
-        "donut": 2,
-        "cookie": 2,
+        "cake_slice": 0,
+        "ice_cream": 0,
+        "donut": 0,
+        "cookie": 0,
         "broken_rice": 0,
-        "banh_mi": 4,
-        "bun_cha": 2,
-        "pho_bowl": 3,
+        "banh_mi": 0,
+        "bun_cha": 0,
+        "pho_bowl": 0,
         "viet_coffee": 0,
         "spring_roll": 0
     },
@@ -350748,9 +351630,21 @@
         "french_fries:0",
         "broken_rice:0",
         "spring_roll:0",
-        "viet_coffee:0"
+        "viet_coffee:0",
+        "banh_mi:0",
+        "bun_cha:0",
+        "pho_bowl:0",
+        "hot_dog:0",
+        "ice_cream:0",
+        "donut:0",
+        "cookie:0",
+        "cake_slice:0"
     ],
-    "pantry_cuisine_trophies": [],
+    "pantry_cuisine_trophies": [
+        "\ud83c\udf5c Vietnamese Cuisine:0",
+        "\ud83c\udf54 American Diner Cuisine:0",
+        "\ud83e\uddc1 Coveted Desserts:0"
+    ],
     "equipped_shoe_name": "New Balance 1080v15",
     "equipped_sunglasses_name": "Oakley Radar Path Sunglasses",
     "equipped_headgear_name": "Tracksmith Session Hat",
@@ -350758,8 +351652,8 @@
     "equipped_shorts_name": "Tracksmith MeridianShorts",
     "equipped_watch_name": "Garmin Forerunner 965",
     "gold_balance": 0,
-    "calorie_bank_balance": 64,
-    "calorie_bank_total_earned": 25504,
+    "calorie_bank_balance": 753,
+    "calorie_bank_total_earned": 33313,
     "p_fuel": 0,
     "p_nitro": 0,
     "p_torque": 0,

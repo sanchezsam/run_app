@@ -607,6 +607,347 @@ if player is not None and os.path.exists(FILE_PATH):
     except Exception: 
         pass
 
+    # ==============================================================================
+    # 📊 CALENDAR WEEK METRICS ENGINE (MON - SUN SUMMARY)
+    # ==============================================================================
+    weekly_miles = 0.0
+    weekly_seconds = 0
+    weekly_elevation = 0.0
+    weekly_streak = 0
+
+    if isinstance(logs_array, list) and len(logs_array) > 0:
+        today_date = datetime.date.today()
+        
+        # Calculate the Monday of the current calendar week
+        start_of_week = today_date - datetime.timedelta(days=today_date.weekday())
+        
+        # Create a unique set of all historical run dates for streak verification
+        run_dates_set = set()
+        
+        for log_item in logs_array:
+            if isinstance(log_item, dict) and "Date" in log_item:
+                try:
+                    # 🗓️ STREAK FIX 1: Explicitly slice out the first 10 characters (YYYY-MM-DD)
+                    # This removes trailing timezone data or execution hours that break matches.
+                    log_date_str = str(log_item.get("Date", ""))[:10]
+                    log_dt = datetime.datetime.strptime(log_date_str, '%Y-%m-%d').date()
+                    run_dates_set.add(log_dt)
+                    
+                    # Only accumulate stats if they happened between Monday and Today
+                    if today_date >= log_dt >= start_of_week:
+                        # Sum Distance
+                        weekly_miles += float(log_item.get("Distance (Miles)", log_item.get("Distance", 0.0)))
+                        
+                        # ⛰️ Elevation Key Scanner
+                        raw_vert = log_item.get("Elevation (ft)", log_item.get("elevation", log_item.get("elevation_gain", 0.0)))
+                        if isinstance(raw_vert, str):
+                            clean_vert = raw_vert.replace("+", "").replace("ft", "").replace(",", "").strip()
+                            weekly_elevation += float(clean_vert)
+                        else:
+                            weekly_elevation += float(raw_vert)
+                        
+                        # ⏱️ Duration Tracker
+                        raw_duration = log_item.get("Duration", log_item.get("Time", 0))
+                        if isinstance(raw_duration, str) and ":" in raw_duration:
+                            parts = raw_duration.split(":")
+                            if len(parts) == 3: # HH:MM:SS
+                                weekly_seconds += (int(parts[0]) * 3600) + (int(parts[1]) * 60) + int(parts[2])
+                            elif len(parts) == 2: # MM:SS
+                                weekly_seconds += (int(parts[0]) * 60) + int(parts[1])
+                        else:
+                            weekly_seconds += int(float(raw_duration))
+                except Exception:
+                    pass
+
+        # 🔥 STREAK FIX 2: Dynamic lookback validator
+        check_date = today_date
+        
+        # If you haven't logged a run yet today, check if you have an active streak from yesterday
+        if check_date not in run_dates_set:
+            check_date -= datetime.timedelta(days=1)
+            
+        # Walk backward day-by-day until we find a missing calendar date entry
+        while check_date in run_dates_set:
+            weekly_streak += 1
+            check_date -= datetime.timedelta(days=1)
+
+
+
+
+    #hours = weekly_seconds // 3600
+    #minutes = (weekly_seconds % 3600) // 60
+    #weekly_time_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+
+    ## ==============================================================================
+    ## 🎽 UNIVERSAL WEEKLY METRIC STRIP 
+    ## ==============================================================================
+    #st.markdown("### 📈 **CURRENT CALENDAR WEEK PERFORMANCE SUMMARY**")
+    #w_col1, w_col2, w_col3, w_col4 = st.columns(4)
+
+    #with w_col1:
+    #    st.metric(label="⚡ Weekly Distance", value=f"{weekly_miles:.2f} Miles")
+    #with w_col2:
+    #    st.metric(label="⏱ Total Duration", value=weekly_time_str)
+    #with w_col3:
+    #    st.metric(label="⛰ Total Vert Gain", value=f"{int(weekly_elevation):,} ft")
+    #with w_col4:
+    #    st.metric(label="🔥 Active Run Streak", value=f"{weekly_streak} Days", delta="Active" if weekly_streak > 0 else "Resting")
+    #st.markdown("---")
+
+
+    # ==============================================================================
+    # 🧮 TEXT PAYLOAD CALENDAR PROGRESS PARSER (YTD, MTD, & WEEKLY)
+    # ==============================================================================
+    import datetime
+    import re
+
+    today = datetime.date.today()
+    start_of_week = today - datetime.timedelta(days=today.weekday())
+    current_month = today.month
+    current_year = today.year
+
+    # Accumulator Targets
+    ytd_miles = 0.0
+    mtd_miles = 0.0
+    weekly_miles = 0.0
+    weekly_elevation = 0.0
+    weekly_seconds = 0
+    weekly_streak = 0
+    weekly_runs_dates = set()
+
+    # 🛡 SAFE INTERCEPT: Read session state cleanly or fall back to an empty dictionary to prevent boot crashes
+    if "profile" in st.session_state and st.session_state["profile"] is not None:
+        logs_source = st.session_state["profile"].get("history_logs", [])
+    else:
+        # Use your local file engine loader function as a safe boot fallback
+        logs_source = load_profile_state().get("history_logs", [])
+
+    for log_item in logs_source:
+        if isinstance(log_item, dict) and "Date" in log_item:
+            try:
+                # Extract workout date attributes
+                log_date_str = log_item.get("Date", "")[:10]
+                log_date = datetime.datetime.strptime(log_date_str, '%Y-%m-%d').date()
+                payload = log_item.get("text_payload", "")
+                
+                # Extract mileage metric value
+                dist_match = re.search(r"Run:\s*([\d\.]+)\s*miles", payload)
+                if dist_match:
+                    miles_val = float(dist_match.group(1))
+                    
+                    # 1. Year To Date Filter
+                    if log_date.year == current_year:
+                        ytd_miles += miles_val
+                        
+                        # 2. Month To Date Filter
+                        if log_date.month == current_month:
+                            mtd_miles += miles_val
+                    
+                    # 3. Current Week Filter
+                    if start_of_week <= log_date <= today:
+                        weekly_miles += miles_val
+                        weekly_runs_dates.add(log_date)
+                        
+                        # Extract elevation metrics
+                        elev_match = re.search(r"Elevation Climbed:\s*\+?([\d\.]+)\s*ft", payload)
+                        if elev_match:
+                            weekly_elevation += float(elev_match.group(1))
+
+                        # Extract pace to calculate duration accumulation
+                        pace_match = re.search(r"Pace:\s*(\d+):(\d+)\s*min/mi", payload)
+                        if pace_match:
+                            pace_minutes = int(pace_match.group(1))
+                            pace_seconds = int(pace_match.group(2))
+                            total_pace_seconds = (pace_minutes * 60) + pace_seconds
+                            weekly_seconds += int(miles_val * total_pace_seconds)
+            except Exception:
+                pass
+
+    # Calculate active consecutive streak days backwards
+    check_date = today
+    while check_date in weekly_runs_dates:
+        weekly_streak += 1
+        check_date -= datetime.timedelta(days=1)
+
+    if weekly_streak == 0:
+        check_date = today - datetime.timedelta(days=1)
+        while check_date in weekly_runs_dates:
+            weekly_streak += 1
+            check_date -= datetime.timedelta(days=1)
+
+
+    # 🏁 RE-INJECT DYNAMIC WIN COUNTER ENGINE
+    history_entries = getattr(player, 'history_logs', [])
+    real_win_count = 0
+    for entry in history_entries:
+        if isinstance(entry, dict):
+            payload = str(entry.get("text_payload", ""))
+            if "[WIN]" in payload or "Track Match Victory" in payload:
+                real_win_count += 1
+        elif isinstance(entry, str):
+            if "[WIN]" in entry or "Track Match Victory" in entry:
+                real_win_count += 1
+
+    # ⏱️ RE-INJECT TIME STAMP MATH
+    hours = weekly_seconds // 3600
+    minutes = (weekly_seconds % 3600) // 60
+    weekly_time_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+    # ==============================================================================
+    # 🎽 PREMIUM ATHLETE STATUS AND PERFORMANCE GRID
+    # ==============================================================================
+    st.markdown("### 🏃‍♂️ **ATHLETE PERFORMANCE HUDBUILDER**")
+
+
+    # Custom CSS Injector for modern grid displays
+    st.markdown("""
+    <style>
+    .hud-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .hud-card {
+        flex: 1;
+        min-width: 150px;
+        padding: 14px;
+        border-radius: 10px;
+        background-color: var(--background-color);
+        border: 1px solid rgba(128, 128, 128, 0.2);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+    .hud-card:hover {
+        transform: translateY(-2px);
+    }
+    .hud-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .hud-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+    .hud-accent-orange { border-left: 4px solid #f59e0b; }
+    .hud-accent-blue { border-left: 4px solid #3b82f6; }
+    .hud-accent-green { border-left: 4px solid #10b981; }
+    .hud-accent-purple { border-left: 4px solid #8b5cf6; }
+    .hud-accent-red { border-left: 4px solid #ef4444; }
+    
+    .streak-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        margin-top: 4px;
+    }
+    .streak-active { background-color: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .streak-resting { background-color: rgba(107, 114, 128, 0.2); color: #6b7280; }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+
+
+    # ==============================================================================
+    # 🎽 COMBINED PERFORMANCE METRICS ROW (GROUPS 1 & 2)
+    # ==============================================================================
+    st.markdown("#### 📈 **CHRONO PROGRESSION INDEX & CYCLE BIOMETRICS**")
+    
+    streak_class = "streak-active" if weekly_streak > 0 else "streak-resting"
+    streak_label = "🔥 ACTIVE RUNNER" if weekly_streak > 0 else "💤 RESTING CYCLE"
+    
+    # Combined 6-card row container layout
+    combined_row_html = f"""
+    <div class="hud-container">
+        <!-- Mileage Cards -->
+        <div class="hud-card hud-accent-purple">
+            <div class="hud-label">📅 Year to Date</div>
+            <div class="hud-value">{ytd_miles:,.2f} <span style="font-size:0.9rem; font-weight:normal;">mi</span></div>
+        </div>
+        <div class="hud-card hud-accent-purple">
+            <div class="hud-label">📆 Month to Date</div>
+            <div class="hud-value">{mtd_miles:.2f} <span style="font-size:0.9rem; font-weight:normal;">mi</span></div>
+        </div>
+        <div class="hud-card hud-accent-blue">
+            <div class="hud-label">⚡ Weekly Volume</div>
+            <div class="hud-value">{weekly_miles:.2f} <span style="font-size:0.9rem; font-weight:normal;">mi</span></div>
+        </div>
+        <!-- Biometric Cards -->
+        <div class="hud-card hud-accent-blue">
+            <div class="hud-label">⏱️ Total Duration</div>
+            <div class="hud-value">{weekly_time_str}</div>
+        </div>
+        <div class="hud-card hud-accent-orange">
+            <div class="hud-label">⛰️ Vert Clime Gain</div>
+            <div class="hud-value">{int(weekly_elevation):,} <span style="font-size:0.9rem; font-weight:normal;">ft</span></div>
+        </div>
+        <div class="hud-card hud-accent-green">
+            <div class="hud-label">🔥 Active Run Streak</div>
+            <div class="hud-value">{weekly_streak} <span style="font-size:0.9rem; font-weight:normal;">Days</span></div>
+            <span class="streak-badge {streak_class}">{streak_label}</span>
+        </div>
+    </div>
+    """
+    st.markdown(combined_row_html, unsafe_allow_html=True)
+
+    # 💠 GROUP 3: RPG CHARACTER ACCOUNT SUMMARY
+    st.markdown("#### 🎽 **RPG RUNNER HERO STATS**")
+    
+    # Read fatigue variables cleanly
+    p_fatigue = getattr(player, 'fatigue', 0)
+    fatigue_color = "#10b981" if p_fatigue < 40 else ("#f59e0b" if p_fatigue < 75 else "#ef4444")
+    
+    rpg_html = f"""
+    <div class="hud-container">
+        <div class="hud-card hud-accent-green">
+            <div class="hud-label">🎖️ Character Level</div>
+            <div class="hud-value">Lv. {player.level}</div>
+        </div>
+        <div class="hud-card hud-accent-orange">
+            <div class="hud-label">💰 Gold Balance</div>
+            <div class="hud-value">{int(getattr(player, "gold", 0))} <span style="font-size:0.9rem; font-weight:normal;">g</span></div>
+        </div>
+        <div class="hud-card hud-accent-blue">
+            <div class="hud-label">🫁 VO2 Max Baseline</div>
+            <div class="hud-value">{player.vo2_max:.1f}</div>
+        </div>
+        <div class="hud-card hud-accent-red">
+            <div class="hud-label">📉 Fatigue Stress</div>
+            <div class="hud-value" style="color:{fatigue_color};">{int(p_fatigue)}<span style="font-size:0.8rem; color:#6b7280; font-weight:normal;"> / 100</span></div>
+        </div>
+        <div class="hud-card hud-accent-orange">
+            <div class="hud-label">🏁 Checkered Flags</div>
+            <div class="hud-value">{real_win_count} <span style="font-size:0.8rem; font-weight:normal; color:#6b7280;">Wins</span></div>
+        </div>
+        <div class="hud-card hud-accent-purple">
+            <div class="hud-label">🔥 Calorie Bank</div>
+            <div class="hud-value">{int(getattr(player, "calorie_bank_balance", 0)):,} <span style="font-size:0.8rem; font-weight:normal;">kcal</span></div>
+        </div>
+    </div>
+    """
+    st.markdown(rpg_html, unsafe_allow_html=True)
+    st.markdown("---")
+
+
+
+
+
+
+
+
+
+
+
+
     hud_col1, hud_col2, hud_col3, hud_col4, hud_col5, hud_col6,hud_col7 = st.columns(7)
     st.write("")
     active_trophies = getattr(player, 'pantry_single_trophies', [])
